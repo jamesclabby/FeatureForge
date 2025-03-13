@@ -1,11 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { MainLayout } from './components/layout';
-import { PrivateRoute } from './components/common';
-import { AuthContainer } from './components/auth';
-import { Home, Dashboard } from './pages';
-import './App.css';
+import PrivateRoute from './components/common/PrivateRoute';
+import MainLayout from './components/layout/MainLayout';
+import AuthContainer from './components/auth/AuthContainer';
+import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
 
 function App() {
   return (

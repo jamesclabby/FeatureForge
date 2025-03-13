@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Login, SignUp, ResetPassword } from './index';
-import './Auth.css';
+import { Card } from '../ui/card';
 
 // Enum for auth views
 const AuthView = {
@@ -43,8 +43,10 @@ const AuthContainer = () => {
   };
 
   return (
-    <div className="auth-container">
-      {renderAuthComponent()}
+    <div className="min-h-screen flex items-center justify-center bg-secondary-50 px-4 py-12">
+      <Card className="w-full max-w-md p-8 shadow-lg">
+        {renderAuthComponent()}
+      </Card>
     </div>
   );
 };
