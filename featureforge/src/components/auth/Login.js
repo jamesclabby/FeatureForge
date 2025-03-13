@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Login = ({ onSignUpClick, onResetPasswordClick }) => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,11 @@ const Login = ({ onSignUpClick, onResetPasswordClick }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login, loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the redirect path from location state or default to dashboard
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const validateForm = () => {
     if (!email.trim()) {
@@ -41,7 +47,8 @@ const Login = ({ onSignUpClick, onResetPasswordClick }) => {
       setError('');
       setLoading(true);
       await login(email, password);
-      // Successful login will be handled by the AuthContext which updates the currentUser
+      // Redirect to the page the user was trying to access or dashboard
+      navigate(from, { replace: true });
     } catch (err) {
       setError('Failed to sign in: ' + (err.message || 'Please check your credentials'));
     } finally {
@@ -54,7 +61,8 @@ const Login = ({ onSignUpClick, onResetPasswordClick }) => {
       setError('');
       setLoading(true);
       await loginWithGoogle();
-      // Successful login will be handled by the AuthContext
+      // Redirect to the page the user was trying to access or dashboard
+      navigate(from, { replace: true });
     } catch (err) {
       setError('Failed to sign in with Google: ' + (err.message || 'Please try again'));
     } finally {
