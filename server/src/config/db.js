@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 const { Sequelize } = require('sequelize');
+const dotenv = require('dotenv');
+const path = require('path');
+
+// Load environment variables with explicit path
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // Create Sequelize instance for PostgreSQL
 let sequelize = null;
@@ -13,6 +18,12 @@ try {
     process.env.DB_HOST &&
     process.env.DB_PORT
   ) {
+    console.log('Creating Sequelize instance with:');
+    console.log('- Database:', process.env.DB_NAME);
+    console.log('- User:', process.env.DB_USER);
+    console.log('- Host:', process.env.DB_HOST);
+    console.log('- Port:', process.env.DB_PORT);
+    
     sequelize = new Sequelize(
       process.env.DB_NAME,
       process.env.DB_USER,
@@ -30,6 +41,13 @@ try {
         }
       }
     );
+  } else {
+    console.warn('Missing required database environment variables:');
+    if (!process.env.DB_NAME) console.warn('- DB_NAME is missing');
+    if (!process.env.DB_USER) console.warn('- DB_USER is missing');
+    if (!process.env.DB_PASSWORD) console.warn('- DB_PASSWORD is missing');
+    if (!process.env.DB_HOST) console.warn('- DB_HOST is missing');
+    if (!process.env.DB_PORT) console.warn('- DB_PORT is missing');
   }
 } catch (error) {
   console.warn('Failed to initialize Sequelize:', error.message);

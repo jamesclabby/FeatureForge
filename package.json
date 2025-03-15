@@ -1,0 +1,15 @@
+{
+  "name": "featureforge-monorepo",
+  "version": "1.0.0",
+  "description": "FeatureForge - Feature Prioritization Tool",
+  "scripts": {
+    "start:server": "cd server && npm run dev",
+    "start:frontend": "cd featureforge && npm start",
+    "start": "concurrently \"npm run start:server\" \"npm run start:frontend\"",
+    "install:all": "npm install && cd server && npm install && cd ../featureforge && npm install",
+    "test": "cd server && npm test && cd ../featureforge && npm test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 
