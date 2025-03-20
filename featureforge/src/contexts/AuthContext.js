@@ -10,6 +10,7 @@ import {
   sendPasswordResetEmail,
   updateProfile
 } from '../services/firebase';
+import apiService from '../services/api';
 
 // Create the authentication context
 const AuthContext = createContext();
@@ -24,6 +25,23 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [backendUser, setBackendUser] = useState(null);
+
+  // Register user with backend
+  const registerWithBackend = async (firebaseUser) => {
+    try {
+      if (firebaseUser) {
+        const idToken = await firebaseUser.getIdToken();
+        const response = await apiService.post('/auth/firebase', { idToken });
+        console.log('Backend user registered:', response);
+        setBackendUser(response.data);
+        return response;
+      }
+    } catch (err) {
+      console.error('Error registering with backend:', err);
+      // We don't throw here to prevent blocking the auth flow
+    }
+  };
 
   // Sign up with email and password
   const signup = async (email, password, displayName) => {
@@ -35,6 +53,9 @@ export const AuthProvider = ({ children }) => {
       if (displayName) {
         await updateProfile(userCredential.user, { displayName });
       }
+      
+      // Register with backend
+      await registerWithBackend(userCredential.user);
       
       return userCredential.user;
     } catch (err) {
@@ -48,6 +69,10 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Register with backend
+      await registerWithBackend(userCredential.user);
+      
       return userCredential.user;
     } catch (err) {
       setError(err.message);
@@ -61,6 +86,10 @@ export const AuthProvider = ({ children }) => {
       setError('');
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
+      
+      // Register with backend
+      await registerWithBackend(userCredential.user);
+      
       return userCredential.user;
     } catch (err) {
       setError(err.message);
@@ -73,6 +102,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
       await signOut(auth);
+      setBackendUser(null);
     } catch (err) {
       setError(err.message);
       throw err;
@@ -107,8 +137,20 @@ export const AuthProvider = ({ children }) => {
 
   // Subscribe to auth state changes when the component mounts
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      
+      // Register with backend when user changes (e.g., on page refresh)
+      if (user) {
+        try {
+          await registerWithBackend(user);
+        } catch (error) {
+          console.error("Error syncing with backend:", error);
+        }
+      } else {
+        setBackendUser(null);
+      }
+      
       setLoading(false);
     });
 
@@ -119,6 +161,7 @@ export const AuthProvider = ({ children }) => {
   // Context value to be provided
   const value = {
     currentUser,
+    backendUser,
     loading,
     error,
     signup,

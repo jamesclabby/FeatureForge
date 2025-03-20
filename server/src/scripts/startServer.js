@@ -79,6 +79,22 @@ const startServer = async (options = {}) => {
       });
     });
     
+    // API index route
+    app.get('/api', (req, res) => {
+      res.json({
+        message: 'FeatureForge API',
+        status: {
+          database: dbConnection ? 'connected' : 'disconnected',
+          version: process.env.npm_package_version || '1.0.0'
+        },
+        endpoints: {
+          auth: '/api/auth',
+          features: '/api/features'
+        },
+        documentation: 'See README.md for API documentation'
+      });
+    });
+    
     // API routes with database check middleware
     const dbCheckMiddleware = (req, res, next) => {
       if (!dbConnection && req.method !== 'GET') {
