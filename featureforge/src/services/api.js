@@ -10,6 +10,43 @@ const api = axios.create({
   timeout: 10000, // 10 seconds timeout
 });
 
+// Extracted auth utility functions to avoid circular dependencies
+export const authUtils = {
+  // Check authentication state
+  checkAuthState: async () => {
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        const token = await user.getIdToken(true);
+        console.log("Current user authenticated:", user.email);
+        console.log("Token available (first 20 chars):", token.substring(0, 20) + "...");
+        return true;
+      } catch (error) {
+        console.error("Failed to get token:", error);
+        return false;
+      }
+    } else {
+      console.warn("No current user found");
+      return false;
+    }
+  },
+  
+  // Get current user
+  getCurrentUser: () => auth.currentUser,
+  
+  // Get token for current user
+  getIdToken: async (forceRefresh = false) => {
+    const user = auth.currentUser;
+    if (user) {
+      return user.getIdToken(forceRefresh);
+    }
+    return null;
+  }
+};
+
+// For backward compatibility
+export const checkAuthState = authUtils.checkAuthState;
+
 /**
  * Request interceptor
  * - Adds authentication token to requests if user is logged in
@@ -17,19 +54,32 @@ const api = axios.create({
  */
 api.interceptors.request.use(
   async (config) => {
-    // Get current user from Firebase Auth
-    const user = auth.currentUser;
-    
-    if (user) {
-      try {
-        // Get the ID token
-        const token = await user.getIdToken(true);
-        
-        // Add token to request headers
-        config.headers.Authorization = `Bearer ${token}`;
-      } catch (error) {
-        console.error('Error getting auth token:', error);
+    try {
+      // Get current user from Firebase Auth using authUtils
+      const user = authUtils.getCurrentUser();
+      
+      if (user) {
+        try {
+          // Force refresh the token
+          const token = await authUtils.getIdToken(true);
+          
+          if (token) {
+            // Add token to request headers
+            config.headers.Authorization = `Bearer ${token}`;
+            console.log(`Request to ${config.url} with auth token`);
+          } else {
+            console.warn(`Request to ${config.url} - token is null even though user is logged in`);
+          }
+        } catch (error) {
+          console.error('Error getting auth token:', error);
+          // Continue with request without token
+        }
+      } else {
+        console.warn(`Request to ${config.url} without authentication`);
       }
+    } catch (error) {
+      console.error('Error in request interceptor:', error);
+      // Continue with request without token
     }
     
     return config;
@@ -57,10 +107,25 @@ api.interceptors.response.use(
     if (response) {
       switch (response.status) {
         case 401: // Unauthorized
-          // Could trigger logout or redirect to login
-          console.error('Authentication error:', response.data);
-          // You could dispatch an action to clear auth state or redirect
-          // Example: window.location.href = '/login';
+          console.error('Authentication error (401):', response.data);
+          console.log('Request URL:', error.config?.url);
+          console.log('Request Method:', error.config?.method);
+          console.log('Authorization header present:', !!error.config?.headers?.Authorization);
+          if (error.config?.headers?.Authorization) {
+            const token = error.config.headers.Authorization.split(' ')[1];
+            console.log('Token length:', token ? token.length : 'No token');
+            console.log('Token first 20 chars:', token ? token.substring(0, 20) + '...' : 'No token');
+          }
+          console.log('Current auth state:');
+          authUtils.checkAuthState().then(isAuth => {
+            if (!isAuth) {
+              console.log('User is not authenticated, consider redirecting to login');
+              // window.location.href = '/login';
+            } else {
+              console.log('User is authenticated in Firebase, but token was rejected by server');
+              console.log('This might be a token format issue or server-side authentication problem');
+            }
+          });
           break;
           
         case 403: // Forbidden
@@ -100,6 +165,58 @@ api.interceptors.response.use(
  * These methods wrap the axios instance to provide a cleaner interface
  */
 const apiService = {
+  // Check auth state (exported function)
+  checkAuth: authUtils.checkAuthState,
+  
+  // Debug utility for the frontend
+  debugAuth: async () => {
+    try {
+      console.group("🔍 Authentication Debug Information");
+      console.log("API Base URL:", process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+      
+      // Check if user is logged in
+      const user = authUtils.getCurrentUser();
+      console.log("User logged in:", !!user);
+      
+      if (user) {
+        console.log("User email:", user.email);
+        console.log("User display name:", user.displayName);
+        console.log("User UID:", user.uid);
+        
+        // Try to get the ID token
+        const token = await authUtils.getIdToken(true);
+        console.log("Token available:", !!token);
+        if (token) {
+          console.log("Token length:", token.length);
+          console.log("Token first 20 chars:", token.substring(0, 20) + "...");
+        }
+        
+        // Try making a request to the /auth/me endpoint
+        try {
+          console.log("Testing /auth/me/firebase endpoint...");
+          const response = await api.get('/auth/me/firebase');
+          console.log("Successfully authenticated with backend:", response);
+          return { success: true, user: response };
+        } catch (error) {
+          console.error("Failed to authenticate with backend:", error.message);
+          if (error.response) {
+            console.error("Status:", error.response.status);
+            console.error("Data:", error.response.data);
+          }
+          return { success: false, error };
+        }
+      } else {
+        console.log("No user is currently logged in");
+        return { success: false, error: "No user logged in" };
+      }
+    } catch (error) {
+      console.error("Auth debug error:", error);
+      return { success: false, error };
+    } finally {
+      console.groupEnd();
+    }
+  },
+  
   // GET request
   get: (url, params = {}, config = {}) => {
     return api.get(url, { params, ...config });
@@ -107,6 +224,7 @@ const apiService = {
   
   // POST request
   post: (url, data = {}, config = {}) => {
+    console.log(`Making POST request to: ${url}`);
     return api.post(url, data, config);
   },
   
@@ -123,7 +241,7 @@ const apiService = {
   // DELETE request
   delete: (url, config = {}) => {
     return api.delete(url, config);
-  }
+  },
 };
 
 export default apiService; 

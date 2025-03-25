@@ -15,23 +15,20 @@ import apiService from '../services/api';
 // Create the authentication context
 const AuthContext = createContext();
 
-// Custom hook to use the auth context
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
-
 // Provider component that wraps the app and makes auth object available to any child component that calls useAuth()
-export const AuthProvider = ({ children }) => {
+const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [backendUser, setBackendUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [lastAuthCheck, setLastAuthCheck] = useState(0);
 
   // Register user with backend
   const registerWithBackend = async (firebaseUser) => {
     try {
       if (firebaseUser) {
-        const idToken = await firebaseUser.getIdToken();
+        const idToken = await firebaseUser.getIdToken(true); // Force token refresh
         const response = await apiService.post('/auth/firebase', { idToken });
         console.log('Backend user registered:', response);
         setBackendUser(response.data);
@@ -40,6 +37,72 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error('Error registering with backend:', err);
       // We don't throw here to prevent blocking the auth flow
+    }
+  };
+
+  // Refresh the user's token
+  const refreshToken = async () => {
+    try {
+      if (currentUser) {
+        console.log('Refreshing auth token...');
+        const token = await currentUser.getIdToken(true);
+        console.log('Token refreshed successfully');
+        return token;
+      }
+      return null;
+    } catch (err) {
+      console.error('Error refreshing token:', err);
+      setError('Failed to refresh authentication token. Please try logging in again.');
+      throw err;
+    }
+  };
+
+  // Verify the user's authentication status with the backend
+  const verifyAuth = async () => {
+    try {
+      // Check if we have a cached authentication result less than 30 seconds old
+      const now = Date.now();
+      if (isAuthenticated && (now - lastAuthCheck < 30000)) {
+        console.log('Using cached authentication status - already verified');
+        return true;
+      }
+
+      if (!currentUser) {
+        console.warn('No current user to verify');
+        setIsAuthenticated(false);
+        setLastAuthCheck(now);
+        return false;
+      }
+      
+      // Force refresh token first
+      await refreshToken();
+      
+      // Test with backend to make sure token is valid - use Firebase auth endpoint
+      console.log('Verifying auth with /auth/me/firebase endpoint...');
+      const response = await apiService.get('/auth/me/firebase');
+      console.log('Auth verification successful:', response);
+      
+      // Update backend user data
+      setBackendUser(response.user || response);
+      setIsAuthenticated(true);
+      setLastAuthCheck(now);
+      return true;
+    } catch (err) {
+      console.error('Auth verification failed:', err);
+      
+      // Check for specific error message from the server indicating Firebase is not initialized
+      if (err.status === 503 || (err.data && err.data.message && err.data.message.includes('Firebase authentication is not available'))) {
+        console.warn('Firebase authentication is not available on the server. Some features may be limited.');
+        // We'll consider this a partial success since the user is authenticated with Firebase,
+        // even if the server doesn't have Firebase configured
+        setIsAuthenticated(true);
+        setLastAuthCheck(Date.now());
+        return true;
+      }
+      
+      setIsAuthenticated(false);
+      setLastAuthCheck(Date.now());
+      return false;
     }
   };
 
@@ -169,7 +232,9 @@ export const AuthProvider = ({ children }) => {
     loginWithGoogle,
     logout,
     resetPassword,
-    updateUserProfile
+    updateUserProfile,
+    refreshToken,
+    verifyAuth
   };
 
   return (
@@ -179,4 +244,11 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// Custom hook to use the auth context
+const useAuth = () => {
+  return useContext(AuthContext);
+};
+
+// Export after definitions are complete
+export { AuthProvider, useAuth };
 export default AuthContext; 

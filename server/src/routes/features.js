@@ -9,7 +9,7 @@ const {
   addComment
 } = require('../controllers/features');
 
-const { protect, authorize } = require('../middleware/auth');
+const { protect, protectWithAny } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -17,18 +17,18 @@ const router = express.Router();
 router
   .route('/')
   .get(getFeatures)
-  .post(protect, createFeature);
+  .post(protectWithAny, createFeature);
 
 router
   .route('/:id')
   .get(getFeature)
-  .put(protect, updateFeature)
-  .delete(protect, deleteFeature);
+  .put(protectWithAny, updateFeature)
+  .delete(protectWithAny, deleteFeature);
 
 // Vote route
-router.route('/:id/vote').put(protect, voteFeature);
+router.route('/:id/vote').put(protectWithAny, voteFeature);
 
 // Comment route
-router.route('/:id/comments').post(protect, addComment);
+router.route('/:id/comments').post(protectWithAny, addComment);
 
 module.exports = router; 

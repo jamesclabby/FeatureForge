@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import featureService from '../../services/featureService';
 import apiService from '../../services/api';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -20,7 +21,7 @@ import {
 import { toast } from '../ui/toast';
 
 const CreateFeatureDialog = ({ onFeatureCreated }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, verifyAuth, refreshToken } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -32,6 +33,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
   });
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,8 +59,17 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     
+    // Prevent multiple submissions
+    if (loading) {
+      console.log('Submission already in progress, ignoring duplicate request');
+      return;
+    }
+    
+    // Check if user is logged in
     if (!currentUser) {
+      setError("You must be logged in to create a feature.");
       toast({
         title: "Authentication Error",
         description: "You must be logged in to create a feature.",
@@ -70,7 +81,19 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
     try {
       setLoading(true);
       
-      const response = await apiService.post('/features', formData);
+      // Check authentication status and refresh token
+      console.log('Starting authentication verification...');
+      await refreshToken();
+      const isAuthenticated = await verifyAuth();
+      if (!isAuthenticated) {
+        throw new Error("Authentication failed. Please log out and log in again.");
+      }
+      
+      // Log the data being sent
+      console.log("Authentication verified. Submitting feature data:", formData);
+      
+      const response = await featureService.createFeature(formData);
+      console.log("Feature created successfully:", response);
       
       toast({
         title: "Success!",
@@ -94,13 +117,24 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
       
       // Notify parent component
       if (onFeatureCreated) {
-        onFeatureCreated(response.data);
+        // Handle both response structures (direct data or data in response.data)
+        const featureData = response.data || response;
+        onFeatureCreated(featureData);
       }
     } catch (error) {
       console.error('Error creating feature:', error);
+      
+      // Log detailed error information
+      if (error.response) {
+        console.error('Server response error:', error.response);
+      }
+      
+      const errorMessage = error.message || "Failed to create feature. Please try again.";
+      setError(errorMessage);
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to create feature. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -130,6 +164,12 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
             Fill in the details for your feature request. Fields marked with * are required.
           </DialogDescription>
         </DialogHeader>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm mb-4">
+            {error}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
@@ -257,6 +297,19 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
             <DialogClose asChild>
               <Button variant="outline" type="button" disabled={loading}>Cancel</Button>
             </DialogClose>
+            {error && (
+              <Button 
+                variant="secondary" 
+                type="button" 
+                onClick={async () => {
+                  console.log("Running auth debug...");
+                  await apiService.debugAuth();
+                }}
+                className="mr-2"
+              >
+                Debug Auth
+              </Button>
+            )}
             <Button type="submit" disabled={loading}>
               {loading ? 'Creating...' : 'Create Feature'}
             </Button>

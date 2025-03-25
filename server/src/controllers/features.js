@@ -152,6 +152,9 @@ exports.getFeature = async (req, res) => {
  */
 exports.createFeature = async (req, res) => {
   try {
+    // Log authentication info for debugging
+    console.log('Creating feature with user:', req.user ? req.user.id : 'No user');
+    
     // Add user to req.body
     req.body.requestedById = req.user.id;
     
@@ -162,6 +165,7 @@ exports.createFeature = async (req, res) => {
       data: feature
     });
   } catch (err) {
+    console.error('Error creating feature:', err);
     res.status(400).json({
       success: false,
       message: err.message
