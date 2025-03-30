@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   auth, 
   signInWithEmailAndPassword, 
@@ -24,18 +24,28 @@ const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [lastAuthCheck, setLastAuthCheck] = useState(0);
 
+  // Add refs to track registration status and last registered email
+  const registrationInProgress = useRef(false);
+  const lastRegisteredEmail = useRef(null);
+
   // Register user with backend
   const registerWithBackend = async (firebaseUser) => {
     try {
-      if (firebaseUser) {
+      if (firebaseUser && !registrationInProgress.current) {
+        registrationInProgress.current = true;
+        console.log('Getting Firebase token for user:', firebaseUser.email);
         const idToken = await firebaseUser.getIdToken(true); // Force token refresh
+        console.log('Registering with backend for user:', firebaseUser.email);
         const response = await apiService.post('/auth/firebase', { idToken });
-        console.log('Backend user registered:', response);
+        console.log('Backend registration successful for user:', firebaseUser.email);
         setBackendUser(response.data);
+        lastRegisteredEmail.current = firebaseUser.email;
+        registrationInProgress.current = false;
         return response;
       }
     } catch (err) {
       console.error('Error registering with backend:', err);
+      registrationInProgress.current = false;
       // We don't throw here to prevent blocking the auth flow
     }
   };
@@ -77,13 +87,7 @@ const AuthProvider = ({ children }) => {
       // Force refresh token first
       await refreshToken();
       
-      // Test with backend to make sure token is valid - use Firebase auth endpoint
-      console.log('Verifying auth with /auth/me/firebase endpoint...');
-      const response = await apiService.get('/auth/me/firebase');
-      console.log('Auth verification successful:', response);
-      
-      // Update backend user data
-      setBackendUser(response.user || response);
+      // Update authentication status
       setIsAuthenticated(true);
       setLastAuthCheck(now);
       return true;
@@ -117,9 +121,6 @@ const AuthProvider = ({ children }) => {
         await updateProfile(userCredential.user, { displayName });
       }
       
-      // Register with backend
-      await registerWithBackend(userCredential.user);
-      
       return userCredential.user;
     } catch (err) {
       setError(err.message);
@@ -132,10 +133,6 @@ const AuthProvider = ({ children }) => {
     try {
       setError('');
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Register with backend
-      await registerWithBackend(userCredential.user);
-      
       return userCredential.user;
     } catch (err) {
       setError(err.message);
@@ -149,10 +146,6 @@ const AuthProvider = ({ children }) => {
       setError('');
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
-      
-      // Register with backend
-      await registerWithBackend(userCredential.user);
-      
       return userCredential.user;
     } catch (err) {
       setError(err.message);
@@ -200,18 +193,26 @@ const AuthProvider = ({ children }) => {
 
   // Subscribe to auth state changes when the component mounts
   useEffect(() => {
+    console.log('Auth state changed - last registered email:', lastRegisteredEmail.current);
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('Firebase auth state changed:', user?.email);
       setCurrentUser(user);
       
-      // Register with backend when user changes (e.g., on page refresh)
-      if (user) {
+      // Only register with backend if we don't have a backend user or if the user changed
+      if (user && (!lastRegisteredEmail.current || lastRegisteredEmail.current !== user.email)) {
+        console.log('Registering with backend - user:', user.email);
         try {
           await registerWithBackend(user);
         } catch (error) {
           console.error("Error syncing with backend:", error);
         }
-      } else {
+      } else if (!user) {
+        console.log('Clearing backend user - user logged out');
         setBackendUser(null);
+        lastRegisteredEmail.current = null;
+      } else {
+        console.log('Skipping backend registration - user already registered:', user.email);
       }
       
       setLoading(false);
@@ -219,7 +220,7 @@ const AuthProvider = ({ children }) => {
 
     // Cleanup subscription on unmount
     return unsubscribe;
-  }, []);
+  }, []); // Remove backendUser from dependencies
 
   // Context value to be provided
   const value = {

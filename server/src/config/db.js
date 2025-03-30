@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const { Sequelize } = require('sequelize');
 const dotenv = require('dotenv');
 const path = require('path');
@@ -57,7 +56,7 @@ try {
  * Connect to PostgreSQL database using Sequelize
  * @param {boolean} required - Whether the connection is required (if true, will exit on failure)
  */
-const connectPostgres = async (required = false) => {
+const connectDb = async (required = false) => {
   // If Sequelize is not initialized, return null
   if (!sequelize) {
     const message = 'PostgreSQL connection not configured. Check your environment variables.';
@@ -98,49 +97,7 @@ const connectPostgres = async (required = false) => {
   }
 };
 
-/**
- * Connect to MongoDB database
- * Note: This is kept for reference but not recommended for use
- * if you're focusing on PostgreSQL
- */
-const connectMongo = async (required = false) => {
-  if (!process.env.MONGODB_URI) {
-    const message = 'MongoDB connection not configured. Check your environment variables.';
-    if (required) {
-      console.error(message);
-      process.exit(1);
-    } else {
-      console.warn(message);
-      return null;
-    }
-  }
-
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      // These options are no longer needed in Mongoose 6+
-      // useNewUrlParser: true,
-      // useUnifiedTopology: true,
-      // useCreateIndex: true,
-      // useFindAndModify: false,
-    });
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (error) {
-    const message = `Error connecting to MongoDB: ${error.message}`;
-    if (required) {
-      console.error(message);
-      process.exit(1);
-    } else {
-      console.warn(message);
-      console.warn('Continuing without database connection. Some features may not work.');
-      return null;
-    }
-  }
-};
-
 module.exports = {
   sequelize,
-  connectPostgres,
-  connectMongo
+  connectDb
 }; 

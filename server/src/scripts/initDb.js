@@ -2,9 +2,10 @@ const dotenv = require('dotenv');
 const { sequelize } = require('../config/db');
 const { models, initializeSequelizeModels } = require('../models');
 const bcrypt = require('bcryptjs');
+const path = require('path');
 
-// Load environment variables
-dotenv.config();
+// Load environment variables with explicit path
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 /**
  * Initialize the database with sample data

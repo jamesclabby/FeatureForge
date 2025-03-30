@@ -1,81 +1,69 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
-const UserSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, 'Name is required'],
-      trim: true,
-      maxlength: [50, 'Name cannot be more than 50 characters']
+module.exports = (sequelize) => {
+  const User = sequelize.define('User', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+      field: 'id'
     },
     email: {
-      type: String,
-      required: [true, 'Email is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
-      trim: true,
-      lowercase: true,
-      match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        'Please add a valid email'
-      ]
+      validate: {
+        isEmail: true
+      },
+      field: 'email'
     },
-    password: {
-      type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
-      select: false // Don't return password in queries
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      field: 'name'
     },
     role: {
-      type: String,
-      enum: ['user', 'admin', 'product-manager'],
-      default: 'user'
+      type: DataTypes.ENUM('user', 'admin', 'product-manager'),
+      defaultValue: 'user',
+      field: 'role'
     },
-    department: {
-      type: String,
-      trim: true
-    },
-    avatar: {
-      type: String
-    },
-    resetPasswordToken: String,
-    resetPasswordExpire: Date,
-    firebaseUid: {
-      type: String,
-      unique: true,
-      sparse: true // Allow null values to be unique
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        len: { args: [6, 100], msg: 'Password must be at least 6 characters' }
+      },
+      field: 'password'
     }
-  },
-  {
-    timestamps: true
-  }
-);
-
-// Encrypt password using bcrypt
-UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
-    next();
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
-
-// Sign JWT and return
-UserSchema.methods.getSignedJwtToken = function() {
-  return jwt.sign(
-    { id: this._id, role: this.role },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN
+  }, {
+    tableName: 'users',
+    timestamps: true,
+    underscored: false,
+    freezeTableName: true,
+    defaultScope: {
+      attributes: { exclude: ['password'] }
+    },
+    scopes: {
+      withPassword: {
+        attributes: { include: ['password'] }
+      }
+    },
+    hooks: {
+      beforeCreate: async (user) => {
+        if (user.password) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed('password')) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      }
     }
-  );
-};
+  });
 
-// Match user entered password to hashed password in database
-UserSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
-
-module.exports = mongoose.model('User', UserSchema); 
+  return User;
+}; 

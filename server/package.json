@@ -7,9 +7,18 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "dev:db-required": "nodemon src/index.js --require-db",
-    "test": "jest",
+    "test": "NODE_ENV=test jest",
+    "test:setup": "node src/scripts/setupTestDb.js",
+    "test:with-setup": "npm run test:setup && npm test",
     "init-db": "node src/scripts/initDb.js",
-    "check-db": "node src/scripts/checkDbConnection.js"
+    "check-db": "node src/scripts/checkDbConnection.js",
+    "clear-db": "node src/scripts/clearDb.js",
+    "seed": "node src/scripts/seedDb.js",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
+    "db:seed:all": "sequelize-cli db:seed:all",
+    "db:seed:undo:all": "sequelize-cli db:seed:undo:all"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -21,10 +30,13 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
     "morgan": "^1.10.0",
+    "nodemailer": "^6.10.0",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.35.1",
-    "validator": "^13.11.0"
+    "swagger-ui-express": "^5.0.1",
+    "validator": "^13.11.0",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
@@ -35,4 +47,4 @@
   "engines": {
     "node": ">=18.0.0"
   }
-} 
+}

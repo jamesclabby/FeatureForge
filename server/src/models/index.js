@@ -1,63 +1,60 @@
-// MongoDB models (kept for reference but not recommended for use)
-// const MongoFeature = require('./Feature');
-// const MongoUser = require('./User');
+const { Sequelize } = require('sequelize');
+const config = require('../config/database');
 
-// Sequelize models
-const { Feature, setupAssociations: setupFeatureAssociations } = require('./FeatureSequelize');
-const { User, setupAssociations: setupUserAssociations } = require('./UserSequelize');
-const { Comment, setupAssociations: setupCommentAssociations } = require('./CommentSequelize');
-const { Vote, setupAssociations: setupVoteAssociations } = require('./VoteSequelize');
-const { Attachment, setupAssociations: setupAttachmentAssociations } = require('./AttachmentSequelize');
-const { Team, setupAssociations: setupTeamAssociations } = require('./TeamSequelize');
-const { sequelize } = require('../config/db');
+const env = process.env.NODE_ENV || 'development';
+const dbConfig = config[env];
 
-// Initialize Sequelize models and associations
-const initializeSequelizeModels = () => {
-  const models = {
-    Feature,
-    User,
-    Comment,
-    Vote,
-    Attachment,
-    Team
-  };
-
-  // Only setup associations if sequelize is initialized
-  if (sequelize) {
-    try {
-      // Setup associations
-      setupFeatureAssociations(models);
-      setupUserAssociations(models);
-      setupCommentAssociations(models);
-      setupVoteAssociations(models);
-      setupAttachmentAssociations(models);
-      setupTeamAssociations(models);
-      console.log('Model associations set up successfully');
-    } catch (error) {
-      console.warn('Error setting up model associations:', error.message);
+const sequelize = new Sequelize(
+  dbConfig.database,
+  dbConfig.username,
+  dbConfig.password,
+  {
+    host: dbConfig.host,
+    dialect: dbConfig.dialect,
+    logging: dbConfig.logging,
+    define: {
+      timestamps: true,
+      underscored: false
     }
-  } else {
-    console.warn('Sequelize not initialized. Model associations will not be set up.');
   }
+);
 
-  return models;
-};
+const Team = require('./Team')(sequelize);
+const User = require('./User')(sequelize);
+const TeamMember = require('./TeamMember')(sequelize);
+const Feature = require('./Feature')(sequelize);
 
-// Initialize models immediately
-const models = initializeSequelizeModels();
+// Define relationships
+Team.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
+User.hasMany(Team, { foreignKey: 'createdBy' });
+
+Team.belongsToMany(User, { 
+  through: TeamMember,
+  foreignKey: 'teamId',
+  otherKey: 'userId',
+  as: 'members',
+  onDelete: 'CASCADE'
+});
+User.belongsToMany(Team, { 
+  through: TeamMember,
+  foreignKey: 'userId',
+  otherKey: 'teamId',
+  as: 'teams'
+});
+
+Feature.belongsTo(Team, { foreignKey: 'teamId' });
+Team.hasMany(Feature, { 
+  foreignKey: 'teamId',
+  onDelete: 'CASCADE'
+});
+
+Feature.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
+User.hasMany(Feature, { foreignKey: 'createdBy' });
 
 module.exports = {
-  // Sequelize models
-  Feature,
-  User,
-  Comment,
-  Vote,
-  Attachment,
+  sequelize,
   Team,
-  
-  // All models in a single object
-  models,
-  
-  // Initialization function (for reference)
-  initializeSequelizeModels
+  User,
+  TeamMember,
+  Feature
 }; 

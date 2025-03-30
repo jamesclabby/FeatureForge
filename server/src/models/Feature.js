@@ -1,105 +1,111 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 
-const FeatureSchema = new mongoose.Schema(
-  {
+module.exports = (sequelize) => {
+  const Feature = sequelize.define('Feature', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
+    },
     title: {
-      type: String,
-      required: [true, 'Feature title is required'],
-      trim: true,
-      maxlength: [100, 'Title cannot be more than 100 characters']
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [1, 200]
+      }
     },
     description: {
-      type: String,
-      required: [true, 'Feature description is required'],
-      trim: true
+      type: DataTypes.TEXT,
+      allowNull: true,
+      validate: {
+        len: [0, 2000]
+      }
     },
     status: {
-      type: String,
-      enum: ['requested', 'planned', 'in-progress', 'completed', 'rejected'],
-      default: 'requested'
+      type: DataTypes.ENUM('backlog', 'in_progress', 'review', 'done'),
+      defaultValue: 'backlog',
+      allowNull: false
     },
     priority: {
-      type: Number,
-      min: 1,
-      max: 10,
-      default: 5
+      type: DataTypes.ENUM('low', 'medium', 'high', 'urgent'),
+      defaultValue: 'medium',
+      allowNull: false
     },
-    impact: {
-      type: Number,
-      min: 1,
-      max: 10,
-      default: 5
+    teamId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'teams',
+        key: 'id'
+      }
     },
-    effort: {
-      type: Number,
-      min: 1,
-      max: 10,
-      default: 5
+    createdBy: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
     },
-    category: {
-      type: String,
-      enum: ['ui', 'performance', 'functionality', 'security', 'other'],
-      default: 'other'
+    createdByEmail: {
+      type: DataTypes.STRING,
+      allowNull: false
     },
-    requestedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+    estimatedEffort: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: 0
+      }
+    },
+    dueDate: {
+      type: DataTypes.DATE,
+      allowNull: true
     },
     assignedTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    votes: {
-      type: Number,
-      default: 0
-    },
-    voters: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
       }
-    ],
-    targetRelease: {
-      type: String,
-      trim: true
     },
-    attachments: [
+    tags: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
+    },
+    attachments: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
+    },
+    comments: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: []
+    }
+  }, {
+    tableName: 'features',
+    timestamps: true,
+    underscored: false,
+    freezeTableName: true,
+    indexes: [
       {
-        name: String,
-        url: String,
-        type: String
-      }
-    ],
-    comments: [
+        fields: ['teamId']
+      },
       {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User'
-        },
-        text: {
-          type: String,
-          required: true
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now
-        }
+        fields: ['status']
+      },
+      {
+        fields: ['priority']
+      },
+      {
+        fields: ['dueDate']
       }
     ]
-  },
-  {
-    timestamps: true
-  }
-);
+  });
 
-// Calculate a score based on priority, impact, and effort
-FeatureSchema.virtual('score').get(function() {
-  return (this.priority * 0.4) + (this.impact * 0.4) - (this.effort * 0.2);
-});
-
-// Ensure virtuals are included when converting to JSON
-FeatureSchema.set('toJSON', { virtuals: true });
-FeatureSchema.set('toObject', { virtuals: true });
-
-module.exports = mongoose.model('Feature', FeatureSchema); 
+  return Feature;
+}; 

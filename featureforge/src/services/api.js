@@ -3,7 +3,7 @@ import { auth } from './firebase';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -59,6 +59,7 @@ api.interceptors.request.use(
       const user = authUtils.getCurrentUser();
       
       if (user) {
+        console.log('Current user found:', user.email);
         try {
           // Force refresh the token
           const token = await authUtils.getIdToken(true);
@@ -66,7 +67,7 @@ api.interceptors.request.use(
           if (token) {
             // Add token to request headers
             config.headers.Authorization = `Bearer ${token}`;
-            console.log(`Request to ${config.url} with auth token`);
+            console.log(`Request to ${config.url} with auth token (first 20 chars): ${token.substring(0, 20)}...`);
           } else {
             console.warn(`Request to ${config.url} - token is null even though user is logged in`);
           }
@@ -75,7 +76,7 @@ api.interceptors.request.use(
           // Continue with request without token
         }
       } else {
-        console.warn(`Request to ${config.url} without authentication`);
+        console.warn(`Request to ${config.url} without authentication - no current user found`);
       }
     } catch (error) {
       console.error('Error in request interceptor:', error);
@@ -85,6 +86,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -172,7 +174,7 @@ const apiService = {
   debugAuth: async () => {
     try {
       console.group("🔍 Authentication Debug Information");
-      console.log("API Base URL:", process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+      console.log("API Base URL:", process.env.REACT_APP_API_URL || 'http://localhost:5001/api');
       
       // Check if user is logged in
       const user = authUtils.getCurrentUser();

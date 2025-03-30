@@ -1,0 +1,527 @@
+openapi: 3.0.0
+info:
+  title: FeatureForge API
+  version: 1.0.0
+  description: API documentation for FeatureForge - A feature management system
+  contact:
+    name: FeatureForge Team
+    email: support@featureforge.com
+
+servers:
+  - url: /api
+    description: API base URL
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "Error message"
+
+    Team:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        createdBy:
+          type: string
+          format: uuid
+        createdByEmail:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TeamMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        teamId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [admin, product-owner, user]
+        joinedAt:
+          type: string
+          format: date-time
+
+    Feature:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [backlog, in_progress, review, done]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        estimatedEffort:
+          type: integer
+        dueDate:
+          type: string
+          format: date-time
+        assignedTo:
+          type: string
+          format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+        attachments:
+          type: array
+          items:
+            type: object
+        comments:
+          type: array
+          items:
+            type: object
+        teamId:
+          type: string
+          format: uuid
+        createdBy:
+          type: string
+          format: uuid
+        createdByEmail:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+paths:
+  /teams:
+    post:
+      summary: Create a new team
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Team created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Team'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: Get user's teams
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of user's teams
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Team'
+
+  /teams/{teamId}:
+    parameters:
+      - name: teamId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      summary: Update team details
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Team updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Team'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete a team
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Team deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /teams/{teamId}/members:
+    parameters:
+      - name: teamId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get team members
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of team members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TeamMember'
+
+    post:
+      summary: Add new team member
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  enum: [admin, product-owner, user]
+      responses:
+        '201':
+          description: Member added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TeamMember'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /teams/{teamId}/features:
+    parameters:
+      - name: teamId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get team features
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of team features
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Feature'
+
+    post:
+      summary: Create feature for team
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                priority:
+                  type: string
+                  enum: [low, medium, high, urgent]
+                status:
+                  type: string
+                  enum: [backlog, in_progress, review, done]
+                estimatedEffort:
+                  type: integer
+                dueDate:
+                  type: string
+                  format: date-time
+                assignedTo:
+                  type: string
+                  format: uuid
+                tags:
+                  type: array
+                  items:
+                    type: string
+                attachments:
+                  type: array
+                  items:
+                    type: object
+                comments:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '201':
+          description: Feature created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Feature'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /teams/{teamId}/features/{featureId}:
+    parameters:
+      - name: teamId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: featureId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      summary: Update feature
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [backlog, in_progress, review, done]
+                priority:
+                  type: string
+                  enum: [low, medium, high, urgent]
+      responses:
+        '200':
+          description: Feature updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Feature'
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Feature not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete feature
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Feature deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Feature not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
