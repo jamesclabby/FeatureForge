@@ -103,7 +103,7 @@ exports.firebaseAuth = async (req, res) => {
     const firebaseUser = await verifyFirebaseToken(idToken);
 
     // Find or create user
-    let user = await User.findOne({ where: { firebase_uid: firebaseUser.uid } });
+    let user = await User.findOne({ where: { firebaseUid: firebaseUser.uid } });
 
     if (!user) {
       // If not found by Firebase UID, check by email
@@ -111,7 +111,7 @@ exports.firebaseAuth = async (req, res) => {
 
       if (user) {
         // If found by email, update Firebase UID
-        user.firebase_uid = firebaseUser.uid;
+        user.firebaseUid = firebaseUser.uid;
         await user.save();
       } else {
         // Create new user
@@ -119,7 +119,7 @@ exports.firebaseAuth = async (req, res) => {
           name: firebaseUser.name || firebaseUser.email.split('@')[0],
           email: firebaseUser.email,
           password: Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8),
-          firebase_uid: firebaseUser.uid,
+          firebaseUid: firebaseUser.uid,
           avatar: firebaseUser.picture || null
         });
       }
@@ -247,25 +247,27 @@ exports.updatePassword = async (req, res) => {
  * Get token from model, create cookie and send response
  */
 const sendTokenResponse = (user, statusCode, res) => {
-  // Create token
   const token = user.getSignedJwtToken();
-
   const options = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
-    httpOnly: true
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
   };
-
-  if (process.env.NODE_ENV === 'production') {
-    options.secure = true;
-  }
 
   res
     .status(statusCode)
     .cookie('token', token, options)
     .json({
       success: true,
-      token
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      }
     });
 }; 

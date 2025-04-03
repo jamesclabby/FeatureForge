@@ -14,6 +14,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 // Import routes
 const featureRoutes = require('../routes/features');
 const authRoutes = require('../routes/auth');
+const teamRoutes = require('../routes/teamRoutes');
 
 /**
  * Start the server with database connection
@@ -99,6 +100,7 @@ const startServer = async (options = {}) => {
         },
         endpoints: {
           auth: '/api/auth',
+          teams: '/api/teams',
           features: '/api/features'
         },
         documentation: 'See README.md for API documentation'
@@ -116,6 +118,7 @@ const startServer = async (options = {}) => {
       next();
     };
     
+    app.use('/api/teams', dbCheckMiddleware, teamRoutes);
     app.use('/api/features', dbCheckMiddleware, featureRoutes);
     app.use('/api/auth', authRoutes);
     

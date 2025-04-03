@@ -41,6 +41,9 @@ pids/
 .env.test.local
 .env.production.local
 
+# Database backups
+database_backups/
+
 # Misc
 .DS_Store
 *.pem 

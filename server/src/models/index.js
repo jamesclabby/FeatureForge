@@ -1,24 +1,4 @@
-const { Sequelize } = require('sequelize');
-const config = require('../config/database');
-
-const env = process.env.NODE_ENV || 'development';
-const dbConfig = config[env];
-
-const sequelize = new Sequelize(
-  dbConfig.database,
-  dbConfig.username,
-  dbConfig.password,
-  {
-    host: dbConfig.host,
-    dialect: dbConfig.dialect,
-    logging: dbConfig.logging,
-    define: {
-      timestamps: true,
-      underscored: false
-    }
-  }
-);
-
+const { sequelize } = require('../config/db');
 const Team = require('./Team')(sequelize);
 const User = require('./User')(sequelize);
 const TeamMember = require('./TeamMember')(sequelize);

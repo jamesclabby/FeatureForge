@@ -27,7 +27,7 @@ const verifyFirebaseToken = async (idToken) => {
 const findOrCreateUserFromFirebase = async (firebaseUser) => {
   try {
     // Check if user exists by Firebase UID
-    let user = await User.findOne({ where: { firebase_uid: firebaseUser.uid } });
+    let user = await User.findOne({ where: { firebaseUid: firebaseUser.uid } });
 
     if (!user) {
       // If not found by Firebase UID, check by email
@@ -35,7 +35,7 @@ const findOrCreateUserFromFirebase = async (firebaseUser) => {
 
       if (user) {
         // If found by email, update Firebase UID
-        user.firebase_uid = firebaseUser.uid;
+        user.firebaseUid = firebaseUser.uid;
         await user.save();
       } else {
         // Create new user
@@ -43,7 +43,7 @@ const findOrCreateUserFromFirebase = async (firebaseUser) => {
           name: firebaseUser.name || firebaseUser.email.split('@')[0],
           email: firebaseUser.email,
           password: Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8),
-          firebase_uid: firebaseUser.uid,
+          firebaseUid: firebaseUser.uid,
           avatar: firebaseUser.picture || null
         });
       }

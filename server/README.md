@@ -98,6 +98,18 @@ Three authentication middleware options are available:
 - `PUT /api/features/:id/vote` - Vote for a feature
 - `POST /api/features/:id/comments` - Add a comment to a feature
 
+### Teams
+
+- `GET /api/teams` - Get all teams
+- `GET /api/teams/:id` - Get a specific team
+- `POST /api/teams` - Create a new team
+- `PUT /api/teams/:id` - Update a team
+- `DELETE /api/teams/:id` - Delete a team
+- `POST /api/teams/:id/members` - Add a member to a team
+- `DELETE /api/teams/:id/members/:userId` - Remove a member from a team
+- `GET /api/teams/:id/members` - Get all members of a team
+- `PUT /api/teams/:id/members/:userId/role` - Update a member's role in a team
+
 ## Project Structure
 
 ```

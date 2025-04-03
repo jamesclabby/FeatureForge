@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 module.exports = (sequelize) => {
   const User = sequelize.define('User', {
@@ -35,6 +36,12 @@ module.exports = (sequelize) => {
         len: { args: [6, 100], msg: 'Password must be at least 6 characters' }
       },
       field: 'password'
+    },
+    firebaseUid: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+      field: 'firebaseUid'
     }
   }, {
     tableName: 'users',
@@ -64,6 +71,23 @@ module.exports = (sequelize) => {
       }
     }
   });
+
+  // Instance methods
+  User.prototype.matchPassword = async function(enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+  };
+
+  User.prototype.getSignedJwtToken = function() {
+    return jwt.sign(
+      { 
+        id: this.id,
+        email: this.email,
+        role: this.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+  };
 
   return User;
 }; 

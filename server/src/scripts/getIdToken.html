@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Get Firebase ID Token</title>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <h2>Firebase Token Exchange</h2>
+  <pre id="output"></pre>
+
+  <script>
+    // Initialize Firebase with the correct configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFIfleHjFn-iMbG9G6A4qzHVJrtdSE05I",
+      authDomain: "featureforge-97936.firebaseapp.com",
+      projectId: "featureforge-97936",
+      storageBucket: "featureforge-97936.firebasestorage.app",
+      messagingSenderId: "444032111988",
+      appId: "G-CDR1KDY7R1"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Sign in with email and password
+    firebase.auth().signInWithEmailAndPassword('jagov41614@oronny.com', 'password123')
+      .then((userCredential) => {
+        return userCredential.user.getIdToken();
+      })
+      .then((idToken) => {
+        document.getElementById('output').textContent = 'ID Token: ' + idToken;
+        console.log('ID Token:', idToken);
+      })
+      .catch((error) => {
+        document.getElementById('output').textContent = 'Error: ' + error.message;
+        console.error('Error:', error);
+      });
+  </script>
+</body>
+</html> 
