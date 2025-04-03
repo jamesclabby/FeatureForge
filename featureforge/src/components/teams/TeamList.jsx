@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import teamService from '../../services/teamService';
 import { useToast } from '../ui/toast';
+import TeamForm from './TeamForm';
 
 const TeamList = () => {
   const [teams, setTeams] = useState([]);
@@ -42,6 +43,11 @@ const TeamList = () => {
 
   const handleTeamClick = (teamId) => {
     navigate(`/teams/${teamId}`);
+  };
+
+  const handleFormSubmit = () => {
+    setIsCreateDialogOpen(false);
+    fetchTeams();
   };
 
   if (loading) {
@@ -107,7 +113,10 @@ const TeamList = () => {
           <DialogHeader>
             <DialogTitle>Create New Team</DialogTitle>
           </DialogHeader>
-          {/* TeamForm component will be added here */}
+          <TeamForm
+            onSubmit={handleFormSubmit}
+            onCancel={() => setIsCreateDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>

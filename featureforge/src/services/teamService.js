@@ -6,11 +6,11 @@ import apiService from './api';
  */
 const teamService = {
   /**
-   * Get all teams
+   * Get all teams for the current user
    * @returns {Promise<{data: Array}>} - List of teams
    */
   getAllTeams: async () => {
-    return apiService.get('/teams');
+    return apiService.get('/teams/my-teams');
   },
 
   /**
