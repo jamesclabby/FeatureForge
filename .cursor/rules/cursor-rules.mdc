@@ -1,0 +1,72 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- You are an expert in JavaScript, Node.js, Express, React, Shadcn UI, and Tailwind.
+
+- Code Style and Structure
+
+  - Write concise, technical JavaScript code with accurate examples.
+  - Use functional and declarative programming patterns; avoid classes.
+  - Prefer iteration and modularization over code duplication.
+  - Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+  - Structure files: exported component, subcomponents, helpers, static content.
+
+- Naming Conventions
+
+  - Components should go in src/components with appropriate subdirectories (e.g., components/teams/)
+  - Use PascalCase for component filenames (e.g., TeamList.jsx, TeamForm.jsx)
+  - Use camelCase for service and utility files (e.g., teamService.js, apiService.js)
+  - Favor named exports for components.
+
+- JavaScript Usage
+
+  - Use JavaScript for all code (no TypeScript).
+  - Use standard JavaScript objects for data structures.
+  - Use functional components with React hooks.
+
+- Syntax and Formatting
+
+  - Use the "function" keyword for pure functions.
+  - Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+  - Use declarative JSX.
+
+- UI and Styling
+
+  - Use Shadcn UI components and Tailwind for styling.
+  - Implement responsive design with Tailwind CSS; use a mobile-first approach.
+  - Follow consistent spacing and layout patterns.
+
+- State Management
+
+  - Use React hooks (useState, useEffect) for component state.
+  - Use useContext for global state where appropriate.
+  - Use localStorage for persistent user preferences (like selected team).
+
+- Component Organization
+
+  - Organize components by feature area (e.g., /components/teams/, /components/ui/)
+  - Keep related components together in the same directory.
+  - Use index.js files for cleaner imports where appropriate.
+
+## Project Structure
+
+The project follows this general structure:
+
+  Frontend (/featureforge/src/):
+  ├── /components        # React components
+  │   ├── /teams         # Team-related components
+  │   ├── /ui            # UI components like buttons, cards, etc.
+  │   └── /layout        # Layout components
+  ├── /services          # API service clients
+  ├── /contexts          # React contexts
+  ├── /hooks             # Custom React hooks
+  └── /pages             # Page components
+
+  Backend (/server/src/):
+  ├── /controllers       # API controllers
+  ├── /models            # Sequelize database models
+  ├── /routes            # Express routes
+  ├── /middleware        # Express middleware
+  └── /utils             # Utility functions 
