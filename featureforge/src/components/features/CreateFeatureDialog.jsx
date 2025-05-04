@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import featureService from '../../services/featureService';
+import featureService, { FEATURE_PRIORITIES } from '../../services/featureService';
 import apiService from '../../services/api';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -18,14 +18,15 @@ import {
   DialogTrigger,
   DialogClose
 } from '../ui/dialog';
-import { toast } from '../ui/toast';
+import { useToast } from '../ui/toast';
 
 const CreateFeatureDialog = ({ onFeatureCreated }) => {
   const { currentUser, verifyAuth, refreshToken } = useAuth();
+  const toast = useToast();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    priority: 5,
+    priority: 'medium',
     impact: 5,
     effort: 5,
     category: 'functionality',
@@ -70,7 +71,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
     // Check if user is logged in
     if (!currentUser) {
       setError("You must be logged in to create a feature.");
-      toast({
+      toast.toast({
         title: "Authentication Error",
         description: "You must be logged in to create a feature.",
         variant: "destructive"
@@ -89,13 +90,19 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
         throw new Error("Authentication failed. Please log out and log in again.");
       }
       
+      // Get team ID from localStorage
+      const teamId = localStorage.getItem('selectedTeamId');
+      if (!teamId) {
+        throw new Error("No team selected. Please select a team before creating a feature.");
+      }
+      
       // Log the data being sent
       console.log("Authentication verified. Submitting feature data:", formData);
       
-      const response = await featureService.createFeature(formData);
+      const response = await featureService.createFeature(teamId, formData);
       console.log("Feature created successfully:", response);
       
-      toast({
+      toast.toast({
         title: "Success!",
         description: "Feature request has been created.",
         variant: "default"
@@ -105,7 +112,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
       setFormData({
         title: '',
         description: '',
-        priority: 5,
+        priority: 'medium',
         impact: 5,
         effort: 5,
         category: 'functionality',
@@ -132,7 +139,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
       const errorMessage = error.message || "Failed to create feature. Please try again.";
       setError(errorMessage);
       
-      toast({
+      toast.toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive"
@@ -144,7 +151,15 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
 
   // Calculate the feature score based on priority, impact, and effort
   const calculateScore = () => {
-    return ((formData.priority * 0.4) + (formData.impact * 0.4) - (formData.effort * 0.2)).toFixed(1);
+    // Map priority string to numeric value for calculation
+    const priorityValue = {
+      'low': 3,
+      'medium': 5,
+      'high': 8,
+      'critical': 10
+    }[formData.priority] || 5;
+    
+    return ((priorityValue * 0.4) + (formData.impact * 0.4) - (formData.effort * 0.2)).toFixed(1);
   };
 
   return (
@@ -236,31 +251,37 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label htmlFor="priority">Priority ({formData.priority})</Label>
-                <span className="text-xs text-secondary-500">Higher is more important</span>
+                <Label htmlFor="priority">Priority</Label>
               </div>
-              <Slider
-                id="priority"
-                value={[formData.priority]}
-                min={1}
-                max={10}
-                step={1}
-                onValueChange={(value) => handleSliderChange('priority', value)}
+              <Select
+                value={formData.priority}
+                onValueChange={(value) => handleSelectChange('priority', value)}
                 disabled={loading}
-              />
+              >
+                <SelectTrigger id="priority">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FEATURE_PRIORITIES.map(priority => (
+                    <SelectItem key={priority.value} value={priority.value}>
+                      {priority.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="impact">Impact ({formData.impact})</Label>
-                <span className="text-xs text-secondary-500">Higher is more impactful</span>
+                <span className="text-xs text-secondary-500">Higher means more impact</span>
               </div>
               <Slider
                 id="impact"
-                value={[formData.impact]}
                 min={1}
                 max={10}
                 step={1}
+                value={[formData.impact]}
                 onValueChange={(value) => handleSliderChange('impact', value)}
                 disabled={loading}
               />
@@ -269,28 +290,28 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="effort">Effort ({formData.effort})</Label>
-                <span className="text-xs text-secondary-500">Higher requires more effort</span>
+                <span className="text-xs text-secondary-500">Higher means more effort</span>
               </div>
               <Slider
                 id="effort"
-                value={[formData.effort]}
                 min={1}
                 max={10}
                 step={1}
+                value={[formData.effort]}
                 onValueChange={(value) => handleSliderChange('effort', value)}
                 disabled={loading}
               />
             </div>
-          </div>
-          
-          <div className="bg-secondary-50 p-4 rounded-md">
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Calculated Score:</span>
-              <span className="text-lg font-bold">{calculateScore()}</span>
+
+            <div className="p-3 bg-secondary-50 rounded-md">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Feature Score:</span>
+                <span className="text-lg font-semibold">{calculateScore()}</span>
+              </div>
+              <p className="text-xs text-secondary-500 mt-1">
+                Score is calculated based on priority, impact, and required effort
+              </p>
             </div>
-            <p className="text-xs text-secondary-500 mt-1">
-              Score = (Priority × 0.4) + (Impact × 0.4) - (Effort × 0.2)
-            </p>
           </div>
           
           <DialogFooter className="pt-4">

@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card';
 import { useToast } from '../components/ui/toast';
 import teamService from '../services/teamService';
+import featureService from '../services/featureService';
 import CreateFeatureDialog from '../components/features/CreateFeatureDialog';
 
 const Dashboard = () => {
@@ -37,11 +38,7 @@ const Dashboard = () => {
     const teamId = getTeamId();
     if (teamId) {
       fetchTeamDetails(teamId);
-      // Here we would also fetch feature statistics for this team
-      // For now using placeholder data
-      setFeatureCount(12);
-      setInProgressCount(5);
-      setCompletedCount(3);
+      fetchFeatureStats(teamId);
     }
   }, []);
 
@@ -76,6 +73,23 @@ const Dashboard = () => {
       }, 2000);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFeatureStats = async (teamId) => {
+    try {
+      const response = await featureService.getFeatureStats(teamId);
+      const stats = response.data;
+      
+      setFeatureCount(stats.total);
+      setInProgressCount(stats.byStatus.inProgress);
+      setCompletedCount(stats.byStatus.completed);
+    } catch (err) {
+      console.error('Error fetching feature statistics:', err);
+      // Fallback to default values if stats can't be fetched
+      setFeatureCount(0);
+      setInProgressCount(0);
+      setCompletedCount(0);
     }
   };
 
