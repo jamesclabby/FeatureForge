@@ -12,7 +12,7 @@ const TeamForm = ({ team, onSubmit, onCancel }) => {
     description: ''
   });
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  const toast = useToast();
 
   useEffect(() => {
     if (team) {
@@ -30,14 +30,14 @@ const TeamForm = ({ team, onSubmit, onCancel }) => {
     try {
       if (team) {
         await teamService.updateTeam(team.id, formData);
-        toast({
+        toast.toast({
           title: 'Success',
           description: 'Team updated successfully',
           variant: 'default'
         });
       } else {
         await teamService.createTeam(formData);
-        toast({
+        toast.toast({
           title: 'Success',
           description: 'Team created successfully',
           variant: 'default'
@@ -45,7 +45,7 @@ const TeamForm = ({ team, onSubmit, onCancel }) => {
       }
       onSubmit();
     } catch (error) {
-      toast({
+      toast.toast({
         title: 'Error',
         description: error.message || 'Failed to save team',
         variant: 'destructive'

@@ -10,7 +10,7 @@ const TeamSelector = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const toast = useToast();
 
   useEffect(() => {
     fetchTeams();
@@ -20,11 +20,19 @@ const TeamSelector = () => {
     try {
       setLoading(true);
       const response = await teamService.getAllTeams();
+      console.log('Teams fetched:', response.data);
       setTeams(response.data);
       setError(null);
+      
+      // If we have teams and there's only one, auto-select it
+      if (response.data && response.data.length === 1) {
+        console.log('Auto-selecting the only team:', response.data[0].id);
+        handleTeamSelect(response.data[0].id);
+      }
     } catch (err) {
+      console.error('Error fetching teams:', err);
       setError('Failed to fetch teams');
-      toast({
+      toast.toast({
         title: 'Error',
         description: 'Failed to fetch your teams. Please try again.',
         variant: 'destructive',
@@ -35,10 +43,11 @@ const TeamSelector = () => {
   };
 
   const handleTeamSelect = (teamId) => {
+    console.log('Selected team ID:', teamId);
     // Store the selected team ID in localStorage for persistence
     localStorage.setItem('selectedTeamId', teamId);
-    // Navigate to the dashboard for the selected team
-    navigate(`/dashboard?teamId=${teamId}`);
+    // Navigate to the dashboard without query parameters
+    navigate('/dashboard');
   };
 
   const handleCreateTeam = () => {

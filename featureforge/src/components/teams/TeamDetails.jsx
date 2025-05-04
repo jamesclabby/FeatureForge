@@ -13,7 +13,7 @@ import TeamSettings from './TeamSettings';
 const TeamDetails = () => {
   const { teamId } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const toast = useToast();
   const [team, setTeam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,7 +31,7 @@ const TeamDetails = () => {
       setError(null);
     } catch (err) {
       setError('Failed to fetch team details');
-      toast({
+      toast.toast({
         title: 'Error',
         description: 'Failed to fetch team details. Please try again.',
         variant: 'destructive',
@@ -45,14 +45,14 @@ const TeamDetails = () => {
     if (window.confirm('Are you sure you want to delete this team? This action cannot be undone.')) {
       try {
         await teamService.deleteTeam(teamId);
-        toast({
+        toast.toast({
           title: 'Success',
           description: 'Team deleted successfully',
           variant: 'default'
         });
         navigate('/teams');
       } catch (error) {
-        toast({
+        toast.toast({
           title: 'Error',
           description: error.message || 'Failed to delete team',
           variant: 'destructive'

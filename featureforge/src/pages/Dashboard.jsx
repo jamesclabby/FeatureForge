@@ -16,20 +16,20 @@ const Dashboard = () => {
   const [completedCount, setCompletedCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
+  const toast = useToast();
   const { currentUser } = useAuth();
   
-  // Get teamId from URL query params or localStorage
+  // Get teamId from localStorage
   const getTeamId = () => {
-    const params = new URLSearchParams(location.search);
-    const teamId = params.get('teamId') || localStorage.getItem('selectedTeamId');
+    const teamId = localStorage.getItem('selectedTeamId');
     
     if (!teamId) {
-      // If no team ID is found, redirect to team selector
-      navigate('/dashboard');
+      // If no team ID is found, the TeamRoute component will handle showing the team selector
+      console.log('No team ID found in localStorage');
       return null;
     }
     
+    console.log('Found team ID in localStorage:', teamId);
     return teamId;
   };
 
@@ -43,31 +43,50 @@ const Dashboard = () => {
       setInProgressCount(5);
       setCompletedCount(3);
     }
-  }, [location.search]);
+  }, []);
 
   const fetchTeamDetails = async (teamId) => {
     try {
       setLoading(true);
+      console.log('Fetching team details for teamId:', teamId);
       const response = await teamService.getTeamById(teamId);
+      console.log('Team details response:', response);
+      
+      if (!response || !response.data) {
+        throw new Error('Invalid response data');
+      }
+      
       setTeam(response.data);
       setError(null);
     } catch (err) {
+      console.error('Error fetching team details:', err);
       setError('Failed to fetch team details');
-      toast({
+      toast.toast({
         title: 'Error',
-        description: 'Failed to fetch team details. Please try again.',
+        description: 'Failed to fetch team details. The team may not exist or the server is not responding.',
         variant: 'destructive',
       });
+      
+      // If we can't fetch the team, clear the selected team to avoid getting stuck
+      localStorage.removeItem('selectedTeamId');
+      
+      // Wait a moment before redirecting
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSwitchTeam = () => {
+    console.log('Switch Team button clicked');
     // Clear the selected team from localStorage
     localStorage.removeItem('selectedTeamId');
-    // Navigate to team selector
-    navigate('/dashboard');
+    console.log('Cleared selectedTeamId from localStorage');
+    // Navigate directly to the team selector
+    console.log('Navigating to /selector');
+    navigate('/selector');
   };
 
   // Handle feature creation success
@@ -76,7 +95,7 @@ const Dashboard = () => {
     setFeatureCount(prevCount => prevCount + 1);
     
     // You could fetch updated counts from the API here
-    toast({
+    toast.toast({
       title: 'Success',
       description: 'Feature created successfully!',
       variant: 'default',
@@ -121,7 +140,15 @@ const Dashboard = () => {
                 {team.description}
               </p>
             </div>
-            <Button variant="outline" className="bg-white text-primary-800 hover:bg-primary-100 hover:text-primary-900" onClick={handleSwitchTeam}>
+            <Button 
+              variant="outline" 
+              className="bg-white text-primary-800 hover:bg-primary-100 hover:text-primary-900" 
+              onClick={() => {
+                console.log('Switch Team button clicked (inline)');
+                localStorage.removeItem('selectedTeamId');
+                navigate('/selector');
+              }}
+            >
               Switch Team
             </Button>
           </div>

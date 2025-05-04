@@ -13,7 +13,7 @@ const TeamMemberList = ({ teamId }) => {
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('member');
-  const { toast } = useToast();
+  const toast = useToast();
 
   useEffect(() => {
     fetchMembers();
@@ -27,7 +27,7 @@ const TeamMemberList = ({ teamId }) => {
       setError(null);
     } catch (err) {
       setError('Failed to fetch team members');
-      toast({
+      toast.toast({
         title: 'Error',
         description: 'Failed to fetch team members. Please try again.',
         variant: 'destructive',
@@ -43,7 +43,7 @@ const TeamMemberList = ({ teamId }) => {
         email: newMemberEmail,
         role: newMemberRole
       });
-      toast({
+      toast.toast({
         title: 'Success',
         description: 'Member added successfully',
         variant: 'default'
@@ -52,7 +52,7 @@ const TeamMemberList = ({ teamId }) => {
       setNewMemberEmail('');
       fetchMembers();
     } catch (error) {
-      toast({
+      toast.toast({
         title: 'Error',
         description: error.message || 'Failed to add member',
         variant: 'destructive'
@@ -63,14 +63,14 @@ const TeamMemberList = ({ teamId }) => {
   const handleRemoveMember = async (userId) => {
     try {
       await teamService.removeTeamMember(teamId, userId);
-      toast({
+      toast.toast({
         title: 'Success',
         description: 'Member removed successfully',
         variant: 'default'
       });
       fetchMembers();
     } catch (error) {
-      toast({
+      toast.toast({
         title: 'Error',
         description: error.message || 'Failed to remove member',
         variant: 'destructive'
@@ -81,14 +81,14 @@ const TeamMemberList = ({ teamId }) => {
   const handleUpdateRole = async (userId, newRole) => {
     try {
       await teamService.updateMemberRole(teamId, userId, newRole);
-      toast({
+      toast.toast({
         title: 'Success',
         description: 'Member role updated successfully',
         variant: 'default'
       });
       fetchMembers();
     } catch (error) {
-      toast({
+      toast.toast({
         title: 'Error',
         description: error.message || 'Failed to update member role',
         variant: 'destructive'

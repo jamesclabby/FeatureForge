@@ -19,7 +19,7 @@ const TeamSettings = ({ teamId }) => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
+  const toast = useToast();
 
   useEffect(() => {
     fetchSettings();
@@ -44,7 +44,7 @@ const TeamSettings = ({ teamId }) => {
         }
       });
     } catch (error) {
-      toast({
+      toast.toast({
         title: 'Error',
         description: 'Failed to load team settings',
         variant: 'destructive'
@@ -63,13 +63,13 @@ const TeamSettings = ({ teamId }) => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      toast({
+      toast.toast({
         title: 'Success',
         description: 'Team settings updated successfully',
         variant: 'default'
       });
     } catch (error) {
-      toast({
+      toast.toast({
         title: 'Error',
         description: 'Failed to update team settings',
         variant: 'destructive'

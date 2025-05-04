@@ -116,7 +116,7 @@ export const useToast = () => {
   if (context === undefined) {
     throw new Error("useToast must be used within a ToastContextProvider");
   }
-  return context.toast;
+  return context;
 };
 
 export { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose, ToastAction };

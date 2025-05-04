@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import TeamList from './components/teams/TeamList';
 import TeamDetails from './components/teams/TeamDetails';
+import TeamNew from './components/teams/TeamNew';
 import TeamSelector from './components/teams/TeamSelector';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -26,6 +27,8 @@ const TeamRoute = ({ children }) => {
       // Check if user has a selected team
       const selectedTeamId = localStorage.getItem('selectedTeamId');
       setHasSelectedTeam(!!selectedTeamId);
+      setCheckingTeam(false);
+    } else {
       setCheckingTeam(false);
     }
   }, [currentUser]);
@@ -70,8 +73,12 @@ function App() {
                   </TeamRoute>
                 } />
                 
+                {/* Direct access to team selector */}
+                <Route path="/selector" element={<TeamSelector />} />
+                
                 {/* Team management routes */}
                 <Route path="/teams" element={<TeamList />} />
+                <Route path="/teams/new" element={<TeamNew />} />
                 <Route path="/teams/:teamId" element={<TeamDetails />} />
               </Route>
               
