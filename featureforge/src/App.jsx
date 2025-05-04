@@ -15,6 +15,9 @@ import TeamSelector from './components/teams/TeamSelector';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
+import Features from './pages/Features';
+import FeatureView from './pages/FeatureView';
+import NewFeature from './pages/NewFeature';
 
 // Team route component that checks for team selection
 const TeamRoute = ({ children }) => {
@@ -80,6 +83,11 @@ function App() {
                 <Route path="/teams" element={<TeamList />} />
                 <Route path="/teams/new" element={<TeamNew />} />
                 <Route path="/teams/:teamId" element={<TeamDetails />} />
+                
+                {/* Feature management routes */}
+                <Route path="/features" element={<Features />} />
+                <Route path="/features/new" element={<NewFeature />} />
+                <Route path="/features/:featureId" element={<FeatureView />} />
               </Route>
               
               {/* Fallback route */}
