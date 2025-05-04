@@ -227,6 +227,7 @@ const AuthProvider = ({ children }) => {
     currentUser,
     backendUser,
     loading,
+    isAuthenticated,
     error,
     signup,
     login,

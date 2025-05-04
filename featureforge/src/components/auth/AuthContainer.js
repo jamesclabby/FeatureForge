@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Login, SignUp, ResetPassword } from './index';
+import Login from './Login';
+import SignUp from './SignUp';
+import ResetPassword from './ResetPassword';
 import { Card } from '../ui/card';
 
 // Enum for auth views
@@ -9,8 +11,10 @@ const AuthView = {
   RESET_PASSWORD: 'reset_password'
 };
 
-const AuthContainer = () => {
-  const [currentView, setCurrentView] = useState(AuthView.LOGIN);
+const AuthContainer = ({ initialTab }) => {
+  // Use initialTab if provided, otherwise default to login
+  const initialView = initialTab === 'register' ? AuthView.SIGNUP : AuthView.LOGIN;
+  const [currentView, setCurrentView] = useState(initialView);
 
   const switchToLogin = () => {
     setCurrentView(AuthView.LOGIN);
