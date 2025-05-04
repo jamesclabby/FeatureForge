@@ -28,13 +28,27 @@ const TeamRoute = ({ children }) => {
   useEffect(() => {
     if (currentUser) {
       // Check if user has a selected team
-      const selectedTeamId = localStorage.getItem('selectedTeamId');
-      setHasSelectedTeam(!!selectedTeamId);
+      try {
+        const selectedTeamId = localStorage.getItem('selectedTeamId');
+        console.log('TeamRoute: selectedTeamId from localStorage:', selectedTeamId);
+        setHasSelectedTeam(!!selectedTeamId);
+      } catch (error) {
+        console.error('TeamRoute: localStorage error -', error);
+        setHasSelectedTeam(false);
+      }
       setCheckingTeam(false);
     } else {
       setCheckingTeam(false);
     }
   }, [currentUser]);
+  
+  // For debugging
+  console.log('TeamRoute state:', { 
+    loading, 
+    checkingTeam, 
+    hasSelectedTeam, 
+    currentUser: !!currentUser 
+  });
   
   if (loading || checkingTeam) {
     return (
@@ -49,9 +63,11 @@ const TeamRoute = ({ children }) => {
   }
   
   if (!hasSelectedTeam) {
+    console.log('TeamRoute: No selected team, rendering TeamSelector');
     return <TeamSelector />;
   }
   
+  console.log('TeamRoute: Has selected team, rendering children');
   return children;
 };
 

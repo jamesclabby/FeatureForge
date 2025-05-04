@@ -26,20 +26,36 @@ const Dashboard = () => {
     
     if (!teamId) {
       // If no team ID is found, the TeamRoute component will handle showing the team selector
-      console.log('No team ID found in localStorage');
+      console.log('Dashboard: No team ID found in localStorage');
       return null;
     }
     
-    console.log('Found team ID in localStorage:', teamId);
+    console.log('Dashboard: Found team ID in localStorage:', teamId);
     return teamId;
   };
 
   useEffect(() => {
-    const teamId = getTeamId();
-    if (teamId) {
-      fetchTeamDetails(teamId);
-      fetchFeatureStats(teamId);
+    // On mount, verify localStorage access
+    try {
+      localStorage.setItem('test', 'test');
+      const testValue = localStorage.getItem('test');
+      localStorage.removeItem('test');
+      console.log('Dashboard: localStorage test -', testValue === 'test' ? 'success' : 'failed');
+    } catch (error) {
+      console.error('Dashboard: localStorage access error -', error);
     }
+    
+    // Delayed initialization to avoid race conditions
+    setTimeout(() => {
+      const teamId = getTeamId();
+      if (teamId) {
+        fetchTeamDetails(teamId);
+        fetchFeatureStats(teamId);
+      } else {
+        console.log('Dashboard: No teamId, redirecting to selector');
+        navigate('/selector');
+      }
+    }, 100);
   }, []);
 
   const fetchTeamDetails = async (teamId) => {
@@ -57,20 +73,15 @@ const Dashboard = () => {
       setError(null);
     } catch (err) {
       console.error('Error fetching team details:', err);
-      setError('Failed to fetch team details');
+      
+      // Don't immediately clear selectedTeamId and redirect
+      // Instead, show a retry option
+      setError('Failed to fetch team details. The team may not exist or the server is not responding.');
       toast.toast({
         title: 'Error',
-        description: 'Failed to fetch team details. The team may not exist or the server is not responding.',
+        description: 'Failed to fetch team details. Please try again or select a different team.',
         variant: 'destructive',
       });
-      
-      // If we can't fetch the team, clear the selected team to avoid getting stuck
-      localStorage.removeItem('selectedTeamId');
-      
-      // Wait a moment before redirecting
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
     } finally {
       setLoading(false);
     }
@@ -79,14 +90,17 @@ const Dashboard = () => {
   const fetchFeatureStats = async (teamId) => {
     try {
       const response = await featureService.getFeatureStats(teamId);
-      const stats = response.data;
       
-      setFeatureCount(stats.total);
-      setInProgressCount(stats.byStatus.inProgress);
-      setCompletedCount(stats.byStatus.completed);
+      // Safely access the stats properties with fallbacks
+      const stats = response?.data || {};
+      
+      setFeatureCount(stats.total || 0);
+      setInProgressCount(stats.byStatus?.inProgress || 0);
+      setCompletedCount(stats.byStatus?.completed || 0);
     } catch (err) {
       console.error('Error fetching feature statistics:', err);
-      // Fallback to default values if stats can't be fetched
+      // Don't let stats errors affect the main dashboard functionality
+      // Just set fallback values and continue
       setFeatureCount(0);
       setInProgressCount(0);
       setCompletedCount(0);
@@ -94,13 +108,18 @@ const Dashboard = () => {
   };
 
   const handleSwitchTeam = () => {
-    console.log('Switch Team button clicked');
+    console.log('Dashboard: Switch Team button clicked');
     // Clear the selected team from localStorage
     localStorage.removeItem('selectedTeamId');
-    console.log('Cleared selectedTeamId from localStorage');
+    console.log('Dashboard: Cleared selectedTeamId from localStorage');
     // Navigate directly to the team selector
-    console.log('Navigating to /selector');
+    console.log('Dashboard: Navigating to /selector');
+    
+    // Use both methods for navigation for reliability
     navigate('/selector');
+    setTimeout(() => {
+      window.location.href = '/selector';
+    }, 100);
   };
 
   // Handle feature creation success
@@ -126,16 +145,41 @@ const Dashboard = () => {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-red-500">{error}</p>
+      <div className="flex flex-col justify-center items-center h-64 gap-4 p-6 text-center">
+        <p className="text-red-500 mb-2">{error}</p>
+        <div className="flex gap-4">
+          <Button 
+            onClick={() => {
+              const teamId = getTeamId();
+              if (teamId) {
+                fetchTeamDetails(teamId);
+                fetchFeatureStats(teamId);
+              }
+            }}
+            variant="default"
+          >
+            Retry
+          </Button>
+          <Button
+            onClick={() => {
+              // Clear the selected team and go to selector
+              localStorage.removeItem('selectedTeamId');
+              navigate('/selector');
+            }}
+            variant="outline"
+          >
+            Select Different Team
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (!team) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex flex-col justify-center items-center h-64 space-y-4">
         <p className="text-secondary-500">Team not found</p>
+        <Button onClick={() => navigate('/selector')}>Select a Team</Button>
       </div>
     );
   }

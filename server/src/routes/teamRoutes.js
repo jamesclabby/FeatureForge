@@ -13,7 +13,9 @@ const {
   getTeamFeatures,
   createTeamFeature,
   updateTeamFeature,
-  deleteTeamFeature
+  deleteTeamFeature,
+  getTeamById,
+  getTeamFeatureStats
 } = require('../controllers/teamController');
 const { protectWithAny } = require('../middleware/auth');
 
@@ -24,6 +26,7 @@ router.get('/my-teams', protectWithAny, getMyTeams);
 
 // Team management routes
 router.post('/', protectWithAny, createTeam);
+router.get('/:teamId', protectWithAny, getTeamById);
 router.put('/:teamId', protectWithAny, updateTeam);
 router.delete('/:teamId', protectWithAny, deleteTeam);
 
@@ -38,6 +41,7 @@ router.get('/:teamId/settings', protectWithAny, getTeamSettings);
 
 // Team feature routes
 router.get('/:teamId/features', protectWithAny, getTeamFeatures);
+router.get('/:teamId/features/stats', protectWithAny, getTeamFeatureStats);
 router.post('/:teamId/features', protectWithAny, createTeamFeature);
 router.put('/:teamId/features/:featureId', protectWithAny, updateTeamFeature);
 router.delete('/:teamId/features/:featureId', protectWithAny, deleteTeamFeature);

@@ -92,8 +92,16 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
       
       // Get team ID from localStorage
       const teamId = localStorage.getItem('selectedTeamId');
+      console.log("Retrieved teamId from localStorage:", teamId);
+      
       if (!teamId) {
         throw new Error("No team selected. Please select a team before creating a feature.");
+      }
+      
+      // Validate teamId is a valid UUID
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) {
+        console.error("Invalid teamId format in localStorage:", teamId);
+        throw new Error(`Invalid team ID format. Please try selecting a team again.`);
       }
       
       // Log the data being sent

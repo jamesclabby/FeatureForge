@@ -1,7 +1,23 @@
 import apiService from './api';
 
 // Mock data for development
-const MOCK_ENABLED = true; // Set to false when the backend is ready
+const MOCK_ENABLED = false; // Set to false when the backend is ready
+
+// Add some debugging to handle errors with more context
+const handleApiError = (error, operation) => {
+  console.error(`API Error during ${operation}:`, error);
+  if (error.response) {
+    console.error('Error response:', {
+      status: error.response.status,
+      data: error.response.data
+    });
+  } else if (error.request) {
+    console.error('No response received:', error.request);
+  } else {
+    console.error('Error message:', error.message);
+  }
+  return Promise.reject(error);
+};
 
 const MOCK_FEATURES = [
   {
@@ -133,7 +149,8 @@ const featureService = {
       const features = MOCK_FEATURES.filter(feature => feature.teamId === teamId);
       return Promise.resolve({ data: features });
     }
-    return apiService.get(`/teams/${teamId}/features`);
+    return apiService.get(`/teams/${teamId}/features`)
+      .catch(error => handleApiError(error, `getTeamFeatures(${teamId})`));
   },
 
   /**
@@ -160,6 +177,17 @@ const featureService = {
    * @returns {Promise<{data: Object}>} - Created feature
    */
   createFeature: async (teamId, featureData) => {
+    // Validate teamId is a valid UUID
+    console.log("Creating feature with teamId:", teamId, "Type:", typeof teamId);
+    
+    if (!teamId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) {
+      console.error("Invalid teamId format:", teamId);
+      return Promise.reject({ 
+        message: `Invalid team ID format. Expected UUID, got: ${teamId}`,
+        teamId: teamId
+      });
+    }
+    
     if (MOCK_ENABLED) {
       console.log(`Using mock data for createFeature for team: ${teamId}`, featureData);
       const newFeature = {
@@ -174,7 +202,8 @@ const featureService = {
       MOCK_FEATURES.push(newFeature);
       return Promise.resolve({ data: newFeature });
     }
-    return apiService.post(`/teams/${teamId}/features`, featureData);
+    return apiService.post(`/teams/${teamId}/features`, featureData)
+      .catch(error => handleApiError(error, `createFeature(${teamId})`));
   },
 
   /**
@@ -198,7 +227,8 @@ const featureService = {
       MOCK_FEATURES[index] = updatedFeature;
       return Promise.resolve({ data: updatedFeature });
     }
-    return apiService.put(`/features/${id}`, featureData);
+    return apiService.put(`/features/${id}`, featureData)
+      .catch(error => handleApiError(error, `updateFeature(${id})`));
   },
 
   /**
@@ -234,7 +264,8 @@ const featureService = {
       MOCK_FEATURES[index].votes += 1;
       return Promise.resolve({ data: MOCK_FEATURES[index] });
     }
-    return apiService.post(`/features/${id}/vote`);
+    return apiService.post(`/features/${id}/vote`)
+      .catch(error => handleApiError(error, `voteForFeature(${id})`));
   },
 
   /**
@@ -294,7 +325,52 @@ const featureService = {
       
       return Promise.resolve({ data: stats });
     }
-    return apiService.get(`/teams/${teamId}/features/stats`);
+    
+    // Try first to get stats directly from dedicated endpoint
+    try {
+      return await apiService.get(`/teams/${teamId}/features/stats`)
+        .catch(error => {
+          console.warn(`Stats endpoint failed, falling back to calculating from features list: ${error.message}`);
+          throw error; // Rethrow to trigger the fallback
+        });
+    } catch (error) {
+      // Fallback: Calculate stats from the feature list if stats endpoint isn't available
+      console.log('Using fallback calculation for stats');
+      try {
+        const response = await apiService.get(`/teams/${teamId}/features`);
+        const features = response.data || [];
+        
+        // Calculate stats from features
+        const stats = {
+          total: features.length,
+          byStatus: {
+            planned: features.filter(f => f.status === 'planned').length,
+            inProgress: features.filter(f => f.status === 'in-progress').length,
+            inReview: features.filter(f => f.status === 'in-review').length,
+            completed: features.filter(f => f.status === 'completed').length,
+            cancelled: features.filter(f => f.status === 'cancelled').length
+          },
+          byPriority: {
+            low: features.filter(f => f.priority === 'low').length,
+            medium: features.filter(f => f.priority === 'medium').length,
+            high: features.filter(f => f.priority === 'high').length,
+            critical: features.filter(f => f.priority === 'critical').length
+          }
+        };
+        
+        return { data: stats };
+      } catch (finalError) {
+        // If even the fallback fails, return empty stats
+        console.error('Failed to calculate stats even with fallback:', finalError);
+        return { 
+          data: { 
+            total: 0, 
+            byStatus: { planned: 0, inProgress: 0, inReview: 0, completed: 0, cancelled: 0 },
+            byPriority: { low: 0, medium: 0, high: 0, critical: 0 }
+          } 
+        };
+      }
+    }
   }
 };
 

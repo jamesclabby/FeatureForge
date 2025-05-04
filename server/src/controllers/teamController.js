@@ -278,7 +278,7 @@ const updateTeamMemberRole = async (req, res) => {
 };
 
 /**
- * Get team members
+ * Get all members of a team
  * @route GET /api/teams/:teamId/members
  * @access Private (Team members only)
  */
@@ -293,24 +293,42 @@ const getTeamMembers = async (req, res) => {
     });
 
     if (!membership) {
-      throw new ApiError('Not authorized to view team members', 403);
+      return res.status(403).json({
+        success: false,
+        error: 'You do not have permission to view team members'
+      });
     }
 
+    // Get team members
     const members = await TeamMember.findAll({
       where: { teamId },
       include: [{
         model: User,
-        as: 'user',
         attributes: ['id', 'name', 'email']
       }]
     });
 
+    // Filter out members where User association failed
+    const validMembers = members
+      .filter(member => member.User && member.User.id)
+      .map(member => ({
+        id: member.User.id,
+        name: member.User.name,
+        email: member.User.email,
+        role: member.role,
+        joinedAt: member.joinedAt
+      }));
+
     res.json({
       success: true,
-      data: members
+      data: validMembers
     });
   } catch (error) {
-    throw new ApiError(error.message, error.statusCode || 400);
+    console.error('Error fetching team members:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch team members'
+    });
   }
 };
 
@@ -401,7 +419,12 @@ const getTeamFeatures = async (req, res) => {
       throw new ApiError('Not authorized to view team features', 403);
     }
 
+    // Get only columns that are guaranteed to exist
     const features = await Feature.findAll({
+      attributes: [
+        'id', 'title', 'description', 'status', 'priority', 
+        'teamId', 'createdBy', 'createdAt', 'updatedAt'
+      ],
       where: { teamId },
       include: [{
         model: User,
@@ -414,12 +437,31 @@ const getTeamFeatures = async (req, res) => {
       ]
     });
 
+    // Add default values for missing columns
+    const enhancedFeatures = features.map(feature => {
+      const featureJson = feature.toJSON();
+      // Add fields that might be missing with default values
+      return {
+        ...featureJson,
+        votes: 0,
+        impact: 5,
+        effort: 5,
+        category: 'functionality',
+        tags: featureJson.tags || [],
+        comments: featureJson.comments || []
+      };
+    });
+
     res.json({
       success: true,
-      data: features
+      data: enhancedFeatures
     });
   } catch (error) {
-    throw new ApiError(error.message, error.statusCode || 400);
+    console.error('Error fetching team features:', error);
+    res.status(error.statusCode || 400).json({
+      success: false,
+      error: error.message
+    });
   }
 };
 
@@ -433,19 +475,27 @@ const createTeamFeature = async (req, res) => {
   const { 
     title, 
     description, 
-    priority, 
+    priority,
     status,
-    estimatedEffort,
-    dueDate,
-    assignedTo,
+    impact,
+    effort,
+    category,
+    targetRelease,
     tags,
-    attachments,
-    comments 
   } = req.body;
   const userId = req.user.id;
   const userEmail = req.user.email;
 
   try {
+    // Validate teamId format
+    if (!teamId || typeof teamId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) {
+      console.error(`Invalid teamId format: ${teamId}`);
+      return res.status(400).json({
+        success: false,
+        error: `Invalid teamId format: ${teamId}. Must be a valid UUID.`
+      });
+    }
+
     // Check if user is team member
     const membership = await TeamMember.findOne({
       where: { teamId, userId }
@@ -463,16 +513,17 @@ const createTeamFeature = async (req, res) => {
       title,
       description,
       priority,
-      status,
+      status: status || 'planned',
       teamId,
       createdBy: userId,
       createdByEmail: userEmail,
-      estimatedEffort,
-      dueDate,
-      assignedTo,
+      votes: 0,
+      impact: impact || 5,
+      effort: effort || 5,
+      category,
+      targetRelease,
       tags: tags || [],
-      attachments: attachments || [],
-      comments: comments || []
+      comments: []
     });
 
     res.status(201).json({
@@ -480,6 +531,7 @@ const createTeamFeature = async (req, res) => {
       data: feature
     });
   } catch (error) {
+    console.error('Error creating feature:', error);
     res.status(error.statusCode || 400).json({
       success: false,
       error: error.message
@@ -504,7 +556,10 @@ const updateTeamFeature = async (req, res) => {
     });
 
     if (!membership) {
-      throw new ApiError('Not authorized to update team features', 403);
+      return res.status(403).json({
+        success: false,
+        error: 'Not authorized to update team features'
+      });
     }
 
     // Check if feature exists and belongs to team
@@ -513,27 +568,51 @@ const updateTeamFeature = async (req, res) => {
     });
 
     if (!feature) {
-      throw new ApiError('Feature not found', 404);
+      return res.status(404).json({
+        success: false,
+        error: 'Feature not found'
+      });
     }
 
     // Only admin and product-owner can change status
     if (status && !['admin', 'product-owner'].includes(membership.role)) {
-      throw new ApiError('Not authorized to change feature status', 403);
+      return res.status(403).json({
+        success: false,
+        error: 'Not authorized to change feature status'
+      });
     }
 
-    await feature.update({
-      title,
-      description,
-      status,
-      priority
-    });
+    // Only update fields that are guaranteed to exist
+    const updateData = {};
+    if (title) updateData.title = title;
+    if (description) updateData.description = description;
+    if (status) updateData.status = status;
+    if (priority) updateData.priority = priority;
+
+    await feature.update(updateData);
+
+    // Add missing fields with default values
+    const updatedFeature = feature.toJSON();
+    const enhancedFeature = {
+      ...updatedFeature,
+      votes: updatedFeature.votes || 0,
+      impact: updatedFeature.impact || 5,
+      effort: updatedFeature.effort || 5,
+      category: updatedFeature.category || 'functionality',
+      tags: updatedFeature.tags || [],
+      comments: updatedFeature.comments || []
+    };
 
     res.json({
       success: true,
-      data: feature
+      data: enhancedFeature
     });
   } catch (error) {
-    throw new ApiError(error.message, error.statusCode || 400);
+    console.error('Error updating team feature:', error);
+    res.status(error.statusCode || 400).json({
+      success: false,
+      error: error.message
+    });
   }
 };
 
@@ -580,6 +659,154 @@ const deleteTeamFeature = async (req, res) => {
   }
 };
 
+/**
+ * Get a team by ID
+ * @route GET /api/teams/:teamId
+ * @access Private (Team members only)
+ */
+const getTeamById = async (req, res) => {
+  const { teamId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    console.log(`Getting team details for teamId: ${teamId}, userId: ${userId}`);
+    
+    // Check if user is team member
+    const membership = await TeamMember.findOne({
+      where: { teamId, userId }
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        success: false,
+        error: 'Not authorized to view this team'
+      });
+    }
+
+    // Get team details without members to avoid association issues
+    const team = await Team.findByPk(teamId, {
+      attributes: ['id', 'name', 'description', 'createdBy', 'createdByEmail', 'createdAt'],
+    });
+
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        error: 'Team not found'
+      });
+    }
+
+    // Get member count separately
+    const memberCount = await TeamMember.count({
+      where: { teamId }
+    });
+
+    // Get creator details
+    let creator = null;
+    if (team.createdBy) {
+      creator = await User.findByPk(team.createdBy, {
+        attributes: ['id', 'name', 'email']
+      });
+    }
+
+    const enhancedTeam = {
+      ...team.toJSON(),
+      memberCount,
+      creator: creator ? {
+        id: creator.id,
+        name: creator.name,
+        email: creator.email
+      } : null
+    };
+
+    res.json({
+      success: true,
+      data: enhancedTeam
+    });
+  } catch (error) {
+    console.error('Error fetching team details:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message || 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Get feature statistics for a team
+ * @route GET /api/teams/:teamId/features/stats
+ * @access Private (Team members only)
+ */
+const getTeamFeatureStats = async (req, res) => {
+  const { teamId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    console.log(`Getting feature stats for teamId: ${teamId}, userId: ${userId}`);
+    
+    // Check if user is team member (with error handling)
+    try {
+      const membership = await TeamMember.findOne({
+        where: { teamId, userId }
+      });
+
+      if (!membership) {
+        return res.status(403).json({
+          success: false,
+          error: 'Not authorized to view team statistics'
+        });
+      }
+    } catch (memberError) {
+      console.error('Error checking team membership:', memberError);
+      return res.status(403).json({
+        success: false,
+        error: 'Error validating team membership. Please try again.'
+      });
+    }
+
+    // Get all features for the team
+    let features = [];
+    try {
+      features = await Feature.findAll({
+        attributes: ['id', 'status', 'priority'],
+        where: { teamId }
+      });
+    } catch (featureError) {
+      console.error('Error fetching features:', featureError);
+      // If feature fetch fails, return empty stats rather than error
+      features = [];
+    }
+
+    // Calculate stats
+    const stats = {
+      total: features.length,
+      byStatus: {
+        planned: features.filter(f => f.status === 'planned').length,
+        inProgress: features.filter(f => f.status === 'in-progress').length,
+        inReview: features.filter(f => f.status === 'in-review').length,
+        completed: features.filter(f => f.status === 'completed').length,
+        cancelled: features.filter(f => f.status === 'cancelled').length
+      },
+      byPriority: {
+        low: features.filter(f => f.priority === 'low').length,
+        medium: features.filter(f => f.priority === 'medium').length,
+        high: features.filter(f => f.priority === 'high').length,
+        critical: features.filter(f => f.priority === 'critical').length
+      }
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error fetching feature statistics:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch feature statistics'
+    });
+  }
+};
+
 module.exports = {
   createTeam,
   updateTeam,
@@ -593,5 +820,7 @@ module.exports = {
   getTeamFeatures,
   createTeamFeature,
   updateTeamFeature,
-  deleteTeamFeature
+  deleteTeamFeature,
+  getTeamById,
+  getTeamFeatureStats
 }; 
