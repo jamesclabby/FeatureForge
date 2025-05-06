@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import featureService, { FEATURE_PRIORITIES } from '../../services/featureService';
+import featureService, { FEATURE_PRIORITIES, FEATURE_STATUSES } from '../../services/featureService';
 import apiService from '../../services/api';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -27,6 +27,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
     title: '',
     description: '',
     priority: 'medium',
+    status: 'in_progress',
     impact: 5,
     effort: 5,
     category: 'functionality',
@@ -92,8 +93,16 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
       
       // Get team ID from localStorage
       const teamId = localStorage.getItem('selectedTeamId');
+      console.log("Retrieved teamId from localStorage:", teamId);
+      
       if (!teamId) {
         throw new Error("No team selected. Please select a team before creating a feature.");
+      }
+      
+      // Validate teamId is a valid UUID
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) {
+        console.error("Invalid teamId format in localStorage:", teamId);
+        throw new Error(`Invalid team ID format. Please try selecting a team again.`);
       }
       
       // Log the data being sent
@@ -113,6 +122,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
         title: '',
         description: '',
         priority: 'medium',
+        status: 'in_progress',
         impact: 5,
         effort: 5,
         category: 'functionality',
@@ -265,6 +275,28 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
                   {FEATURE_PRIORITIES.map(priority => (
                     <SelectItem key={priority.value} value={priority.value}>
                       {priority.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="status">Status</Label>
+              </div>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleSelectChange('status', value)}
+                disabled={loading}
+              >
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FEATURE_STATUSES.map(status => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

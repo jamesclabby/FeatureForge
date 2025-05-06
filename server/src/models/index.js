@@ -8,6 +8,7 @@ const Feature = require('./Feature')(sequelize);
 Team.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
 User.hasMany(Team, { foreignKey: 'createdBy' });
 
+// Many-to-many relationship between Team and User
 Team.belongsToMany(User, { 
   through: TeamMember,
   foreignKey: 'teamId',
@@ -22,6 +23,11 @@ User.belongsToMany(Team, {
   as: 'teams'
 });
 
+// Direct associations for TeamMember model
+TeamMember.belongsTo(User, { foreignKey: 'userId' });
+TeamMember.belongsTo(Team, { foreignKey: 'teamId' });
+
+// Feature relationships
 Feature.belongsTo(Team, { foreignKey: 'teamId' });
 Team.hasMany(Feature, { 
   foreignKey: 'teamId',

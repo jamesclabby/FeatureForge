@@ -1,32 +1,32 @@
 import apiService from './api';
 
 // Mock data for development
-const MOCK_ENABLED = true; // Set to false when the backend is ready
+const MOCK_ENABLED = false; // Set to false to use the backend instead of mock data
 
 const MOCK_TEAMS = [
   {
-    id: '1',
+    id: '123e4567-e89b-12d3-a456-426614174000',
     name: 'Engineering Team',
     description: 'Frontend and backend development team',
     memberCount: 8,
     createdAt: '2023-01-15T10:00:00.000Z'
   },
   {
-    id: '2',
+    id: '223e4567-e89b-12d3-a456-426614174001',
     name: 'Design Team',
     description: 'UI/UX design team',
     memberCount: 5,
     createdAt: '2023-02-20T09:30:00.000Z'
   },
   {
-    id: '3',
+    id: '323e4567-e89b-12d3-a456-426614174002',
     name: 'Product Team',
     description: 'Product management and strategy',
     memberCount: 4,
     createdAt: '2023-03-10T14:15:00.000Z'
   },
   {
-    id: '4',
+    id: '423e4567-e89b-12d3-a456-426614174003',
     name: 'Test Team 1',
     description: 'A test team created by the user',
     memberCount: 1,
@@ -35,17 +35,17 @@ const MOCK_TEAMS = [
 ];
 
 const MOCK_MEMBERS = {
-  '1': [
+  '123e4567-e89b-12d3-a456-426614174000': [
     { id: '101', userId: 'user1', name: 'John Doe', role: 'admin', joinedAt: '2023-01-15T10:00:00.000Z' },
     { id: '102', userId: 'user2', name: 'Jane Smith', role: 'member', joinedAt: '2023-01-16T11:30:00.000Z' }
   ],
-  '2': [
+  '223e4567-e89b-12d3-a456-426614174001': [
     { id: '201', userId: 'user3', name: 'Alice Johnson', role: 'admin', joinedAt: '2023-02-20T09:30:00.000Z' }
   ],
-  '3': [
+  '323e4567-e89b-12d3-a456-426614174002': [
     { id: '301', userId: 'user4', name: 'Bob Wilson', role: 'admin', joinedAt: '2023-03-10T14:15:00.000Z' }
   ],
-  '4': [
+  '423e4567-e89b-12d3-a456-426614174003': [
     { id: '401', userId: 'currentUser', name: 'Current User', role: 'admin', joinedAt: new Date().toISOString() }
   ]
 };
@@ -94,13 +94,31 @@ const teamService = {
   createTeam: async (teamData) => {
     if (MOCK_ENABLED) {
       console.log('Using mock data for createTeam', teamData);
+      
+      // Generate a UUID for the team
+      const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+      
       const newTeam = {
-        id: Date.now().toString(),
+        id: uuid,
         ...teamData,
         memberCount: 1,
         createdAt: new Date().toISOString()
       };
+      
       MOCK_TEAMS.push(newTeam);
+      
+      // Initialize empty members array
+      MOCK_MEMBERS[uuid] = [{
+        id: Date.now().toString(),
+        userId: 'currentUser',
+        name: 'Current User',
+        role: 'admin',
+        joinedAt: new Date().toISOString()
+      }];
+      
       return Promise.resolve({ data: newTeam });
     }
     return apiService.post('/teams', teamData);

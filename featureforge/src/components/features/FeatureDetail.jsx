@@ -12,8 +12,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
+  DialogClose
 } from '../ui/dialog';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '../ui/tooltip';
 import { useToast } from '../ui/toast';
 import featureService, { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -59,6 +66,13 @@ const FeatureDetail = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
+  
+  // Comment editing/deletion states
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [isEditCommentDialogOpen, setIsEditCommentDialogOpen] = useState(false);
+  const [isDeleteCommentDialogOpen, setIsDeleteCommentDialogOpen] = useState(false);
+  const [selectedCommentId, setSelectedCommentId] = useState(null);
   const navigate = useNavigate();
   const toast = useToast();
   const { currentUser } = useAuth();
@@ -69,10 +83,33 @@ const FeatureDetail = () => {
     }
   }, [featureId]);
 
+  // Debug current user
+  useEffect(() => {
+    if (currentUser) {
+      console.log('Current user:', {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName
+      });
+    } else {
+      console.log('No current user authenticated');
+    }
+  }, [currentUser]);
+
   const fetchFeature = async () => {
     try {
       setLoading(true);
       const response = await featureService.getFeatureById(featureId);
+      console.log('Feature data loaded:', response.data);
+      
+      // Check comments specifically 
+      if (response.data.comments) {
+        console.log('Comments loaded:', response.data.comments.length, 'comments found');
+        console.log('First comment (if any):', response.data.comments[0]);
+      } else {
+        console.log('No comments array found in feature data');
+      }
+      
       setFeature(response.data);
       setSelectedStatus(response.data.status);
       setError(null);
@@ -114,12 +151,31 @@ const FeatureDetail = () => {
 
     try {
       setSubmittingComment(true);
-      await featureService.addComment(featureId, comment);
+      console.log('Submitting comment:', comment);
       
-      // Refresh the feature data instead of manually updating the comments
-      await fetchFeature();
+      const response = await featureService.addComment(featureId, comment);
+      console.log('Comment added successfully, response:', response);
       
+      // Immediately update the UI with the new comment
+      const newComment = response.data;
+      
+      // Update the feature state with the new comment
+      setFeature(prevFeature => {
+        // Create a new comments array if it doesn't exist
+        const comments = Array.isArray(prevFeature.comments) ? [...prevFeature.comments] : [];
+        // Add the new comment to the array
+        comments.push(newComment);
+        
+        // Return the updated feature
+        return {
+          ...prevFeature,
+          comments
+        };
+      });
+      
+      // Clear the comment input
       setComment('');
+      
       toast.toast({
         title: 'Success',
         description: 'Comment added successfully!',
@@ -195,6 +251,92 @@ const FeatureDetail = () => {
       description: 'Feature updated successfully!',
       variant: 'default',
     });
+  };
+
+  const handleEditComment = async () => {
+    if (!editingCommentId || !editingCommentText.trim()) return;
+    
+    try {
+      const response = await featureService.editComment(featureId, editingCommentId, editingCommentText);
+      
+      // Update the feature data with the edited comment
+      setFeature(prevFeature => {
+        const updatedComments = prevFeature.comments.map(comment => 
+          comment.id === editingCommentId ? response.data : comment
+        );
+        
+        return {
+          ...prevFeature,
+          comments: updatedComments
+        };
+      });
+      
+      // Reset editing state
+      setEditingCommentId(null);
+      setEditingCommentText('');
+      setIsEditCommentDialogOpen(false);
+      
+      toast.toast({
+        title: 'Success',
+        description: 'Comment updated successfully!',
+        variant: 'default',
+      });
+    } catch (err) {
+      console.error('Error editing comment:', err);
+      toast.toast({
+        title: 'Error',
+        description: 'Failed to edit comment. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const handleDeleteComment = async () => {
+    if (!selectedCommentId) return;
+    
+    try {
+      await featureService.deleteComment(featureId, selectedCommentId);
+      
+      // Update the feature data by removing the deleted comment
+      setFeature(prevFeature => {
+        const updatedComments = prevFeature.comments.filter(
+          comment => comment.id !== selectedCommentId
+        );
+        
+        return {
+          ...prevFeature,
+          comments: updatedComments
+        };
+      });
+      
+      // Reset state
+      setSelectedCommentId(null);
+      setIsDeleteCommentDialogOpen(false);
+      
+      toast.toast({
+        title: 'Success',
+        description: 'Comment deleted successfully!',
+        variant: 'default',
+      });
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+      toast.toast({
+        title: 'Error',
+        description: 'Failed to delete comment. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const openEditCommentDialog = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentText(comment.text || comment.content || '');
+    setIsEditCommentDialogOpen(true);
+  };
+  
+  const openDeleteCommentDialog = (commentId) => {
+    setSelectedCommentId(commentId);
+    setIsDeleteCommentDialogOpen(true);
   };
 
   if (loading) {
@@ -432,17 +574,78 @@ const FeatureDetail = () => {
             </p>
           ) : (
             <div className="space-y-4">
-              {feature.comments.map(comment => (
-                <div key={comment.id} className="border border-secondary-200 rounded-md p-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="font-medium">{comment.userId}</span>
-                    <span className="text-xs text-secondary-500">
-                      {formatDate(comment.createdAt)}
-                    </span>
+              {feature.comments.map(comment => {
+                // Check if current user is the comment author
+                const isCommentAuthor = currentUser && (
+                  comment.userId === currentUser.uid || 
+                  comment.userEmail === currentUser.email
+                );
+                
+                return (
+                  <div key={comment.id} className="border border-secondary-200 rounded-md p-4 relative">
+                    <div className="flex justify-between mb-2">
+                      <span className="font-medium">
+                        {comment.userName || comment.userEmail || comment.userId || "Anonymous"}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {/* Only show edit and delete buttons for author */}
+                        {isCommentAuthor && (
+                          <>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={() => openEditCommentDialog(comment)}
+                                    className="text-secondary-500 hover:text-secondary-700"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil">
+                                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                      <path d="m15 5 4 4"/>
+                                    </svg>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit Comment</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={() => openDeleteCommentDialog(comment.id)}
+                                    className="text-secondary-500 hover:text-red-500"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2">
+                                      <path d="M3 6h18"/>
+                                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                      <line x1="10" x2="10" y1="11" y2="17"/>
+                                      <line x1="14" x2="14" y1="11" y2="17"/>
+                                    </svg>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Delete Comment</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </>
+                        )}
+                        
+                        <span className="text-xs text-secondary-500">
+                          {formatDate(comment.createdAt)}
+                          {comment.lastEdited && (
+                            <span className="ml-1 italic">(edited)</span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-secondary-700">{comment.text || comment.content}</p>
                   </div>
-                  <p className="text-secondary-700">{comment.content}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           
@@ -467,6 +670,46 @@ const FeatureDetail = () => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Dialog for editing a comment */}
+      <Dialog open={isEditCommentDialogOpen} onOpenChange={setIsEditCommentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Comment</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={editingCommentText}
+            onChange={(e) => setEditingCommentText(e.target.value)}
+            placeholder="Edit your comment..."
+            className="min-h-[100px] w-full mt-4"
+          />
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setIsEditCommentDialogOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleEditComment}
+              disabled={!editingCommentText.trim()}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog for deleting a comment */}
+      <Dialog open={isDeleteCommentDialogOpen} onOpenChange={setIsDeleteCommentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Comment</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this comment? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteCommentDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteComment}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

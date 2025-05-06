@@ -28,7 +28,7 @@ module.exports = (sequelize) => {
       allowNull: false
     },
     priority: {
-      type: DataTypes.ENUM('low', 'medium', 'high', 'urgent'),
+      type: DataTypes.ENUM('low', 'medium', 'high', 'critical'),
       defaultValue: 'medium',
       allowNull: false
     },
@@ -50,7 +50,7 @@ module.exports = (sequelize) => {
     },
     createdByEmail: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: true
     },
     estimatedEffort: {
       type: DataTypes.INTEGER,
@@ -84,7 +84,47 @@ module.exports = (sequelize) => {
     comments: {
       type: DataTypes.JSONB,
       allowNull: true,
-      defaultValue: []
+      defaultValue: [],
+      get() {
+        // Ensure we always return an array, even if the database has NULL
+        const rawValue = this.getDataValue('comments');
+        return rawValue || [];
+      },
+      set(value) {
+        // Always store an array
+        this.setDataValue('comments', Array.isArray(value) ? value : []);
+      }
+    },
+    votes: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
+    },
+    impact: {
+      type: DataTypes.INTEGER,
+      defaultValue: 5,
+      allowNull: true,
+      validate: {
+        min: 1,
+        max: 10
+      }
+    },
+    effort: {
+      type: DataTypes.INTEGER,
+      defaultValue: 5,
+      allowNull: true,
+      validate: {
+        min: 1,
+        max: 10
+      }
+    },
+    category: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    targetRelease: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     tableName: 'features',
@@ -102,7 +142,7 @@ module.exports = (sequelize) => {
         fields: ['priority']
       },
       {
-        fields: ['dueDate']
+        fields: ['votes']
       }
     ]
   });

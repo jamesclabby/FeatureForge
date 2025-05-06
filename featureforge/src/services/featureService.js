@@ -1,7 +1,23 @@
 import apiService from './api';
 
 // Mock data for development
-const MOCK_ENABLED = true; // Set to false when the backend is ready
+const MOCK_ENABLED = false; // Set to false when the backend is ready
+
+// Add some debugging to handle errors with more context
+const handleApiError = (error, operation) => {
+  console.error(`API Error during ${operation}:`, error);
+  if (error.response) {
+    console.error('Error response:', {
+      status: error.response.status,
+      data: error.response.data
+    });
+  } else if (error.request) {
+    console.error('No response received:', error.request);
+  } else {
+    console.error('Error message:', error.message);
+  }
+  return Promise.reject(error);
+};
 
 const MOCK_FEATURES = [
   {
@@ -102,11 +118,10 @@ const MOCK_FEATURES = [
 
 // Feature status options
 export const FEATURE_STATUSES = [
-  { value: 'planned', label: 'Planned', color: 'blue' },
-  { value: 'in-progress', label: 'In Progress', color: 'amber' },
-  { value: 'in-review', label: 'In Review', color: 'purple' },
-  { value: 'completed', label: 'Completed', color: 'green' },
-  { value: 'cancelled', label: 'Cancelled', color: 'gray' }
+  { value: 'backlog', label: 'Planned', color: 'blue' },
+  { value: 'in_progress', label: 'In Progress', color: 'amber' },
+  { value: 'review', label: 'In Review', color: 'purple' },
+  { value: 'done', label: 'Completed', color: 'green' }
 ];
 
 // Feature priority options
@@ -133,7 +148,8 @@ const featureService = {
       const features = MOCK_FEATURES.filter(feature => feature.teamId === teamId);
       return Promise.resolve({ data: features });
     }
-    return apiService.get(`/teams/${teamId}/features`);
+    return apiService.get(`/teams/${teamId}/features`)
+      .catch(error => handleApiError(error, `getTeamFeatures(${teamId})`));
   },
 
   /**
@@ -150,7 +166,20 @@ const featureService = {
       }
       return Promise.resolve({ data: feature });
     }
-    return apiService.get(`/features/${id}`);
+    
+    try {
+      const response = await apiService.get(`/features/${id}`);
+      
+      // Ensure the feature has a comments array
+      if (!response.data.comments) {
+        response.data.comments = [];
+      }
+      
+      console.log('Feature loaded with comments:', response.data.comments);
+      return response;
+    } catch (error) {
+      return handleApiError(error, `getFeatureById(${id})`);
+    }
   },
 
   /**
@@ -160,6 +189,17 @@ const featureService = {
    * @returns {Promise<{data: Object}>} - Created feature
    */
   createFeature: async (teamId, featureData) => {
+    // Validate teamId is a valid UUID
+    console.log("Creating feature with teamId:", teamId, "Type:", typeof teamId);
+    
+    if (!teamId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) {
+      console.error("Invalid teamId format:", teamId);
+      return Promise.reject({ 
+        message: `Invalid team ID format. Expected UUID, got: ${teamId}`,
+        teamId: teamId
+      });
+    }
+    
     if (MOCK_ENABLED) {
       console.log(`Using mock data for createFeature for team: ${teamId}`, featureData);
       const newFeature = {
@@ -174,7 +214,8 @@ const featureService = {
       MOCK_FEATURES.push(newFeature);
       return Promise.resolve({ data: newFeature });
     }
-    return apiService.post(`/teams/${teamId}/features`, featureData);
+    return apiService.post(`/teams/${teamId}/features`, featureData)
+      .catch(error => handleApiError(error, `createFeature(${teamId})`));
   },
 
   /**
@@ -198,7 +239,8 @@ const featureService = {
       MOCK_FEATURES[index] = updatedFeature;
       return Promise.resolve({ data: updatedFeature });
     }
-    return apiService.put(`/features/${id}`, featureData);
+    return apiService.put(`/features/${id}`, featureData)
+      .catch(error => handleApiError(error, `updateFeature(${id})`));
   },
 
   /**
@@ -234,7 +276,8 @@ const featureService = {
       MOCK_FEATURES[index].votes += 1;
       return Promise.resolve({ data: MOCK_FEATURES[index] });
     }
-    return apiService.post(`/features/${id}/vote`);
+    return apiService.post(`/features/${id}/vote`)
+      .catch(error => handleApiError(error, `voteForFeature(${id})`));
   },
 
   /**
@@ -261,7 +304,81 @@ const featureService = {
       MOCK_FEATURES[index].comments.push(newComment);
       return Promise.resolve({ data: newComment });
     }
-    return apiService.post(`/features/${id}/comments`, { content });
+    
+    console.log(`Sending comment to feature ${id}:`, content);
+    return apiService.post(`/features/${id}/comments`, { text: content })
+      .catch(error => handleApiError(error, `addComment(${id})`));
+  },
+
+  /**
+   * Edit an existing comment
+   * @param {string} featureId - Feature ID
+   * @param {string} commentId - Comment ID
+   * @param {string} text - Updated comment text
+   * @returns {Promise<{data: Object}>} - Updated comment
+   */
+  editComment: async (featureId, commentId, text) => {
+    if (MOCK_ENABLED) {
+      console.log(`Using mock data for editComment: ${commentId} on feature: ${featureId}`);
+      const featureIndex = MOCK_FEATURES.findIndex(feature => feature.id === featureId);
+      if (featureIndex === -1) {
+        return Promise.reject({ message: 'Feature not found' });
+      }
+      
+      const commentIndex = MOCK_FEATURES[featureIndex].comments.findIndex(
+        comment => comment.id === commentId
+      );
+      
+      if (commentIndex === -1) {
+        return Promise.reject({ message: 'Comment not found' });
+      }
+      
+      MOCK_FEATURES[featureIndex].comments[commentIndex].content = text;
+      MOCK_FEATURES[featureIndex].comments[commentIndex].lastEdited = new Date().toISOString();
+      
+      return Promise.resolve({ 
+        data: MOCK_FEATURES[featureIndex].comments[commentIndex] 
+      });
+    }
+    
+    console.log(`Editing comment ${commentId} on feature ${featureId}:`, text);
+    return apiService.put(`/features/${featureId}/comments/${commentId}`, { text })
+      .catch(error => handleApiError(error, `editComment(${featureId}, ${commentId})`));
+  },
+
+  /**
+   * Delete a comment
+   * @param {string} featureId - Feature ID
+   * @param {string} commentId - Comment ID
+   * @returns {Promise<{success: boolean}>} - Result of deletion
+   */
+  deleteComment: async (featureId, commentId) => {
+    if (MOCK_ENABLED) {
+      console.log(`Using mock data for deleteComment: ${commentId} from feature: ${featureId}`);
+      const featureIndex = MOCK_FEATURES.findIndex(feature => feature.id === featureId);
+      if (featureIndex === -1) {
+        return Promise.reject({ message: 'Feature not found' });
+      }
+      
+      const commentIndex = MOCK_FEATURES[featureIndex].comments.findIndex(
+        comment => comment.id === commentId
+      );
+      
+      if (commentIndex === -1) {
+        return Promise.reject({ message: 'Comment not found' });
+      }
+      
+      MOCK_FEATURES[featureIndex].comments.splice(commentIndex, 1);
+      
+      return Promise.resolve({ 
+        success: true,
+        message: 'Comment deleted successfully'
+      });
+    }
+    
+    console.log(`Deleting comment ${commentId} from feature ${featureId}`);
+    return apiService.delete(`/features/${featureId}/comments/${commentId}`)
+      .catch(error => handleApiError(error, `deleteComment(${featureId}, ${commentId})`));
   },
 
   /**
@@ -294,8 +411,52 @@ const featureService = {
       
       return Promise.resolve({ data: stats });
     }
-    return apiService.get(`/teams/${teamId}/features/stats`);
+    
+    // Try first to get stats directly from dedicated endpoint
+    try {
+      return await apiService.get(`/teams/${teamId}/features/stats`)
+        .catch(error => {
+          console.warn(`Stats endpoint failed, falling back to calculating from features list: ${error.message}`);
+          throw error; // Rethrow to trigger the fallback
+        });
+    } catch (error) {
+      // Fallback: Calculate stats from the feature list if stats endpoint isn't available
+      console.log('Using fallback calculation for stats');
+      try {
+        const response = await apiService.get(`/teams/${teamId}/features`);
+        const features = response.data || [];
+        
+        // Calculate stats from features
+        const stats = {
+          total: features.length,
+          byStatus: {
+            backlog: features.filter(f => f.status === 'backlog').length,
+            inProgress: features.filter(f => f.status === 'in_progress').length,
+            review: features.filter(f => f.status === 'review').length,
+            done: features.filter(f => f.status === 'done').length
+          },
+          byPriority: {
+            low: features.filter(f => f.priority === 'low').length,
+            medium: features.filter(f => f.priority === 'medium').length,
+            high: features.filter(f => f.priority === 'high').length,
+            critical: features.filter(f => f.priority === 'critical').length
+          }
+        };
+        
+        return { data: stats };
+      } catch (finalError) {
+        // If even the fallback fails, return empty stats
+        console.error('Failed to calculate stats even with fallback:', finalError);
+        return { 
+          data: { 
+            total: 0, 
+            byStatus: { backlog: 0, inProgress: 0, review: 0, done: 0 },
+            byPriority: { low: 0, medium: 0, high: 0, critical: 0 }
+          } 
+        };
+      }
+    }
   }
 };
 
-export default featureService; 
+export default featureService;
