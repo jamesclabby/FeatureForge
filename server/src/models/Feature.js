@@ -23,8 +23,8 @@ module.exports = (sequelize) => {
       }
     },
     status: {
-      type: DataTypes.ENUM('planned', 'in-progress', 'in-review', 'completed', 'cancelled'),
-      defaultValue: 'planned',
+      type: DataTypes.ENUM('backlog', 'in_progress', 'review', 'done'),
+      defaultValue: 'backlog',
       allowNull: false
     },
     priority: {
@@ -84,7 +84,16 @@ module.exports = (sequelize) => {
     comments: {
       type: DataTypes.JSONB,
       allowNull: true,
-      defaultValue: []
+      defaultValue: [],
+      get() {
+        // Ensure we always return an array, even if the database has NULL
+        const rawValue = this.getDataValue('comments');
+        return rawValue || [];
+      },
+      set(value) {
+        // Always store an array
+        this.setDataValue('comments', Array.isArray(value) ? value : []);
+      }
     },
     votes: {
       type: DataTypes.INTEGER,

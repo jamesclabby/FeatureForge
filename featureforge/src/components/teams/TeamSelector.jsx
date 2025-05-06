@@ -24,11 +24,7 @@ const TeamSelector = () => {
       setTeams(response.data);
       setError(null);
       
-      // If we have teams and there's only one, auto-select it
-      if (response.data && response.data.length === 1) {
-        console.log('Auto-selecting the only team:', response.data[0].id);
-        handleTeamSelect(response.data[0].id);
-      }
+      // No longer auto-select teams even if there's only one
     } catch (err) {
       console.error('Error fetching teams:', err);
       setError('Failed to fetch teams');
@@ -61,12 +57,18 @@ const TeamSelector = () => {
       localStorage.setItem('selectedTeamId', teamId);
       console.log('TeamSelector: Stored teamId in localStorage:', teamId);
       
-      // Navigate to the dashboard - add a query param to force refresh
-      const dashboardUrl = `/dashboard?t=${Date.now()}`;
-      console.log('TeamSelector: Navigating to', dashboardUrl);
+      // Navigate to the specific team dashboard instead of the general dashboard
+      const teamDashboardUrl = `/team-dashboard/${teamId}?t=${Date.now()}`;
+      console.log('TeamSelector: Navigating to', teamDashboardUrl);
+      
+      toast.toast({
+        title: 'Team Selected',
+        description: 'Team selected successfully. Loading dashboard...',
+        variant: 'default',
+      });
       
       // Hard redirect instead of using React Router
-      window.location.href = dashboardUrl;
+      window.location.href = teamDashboardUrl;
     } catch (error) {
       console.error('Error in handleTeamSelect:', error);
       toast.toast({
@@ -147,7 +149,7 @@ const TeamSelector = () => {
                       e.preventDefault();
                       console.log('Direct team selection for:', team.id);
                       localStorage.setItem('selectedTeamId', team.id);
-                      window.location.href = '/dashboard';
+                      window.location.href = `/team-dashboard/${team.id}`;
                     }}
                   >
                     {team.name}

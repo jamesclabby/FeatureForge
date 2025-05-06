@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card';
@@ -17,46 +17,49 @@ const Dashboard = () => {
   const [completedCount, setCompletedCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
+  const { teamId: urlTeamId } = useParams(); // Get teamId from URL parameter
   const toast = useToast();
   const { currentUser } = useAuth();
   
-  // Get teamId from localStorage
+  // Get teamId, preferring the URL parameter over localStorage
   const getTeamId = () => {
-    const teamId = localStorage.getItem('selectedTeamId');
-    
-    if (!teamId) {
-      // If no team ID is found, the TeamRoute component will handle showing the team selector
-      console.log('Dashboard: No team ID found in localStorage');
-      return null;
+    // First, check URL parameter
+    if (urlTeamId) {
+      console.log('Dashboard: Using teamId from URL parameter:', urlTeamId);
+      
+      // Since we're using a URL parameter, also store it in localStorage
+      // This ensures RequireSelectedTeam will allow access to other team features
+      try {
+        localStorage.setItem('selectedTeamId', urlTeamId);
+        console.log('Dashboard: Updated localStorage with teamId from URL');
+      } catch (error) {
+        console.error('Dashboard: Error storing teamId in localStorage:', error);
+      }
+      
+      return urlTeamId;
     }
     
-    console.log('Dashboard: Found team ID in localStorage:', teamId);
-    return teamId;
+    // Fallback to localStorage (for backward compatibility)
+    try {
+      const storedTeamId = localStorage.getItem('selectedTeamId');
+      console.log('Dashboard: Using teamId from localStorage:', storedTeamId);
+      return storedTeamId;
+    } catch (error) {
+      console.error('Dashboard: Error accessing localStorage:', error);
+      return null;
+    }
   };
 
   useEffect(() => {
-    // On mount, verify localStorage access
-    try {
-      localStorage.setItem('test', 'test');
-      const testValue = localStorage.getItem('test');
-      localStorage.removeItem('test');
-      console.log('Dashboard: localStorage test -', testValue === 'test' ? 'success' : 'failed');
-    } catch (error) {
-      console.error('Dashboard: localStorage access error -', error);
+    const teamId = getTeamId();
+    if (teamId) {
+      fetchTeamDetails(teamId);
+      fetchFeatureStats(teamId);
+    } else {
+      console.log('Dashboard: No teamId available, redirecting to selector');
+      navigate('/selector');
     }
-    
-    // Delayed initialization to avoid race conditions
-    setTimeout(() => {
-      const teamId = getTeamId();
-      if (teamId) {
-        fetchTeamDetails(teamId);
-        fetchFeatureStats(teamId);
-      } else {
-        console.log('Dashboard: No teamId, redirecting to selector');
-        navigate('/selector');
-      }
-    }, 100);
-  }, []);
+  }, [urlTeamId]); // Re-run when URL parameter changes
 
   const fetchTeamDetails = async (teamId) => {
     try {
@@ -114,12 +117,7 @@ const Dashboard = () => {
     console.log('Dashboard: Cleared selectedTeamId from localStorage');
     // Navigate directly to the team selector
     console.log('Dashboard: Navigating to /selector');
-    
-    // Use both methods for navigation for reliability
     navigate('/selector');
-    setTimeout(() => {
-      window.location.href = '/selector';
-    }, 100);
   };
 
   // Handle feature creation success

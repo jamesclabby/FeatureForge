@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastContextProvider } from './components/ui/toast';
 import { useAuth } from './contexts/AuthContext';
@@ -19,21 +19,22 @@ import Features from './pages/Features';
 import FeatureView from './pages/FeatureView';
 import NewFeature from './pages/NewFeature';
 
-// Team route component that checks for team selection
-const TeamRoute = ({ children }) => {
+// Team access check component for routes that require a valid team selection
+const RequireSelectedTeam = ({ children }) => {
   const { currentUser, loading } = useAuth();
   const [hasSelectedTeam, setHasSelectedTeam] = useState(false);
   const [checkingTeam, setCheckingTeam] = useState(true);
+  const location = useLocation();
   
   useEffect(() => {
     if (currentUser) {
       // Check if user has a selected team
       try {
         const selectedTeamId = localStorage.getItem('selectedTeamId');
-        console.log('TeamRoute: selectedTeamId from localStorage:', selectedTeamId);
+        console.log('RequireSelectedTeam: selectedTeamId from localStorage:', selectedTeamId);
         setHasSelectedTeam(!!selectedTeamId);
       } catch (error) {
-        console.error('TeamRoute: localStorage error -', error);
+        console.error('RequireSelectedTeam: localStorage error -', error);
         setHasSelectedTeam(false);
       }
       setCheckingTeam(false);
@@ -43,11 +44,12 @@ const TeamRoute = ({ children }) => {
   }, [currentUser]);
   
   // For debugging
-  console.log('TeamRoute state:', { 
+  console.log('RequireSelectedTeam state:', { 
     loading, 
     checkingTeam, 
     hasSelectedTeam, 
-    currentUser: !!currentUser 
+    currentUser: !!currentUser,
+    path: location.pathname
   });
   
   if (loading || checkingTeam) {
@@ -63,11 +65,13 @@ const TeamRoute = ({ children }) => {
   }
   
   if (!hasSelectedTeam) {
-    console.log('TeamRoute: No selected team, rendering TeamSelector');
-    return <TeamSelector />;
+    // Instead of showing TeamSelector, redirect to the selector page
+    // This ensures the URL matches what's being shown
+    console.log('RequireSelectedTeam: No selected team, redirecting to selector');
+    return <Navigate to="/selector" state={{ from: location }} replace />;
   }
   
-  console.log('TeamRoute: Has selected team, rendering children');
+  console.log('RequireSelectedTeam: Has selected team, rendering children');
   return children;
 };
 
@@ -85,12 +89,8 @@ function App() {
               <Route path="/register" element={<Register />} />
               
               <Route element={<ProtectedRoute />}>
-                {/* Protected routes that require team selection */}
-                <Route path="/dashboard" element={
-                  <TeamRoute>
-                    <Dashboard />
-                  </TeamRoute>
-                } />
+                {/* Dashboard now redirects to selector first */}
+                <Route path="/dashboard" element={<Navigate to="/selector" replace />} />
                 
                 {/* Direct access to team selector */}
                 <Route path="/selector" element={<TeamSelector />} />
@@ -100,10 +100,29 @@ function App() {
                 <Route path="/teams/new" element={<TeamNew />} />
                 <Route path="/teams/:teamId" element={<TeamDetails />} />
                 
+                {/* Specific team dashboard - requires team selection */}
+                <Route path="/team-dashboard/:teamId" element={
+                  <RequireSelectedTeam>
+                    <Dashboard />
+                  </RequireSelectedTeam>
+                } />
+                
                 {/* Feature management routes */}
-                <Route path="/features" element={<Features />} />
-                <Route path="/features/new" element={<NewFeature />} />
-                <Route path="/features/:featureId" element={<FeatureView />} />
+                <Route path="/features" element={
+                  <RequireSelectedTeam>
+                    <Features />
+                  </RequireSelectedTeam>
+                } />
+                <Route path="/features/new" element={
+                  <RequireSelectedTeam>
+                    <NewFeature />
+                  </RequireSelectedTeam>
+                } />
+                <Route path="/features/:featureId" element={
+                  <RequireSelectedTeam>
+                    <FeatureView />
+                  </RequireSelectedTeam>
+                } />
               </Route>
               
               {/* Fallback route */}

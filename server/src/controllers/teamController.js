@@ -507,13 +507,59 @@ const createTeamFeature = async (req, res) => {
         error: 'Not authorized to create features for this team'
       });
     }
+    
+    // Log received values for troubleshooting
+    console.log('Creating feature with data:', { 
+      title, description, priority, status, 
+      impact, effort, category, targetRelease, tags
+    });
+    
+    // Check the actual database enum values
+    try {
+      const describeResult = await Feature.sequelize.query("SHOW COLUMNS FROM features LIKE 'status'");
+      console.log('Database status enum values:', describeResult[0][0].Type);
+    } catch (err) {
+      console.error('Error checking enum values:', err);
+    }
+    
+    // Make sure status is one of the allowed values
+    // Check case sensitivity in the enum values
+    let sanitizedStatus;
+    
+    // Force the status to use one of the exact values expected by the database schema
+    // This handles potential case sensitivity issues
+    const statusMap = {
+      // Current database values
+      'backlog': 'backlog',
+      'in_progress': 'in_progress', 
+      'review': 'review',
+      'done': 'done',
+      
+      // Map from the frontend's logical names to database values
+      'planned': 'backlog',
+      'in-progress': 'in_progress',
+      'in_progress': 'in_progress',
+      'inprogress': 'in_progress',
+      'in-review': 'review',
+      'inreview': 'review',
+      'completed': 'done',
+      'cancelled': 'done'
+    };
+    
+    if (status && statusMap[status]) {
+      sanitizedStatus = statusMap[status];
+    } else {
+      sanitizedStatus = 'in_progress'; // Default to in_progress as fallback
+    }
+    
+    console.log(`Status received: "${status}" (${typeof status}), sanitized to: "${sanitizedStatus}"`);
 
-    // Create feature
+    // Create feature with the sanitized status
     const feature = await Feature.create({
       title,
       description,
       priority,
-      status: status || 'planned',
+      status: sanitizedStatus,
       teamId,
       createdBy: userId,
       createdByEmail: userEmail,

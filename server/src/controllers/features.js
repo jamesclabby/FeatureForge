@@ -88,39 +88,13 @@ exports.getFeatures = async (req, res) => {
  */
 exports.getFeature = async (req, res) => {
   try {
+    // Get the feature with minimal includes to avoid association errors
     const feature = await Feature.findByPk(req.params.id, {
       include: [
         {
           model: User,
-          as: 'requestedBy',
-          attributes: ['id', 'name', 'email', 'avatar']
-        },
-        {
-          model: User,
-          as: 'assignedTo',
-          attributes: ['id', 'name', 'email', 'avatar']
-        },
-        {
-          model: Comment,
-          as: 'comments',
-          include: [
-            {
-              model: User,
-              as: 'user',
-              attributes: ['id', 'name', 'email', 'avatar']
-            }
-          ]
-        },
-        {
-          model: Vote,
-          as: 'voterRecords',
-          include: [
-            {
-              model: User,
-              as: 'user',
-              attributes: ['id', 'name', 'email']
-            }
-          ]
+          as: 'creator',
+          attributes: ['id', 'name', 'email']
         }
       ]
     });
@@ -132,11 +106,24 @@ exports.getFeature = async (req, res) => {
       });
     }
     
+    // Convert to plain object to safely add additional data
+    const featureData = feature.toJSON();
+    
+    // Make sure comments are initialized as an array if they don't exist
+    if (!featureData.comments) {
+      featureData.comments = [];
+    }
+    
+    // Log what we're returning
+    console.log(`Returning feature ${req.params.id} with ${featureData.comments.length} comments`);
+    
+    // Return the feature data
     res.status(200).json({
       success: true,
-      data: feature
+      data: featureData
     });
   } catch (err) {
+    console.error('Error fetching feature:', err);
     res.status(500).json({
       success: false,
       message: 'Server Error',
@@ -315,24 +302,8 @@ exports.voteFeature = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'requestedBy',
-          attributes: ['id', 'name', 'email', 'avatar']
-        },
-        {
-          model: User,
-          as: 'assignedTo',
-          attributes: ['id', 'name', 'email', 'avatar']
-        },
-        {
-          model: Vote,
-          as: 'voterRecords',
-          include: [
-            {
-              model: User,
-              as: 'user',
-              attributes: ['id', 'name', 'email']
-            }
-          ]
+          as: 'creator',
+          attributes: ['id', 'name', 'email']
         }
       ]
     });
@@ -342,6 +313,7 @@ exports.voteFeature = async (req, res) => {
       data: updatedFeature
     });
   } catch (err) {
+    console.error('Error voting for feature:', err);
     res.status(400).json({
       success: false,
       message: err.message
@@ -356,7 +328,18 @@ exports.voteFeature = async (req, res) => {
  */
 exports.addComment = async (req, res) => {
   try {
-    const feature = await Feature.findByPk(req.params.id);
+    const featureId = req.params.id;
+    const userId = req.user.id;
+    const text = req.body.text;
+    
+    console.log(`Adding comment to feature ${featureId}:`, {
+      userId,
+      text,
+      body: req.body
+    });
+
+    // First get the current comments
+    const feature = await Feature.findByPk(featureId);
     
     if (!feature) {
       return res.status(404).json({
@@ -365,28 +348,233 @@ exports.addComment = async (req, res) => {
       });
     }
     
-    const comment = await Comment.create({
-      text: req.body.text,
-      userId: req.user.id,
-      featureId: req.params.id
-    });
+    console.log('Current feature.comments:', feature.comments);
     
-    // Get the comment with user data
-    const commentWithUser = await Comment.findByPk(comment.id, {
-      include: [
+    // Create the new comment
+    const newComment = {
+      id: Date.now().toString(), // Simple ID generation
+      userId: userId,
+      userEmail: req.user.email,
+      userName: req.user.name,
+      text: text,
+      createdAt: new Date().toISOString()
+    };
+    
+    // Get current comments or initialize empty array
+    let comments = feature.comments || [];
+    if (!Array.isArray(comments)) {
+      comments = [];
+    }
+    
+    // Add new comment to the array
+    comments.push(newComment);
+    
+    console.log('New comments array:', comments);
+    
+    // Direct SQL approach - simpler and more reliable than transactions for JSONB
+    try {
+      // Use raw SQL update with direct sequelize connection
+      await Feature.sequelize.query(
+        `UPDATE features SET comments = $comments, "updatedAt" = NOW() WHERE id = $featureId`,
         {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'name', 'email', 'avatar']
+          bind: { 
+            comments: JSON.stringify(comments),
+            featureId: featureId
+          },
+          type: Feature.sequelize.QueryTypes.UPDATE
         }
-      ]
-    });
+      );
+      
+      console.log('Feature updated successfully with new comments via direct SQL');
+    } catch (sqlError) {
+      console.error('Error updating feature with SQL query:', sqlError);
+      throw sqlError;
+    }
+    
+    // Verify the update was successful by fetching the feature again
+    const updatedFeature = await Feature.findByPk(featureId);
+    console.log('After update, feature.comments:', updatedFeature.comments);
+    console.log(`Comment added successfully. Feature now has ${updatedFeature.comments ? updatedFeature.comments.length : 0} comments.`);
     
     res.status(200).json({
       success: true,
-      data: commentWithUser
+      data: newComment
     });
   } catch (err) {
+    console.error('Error adding comment:', err);
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+/**
+ * @desc    Delete a comment from a feature
+ * @route   DELETE /api/features/:id/comments/:commentId
+ * @access  Private (Comment creator only)
+ */
+exports.deleteComment = async (req, res) => {
+  try {
+    const { id: featureId, commentId } = req.params;
+    const userId = req.user.id;
+    
+    console.log(`Attempting to delete comment ${commentId} from feature ${featureId} by user ${userId}`);
+
+    // Get the feature with its comments
+    const feature = await Feature.findByPk(featureId);
+    
+    if (!feature) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feature not found'
+      });
+    }
+    
+    // Get current comments array
+    let comments = feature.comments || [];
+    if (!Array.isArray(comments)) {
+      comments = [];
+    }
+    
+    // Find the comment to delete
+    const commentIndex = comments.findIndex(comment => comment.id === commentId);
+    
+    // If comment doesn't exist
+    if (commentIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Comment not found'
+      });
+    }
+    
+    // Check if user is authorized to delete this comment
+    if (comments[commentIndex].userId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this comment'
+      });
+    }
+    
+    // Remove the comment from the array
+    comments.splice(commentIndex, 1);
+    
+    // Update the feature with the new comments array
+    try {
+      await Feature.sequelize.query(
+        `UPDATE features SET comments = $comments, "updatedAt" = NOW() WHERE id = $featureId`,
+        {
+          bind: { 
+            comments: JSON.stringify(comments),
+            featureId: featureId
+          },
+          type: Feature.sequelize.QueryTypes.UPDATE
+        }
+      );
+      
+      console.log(`Comment ${commentId} deleted successfully from feature ${featureId}`);
+    } catch (sqlError) {
+      console.error('Error updating feature with SQL query:', sqlError);
+      throw sqlError;
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Comment deleted successfully'
+    });
+  } catch (err) {
+    console.error('Error deleting comment:', err);
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+/**
+ * @desc    Edit a comment on a feature
+ * @route   PUT /api/features/:id/comments/:commentId
+ * @access  Private (Comment creator only)
+ */
+exports.editComment = async (req, res) => {
+  try {
+    const { id: featureId, commentId } = req.params;
+    const userId = req.user.id;
+    const { text } = req.body;
+    
+    if (!text || !text.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Comment text is required'
+      });
+    }
+    
+    console.log(`Attempting to edit comment ${commentId} on feature ${featureId} by user ${userId}`);
+
+    // Get the feature with its comments
+    const feature = await Feature.findByPk(featureId);
+    
+    if (!feature) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feature not found'
+      });
+    }
+    
+    // Get current comments array
+    let comments = feature.comments || [];
+    if (!Array.isArray(comments)) {
+      comments = [];
+    }
+    
+    // Find the comment to edit
+    const commentIndex = comments.findIndex(comment => comment.id === commentId);
+    
+    // If comment doesn't exist
+    if (commentIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Comment not found'
+      });
+    }
+    
+    // Check if user is authorized to edit this comment
+    if (comments[commentIndex].userId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to edit this comment'
+      });
+    }
+    
+    // Update the comment text and add lastEdited timestamp
+    comments[commentIndex].text = text;
+    comments[commentIndex].lastEdited = new Date().toISOString();
+    
+    // Update the feature with the edited comment
+    try {
+      await Feature.sequelize.query(
+        `UPDATE features SET comments = $comments, "updatedAt" = NOW() WHERE id = $featureId`,
+        {
+          bind: { 
+            comments: JSON.stringify(comments),
+            featureId: featureId
+          },
+          type: Feature.sequelize.QueryTypes.UPDATE
+        }
+      );
+      
+      console.log(`Comment ${commentId} edited successfully on feature ${featureId}`);
+    } catch (sqlError) {
+      console.error('Error updating feature with SQL query:', sqlError);
+      throw sqlError;
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: comments[commentIndex]
+    });
+  } catch (err) {
+    console.error('Error editing comment:', err);
     res.status(400).json({
       success: false,
       message: err.message

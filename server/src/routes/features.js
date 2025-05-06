@@ -6,7 +6,9 @@ const {
   updateFeature,
   deleteFeature,
   voteFeature,
-  addComment
+  addComment,
+  deleteComment,
+  editComment
 } = require('../controllers/features');
 
 const { protect, protectWithAny } = require('../middleware/auth');
@@ -28,7 +30,10 @@ router
 // Vote route
 router.route('/:id/vote').put(protectWithAny, voteFeature);
 
-// Comment route
+// Comment routes
 router.route('/:id/comments').post(protectWithAny, addComment);
+router.route('/:id/comments/:commentId')
+  .put(protectWithAny, editComment)
+  .delete(protectWithAny, deleteComment);
 
 module.exports = router; 

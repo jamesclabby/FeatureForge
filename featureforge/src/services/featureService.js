@@ -118,11 +118,10 @@ const MOCK_FEATURES = [
 
 // Feature status options
 export const FEATURE_STATUSES = [
-  { value: 'planned', label: 'Planned', color: 'blue' },
-  { value: 'in-progress', label: 'In Progress', color: 'amber' },
-  { value: 'in-review', label: 'In Review', color: 'purple' },
-  { value: 'completed', label: 'Completed', color: 'green' },
-  { value: 'cancelled', label: 'Cancelled', color: 'gray' }
+  { value: 'backlog', label: 'Planned', color: 'blue' },
+  { value: 'in_progress', label: 'In Progress', color: 'amber' },
+  { value: 'review', label: 'In Review', color: 'purple' },
+  { value: 'done', label: 'Completed', color: 'green' }
 ];
 
 // Feature priority options
@@ -167,7 +166,20 @@ const featureService = {
       }
       return Promise.resolve({ data: feature });
     }
-    return apiService.get(`/features/${id}`);
+    
+    try {
+      const response = await apiService.get(`/features/${id}`);
+      
+      // Ensure the feature has a comments array
+      if (!response.data.comments) {
+        response.data.comments = [];
+      }
+      
+      console.log('Feature loaded with comments:', response.data.comments);
+      return response;
+    } catch (error) {
+      return handleApiError(error, `getFeatureById(${id})`);
+    }
   },
 
   /**
@@ -292,7 +304,81 @@ const featureService = {
       MOCK_FEATURES[index].comments.push(newComment);
       return Promise.resolve({ data: newComment });
     }
-    return apiService.post(`/features/${id}/comments`, { content });
+    
+    console.log(`Sending comment to feature ${id}:`, content);
+    return apiService.post(`/features/${id}/comments`, { text: content })
+      .catch(error => handleApiError(error, `addComment(${id})`));
+  },
+
+  /**
+   * Edit an existing comment
+   * @param {string} featureId - Feature ID
+   * @param {string} commentId - Comment ID
+   * @param {string} text - Updated comment text
+   * @returns {Promise<{data: Object}>} - Updated comment
+   */
+  editComment: async (featureId, commentId, text) => {
+    if (MOCK_ENABLED) {
+      console.log(`Using mock data for editComment: ${commentId} on feature: ${featureId}`);
+      const featureIndex = MOCK_FEATURES.findIndex(feature => feature.id === featureId);
+      if (featureIndex === -1) {
+        return Promise.reject({ message: 'Feature not found' });
+      }
+      
+      const commentIndex = MOCK_FEATURES[featureIndex].comments.findIndex(
+        comment => comment.id === commentId
+      );
+      
+      if (commentIndex === -1) {
+        return Promise.reject({ message: 'Comment not found' });
+      }
+      
+      MOCK_FEATURES[featureIndex].comments[commentIndex].content = text;
+      MOCK_FEATURES[featureIndex].comments[commentIndex].lastEdited = new Date().toISOString();
+      
+      return Promise.resolve({ 
+        data: MOCK_FEATURES[featureIndex].comments[commentIndex] 
+      });
+    }
+    
+    console.log(`Editing comment ${commentId} on feature ${featureId}:`, text);
+    return apiService.put(`/features/${featureId}/comments/${commentId}`, { text })
+      .catch(error => handleApiError(error, `editComment(${featureId}, ${commentId})`));
+  },
+
+  /**
+   * Delete a comment
+   * @param {string} featureId - Feature ID
+   * @param {string} commentId - Comment ID
+   * @returns {Promise<{success: boolean}>} - Result of deletion
+   */
+  deleteComment: async (featureId, commentId) => {
+    if (MOCK_ENABLED) {
+      console.log(`Using mock data for deleteComment: ${commentId} from feature: ${featureId}`);
+      const featureIndex = MOCK_FEATURES.findIndex(feature => feature.id === featureId);
+      if (featureIndex === -1) {
+        return Promise.reject({ message: 'Feature not found' });
+      }
+      
+      const commentIndex = MOCK_FEATURES[featureIndex].comments.findIndex(
+        comment => comment.id === commentId
+      );
+      
+      if (commentIndex === -1) {
+        return Promise.reject({ message: 'Comment not found' });
+      }
+      
+      MOCK_FEATURES[featureIndex].comments.splice(commentIndex, 1);
+      
+      return Promise.resolve({ 
+        success: true,
+        message: 'Comment deleted successfully'
+      });
+    }
+    
+    console.log(`Deleting comment ${commentId} from feature ${featureId}`);
+    return apiService.delete(`/features/${featureId}/comments/${commentId}`)
+      .catch(error => handleApiError(error, `deleteComment(${featureId}, ${commentId})`));
   },
 
   /**
@@ -344,11 +430,10 @@ const featureService = {
         const stats = {
           total: features.length,
           byStatus: {
-            planned: features.filter(f => f.status === 'planned').length,
-            inProgress: features.filter(f => f.status === 'in-progress').length,
-            inReview: features.filter(f => f.status === 'in-review').length,
-            completed: features.filter(f => f.status === 'completed').length,
-            cancelled: features.filter(f => f.status === 'cancelled').length
+            backlog: features.filter(f => f.status === 'backlog').length,
+            inProgress: features.filter(f => f.status === 'in_progress').length,
+            review: features.filter(f => f.status === 'review').length,
+            done: features.filter(f => f.status === 'done').length
           },
           byPriority: {
             low: features.filter(f => f.priority === 'low').length,
@@ -365,7 +450,7 @@ const featureService = {
         return { 
           data: { 
             total: 0, 
-            byStatus: { planned: 0, inProgress: 0, inReview: 0, completed: 0, cancelled: 0 },
+            byStatus: { backlog: 0, inProgress: 0, review: 0, done: 0 },
             byPriority: { low: 0, medium: 0, high: 0, critical: 0 }
           } 
         };
@@ -374,4 +459,4 @@ const featureService = {
   }
 };
 
-export default featureService; 
+export default featureService;
