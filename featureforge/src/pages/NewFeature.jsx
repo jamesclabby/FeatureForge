@@ -4,9 +4,11 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import { Button } from '../components/ui/button';
 import { useToast } from '../components/ui/toast';
 import FeatureForm from '../components/features/FeatureForm';
+import teamService from '../services/teamService';
 
 const NewFeature = () => {
   const [teamId, setTeamId] = useState(null);
+  const [team, setTeam] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const toast = useToast();
@@ -16,15 +18,32 @@ const NewFeature = () => {
     const storedTeamId = localStorage.getItem('selectedTeamId');
     if (storedTeamId) {
       setTeamId(storedTeamId);
+      fetchTeamDetails(storedTeamId);
     } else {
       toast.toast({
         title: 'Team Selection Required',
         description: 'Please select a team before creating a new feature.',
         variant: 'destructive',
       });
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
+
+  const fetchTeamDetails = async (teamId) => {
+    try {
+      const response = await teamService.getTeamById(teamId);
+      setTeam(response.data);
+    } catch (err) {
+      console.error('Error fetching team details:', err);
+      toast.toast({
+        title: 'Error',
+        description: 'Failed to fetch team details.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFeatureCreated = (featureData) => {
     toast.toast({
@@ -43,7 +62,7 @@ const NewFeature = () => {
     );
   }
 
-  if (!teamId) {
+  if (!teamId || !team) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
@@ -51,8 +70,8 @@ const NewFeature = () => {
           <p className="text-secondary-500 mb-6">
             You need to select a team before you can create a new feature.
           </p>
-          <Button onClick={() => navigate('/dashboard')}>
-            Go to Dashboard
+          <Button onClick={() => navigate('/selector')}>
+            Select a Team
           </Button>
         </div>
       </div>
@@ -63,7 +82,12 @@ const NewFeature = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Create New Feature</h1>
+          <div>
+            <h1 className="text-2xl font-bold">Create New Feature</h1>
+            <p className="text-secondary-500 mt-1">
+              Creating feature for <span className="font-semibold text-secondary-700">{team.name}</span>
+            </p>
+          </div>
           <Button 
             variant="outline" 
             size="sm"
@@ -91,7 +115,7 @@ const NewFeature = () => {
           <CardHeader>
             <CardTitle>Feature Details</CardTitle>
             <CardDescription>
-              Fill in the details of the new feature you'd like to add.
+              Fill in the details of the new feature you'd like to add to {team.name}.
             </CardDescription>
           </CardHeader>
           <CardContent>

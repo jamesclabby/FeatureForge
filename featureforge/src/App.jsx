@@ -20,6 +20,27 @@ import Features from './pages/Features';
 import FeatureView from './pages/FeatureView';
 import NewFeature from './pages/NewFeature';
 
+// Smart root route component that redirects based on auth status
+const RootRoute = () => {
+  const { currentUser, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+  
+  // If user is logged in, redirect to team selector
+  if (currentUser) {
+    return <Navigate to="/selector" replace />;
+  }
+  
+  // If not logged in, show the marketing home page
+  return <Home />;
+};
+
 // Team access check component for routes that require a valid team selection
 const RequireSelectedTeam = ({ children }) => {
   const { currentUser, loading } = useAuth();
@@ -85,8 +106,8 @@ function App() {
           <ErrorBoundary>
             <MainLayout>
               <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Home />} />
+                {/* Smart root route - redirects logged-in users to selector */}
+                <Route path="/" element={<RootRoute />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 
