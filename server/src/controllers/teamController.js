@@ -127,13 +127,13 @@ const deleteTeam = async (req, res) => {
 };
 
 /**
- * Add new team member
- * @route POST /api/teams/:teamId/members
- * @access Private (Admin only)
+ * @desc    Add member to team
+ * @route   POST /api/teams/:teamId/members
+ * @access  Private
  */
 const addTeamMember = async (req, res) => {
   const { teamId } = req.params;
-  const { email, role } = req.body;
+  const { email, role = 'member' } = req.body;
   const userId = req.user.id;
 
   try {
@@ -149,13 +149,29 @@ const addTeamMember = async (req, res) => {
       });
     }
 
-    // Find user by email
-    const userToAdd = await User.findOne({ where: { email } });
-    if (!userToAdd) {
+    // Get team details for the invitation email
+    const team = await Team.findByPk(teamId);
+    if (!team) {
       return res.status(404).json({
         success: false,
-        error: 'User not found'
+        error: 'Team not found'
       });
+    }
+
+    // Find user by email or create if doesn't exist
+    let userToAdd = await User.findOne({ where: { email } });
+    let isNewUser = false;
+    
+    if (!userToAdd) {
+      // Create a new user account
+      const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+      userToAdd = await User.create({
+        name: email.split('@')[0], // Use email prefix as default name
+        email: email,
+        password: tempPassword, // They'll need to reset this
+        firebaseUid: null // Will be set when they sign in with Firebase
+      });
+      isNewUser = true;
     }
 
     // Check if user is already a member
@@ -183,12 +199,35 @@ const addTeamMember = async (req, res) => {
     const teamMember = await TeamMember.create({
       teamId,
       userId: userToAdd.id,
-      role: role || 'user'
+      role: role || 'member'
     });
+
+    // Send invitation email
+    try {
+      await sendInvitationEmail(
+        userToAdd.email,
+        team.name,
+        req.user.name || req.user.email,
+        isNewUser
+      );
+    } catch (emailError) {
+      // Don't fail the request if email fails, just log it
+    }
 
     res.status(201).json({
       success: true,
-      data: teamMember
+      data: {
+        ...teamMember.toJSON(),
+        user: {
+          id: userToAdd.id,
+          name: userToAdd.name,
+          email: userToAdd.email
+        },
+        isNewUser
+      },
+      message: isNewUser 
+        ? `Invitation sent to ${email}. They will receive an email with instructions to join.`
+        : `${email} has been added to the team.`
     });
   } catch (error) {
     res.status(error.statusCode || 400).json({
@@ -208,13 +247,38 @@ const removeTeamMember = async (req, res) => {
   const adminId = req.user.id;
 
   try {
+    // Validate required parameters
+    if (!teamId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Team ID is required'
+      });
+    }
+
+    if (!targetUserId || targetUserId === 'undefined') {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    if (!adminId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin authentication required'
+      });
+    }
+
     // Check if admin
     const adminMembership = await TeamMember.findOne({
       where: { teamId, userId: adminId, role: 'admin' }
     });
 
     if (!adminMembership) {
-      throw new ApiError('Not authorized to remove team members', 403);
+      return res.status(403).json({
+        success: false,
+        error: 'Not authorized to remove team members'
+      });
     }
 
     // Find and remove membership
@@ -223,7 +287,10 @@ const removeTeamMember = async (req, res) => {
     });
 
     if (!membership) {
-      throw new ApiError('Team member not found', 404);
+      return res.status(404).json({
+        success: false,
+        error: 'Team member not found'
+      });
     }
 
     await membership.destroy();
@@ -233,7 +300,11 @@ const removeTeamMember = async (req, res) => {
       data: {}
     });
   } catch (error) {
-    throw new ApiError(error.message, error.statusCode || 400);
+    console.error('Error in removeTeamMember:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to remove team member'
+    });
   }
 };
 
@@ -313,6 +384,7 @@ const getTeamMembers = async (req, res) => {
       .filter(member => member.User && member.User.id)
       .map(member => ({
         id: member.User.id,
+        userId: member.User.id, // Include userId for removeTeamMember compatibility
         name: member.User.name,
         email: member.User.email,
         role: member.role,
