@@ -1,9 +1,5 @@
 const { Sequelize } = require('sequelize');
-const dotenv = require('dotenv');
-const path = require('path');
-
-// Load environment variables with explicit path
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+const logger = require('../utils/logger');
 
 // Create Sequelize instance for PostgreSQL
 let sequelize = null;
@@ -17,11 +13,7 @@ try {
     process.env.DB_HOST &&
     process.env.DB_PORT
   ) {
-    console.log('Creating Sequelize instance with:');
-    console.log('- Database:', process.env.DB_NAME);
-    console.log('- User:', process.env.DB_USER);
-    console.log('- Host:', process.env.DB_HOST);
-    console.log('- Port:', process.env.DB_PORT);
+    logger.info('Creating Sequelize instance with database configuration');
     
     sequelize = new Sequelize(
       process.env.DB_NAME,
@@ -31,25 +23,59 @@ try {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         dialect: 'postgres',
-        logging: process.env.NODE_ENV === 'development' ? console.log : false,
+        logging: process.env.NODE_ENV === 'development' ? 
+          (msg) => logger.debug(msg) : false,
         pool: {
-          max: 5,
-          min: 0,
-          acquire: 30000,
-          idle: 10000
-        }
+          max: parseInt(process.env.DB_POOL_MAX) || 20,
+          min: parseInt(process.env.DB_POOL_MIN) || 0,
+          acquire: parseInt(process.env.DB_POOL_ACQUIRE) || 60000,
+          idle: parseInt(process.env.DB_POOL_IDLE) || 10000,
+          evict: parseInt(process.env.DB_POOL_EVICT) || 1000
+        },
+        dialectOptions: {
+          connectTimeout: 30000,
+          idle_in_transaction_session_timeout: 30000,
+          statement_timeout: 30000,
+          ...(process.env.NODE_ENV === 'production' && {
+            ssl: {
+              require: true,
+              rejectUnauthorized: false
+            }
+          })
+        },
+        retry: {
+          match: [
+            /ConnectionError/,
+            /ConnectionRefusedError/,
+            /ConnectionTimedOutError/,
+            /TimeoutError/
+          ],
+          max: 3
+        },
+        benchmark: process.env.NODE_ENV === 'development'
       }
     );
+
+    // Test the connection on startup
+    sequelize.authenticate()
+      .then(() => {
+        logger.info(`Database connected: ${process.env.DB_NAME}@${process.env.DB_HOST}:${process.env.DB_PORT}`);
+      })
+      .catch(err => {
+        logger.warn('Unable to connect to the database:', err.message);
+      });
   } else {
-    console.warn('Missing required database environment variables:');
-    if (!process.env.DB_NAME) console.warn('- DB_NAME is missing');
-    if (!process.env.DB_USER) console.warn('- DB_USER is missing');
-    if (!process.env.DB_PASSWORD) console.warn('- DB_PASSWORD is missing');
-    if (!process.env.DB_HOST) console.warn('- DB_HOST is missing');
-    if (!process.env.DB_PORT) console.warn('- DB_PORT is missing');
+    const missingVars = [];
+    if (!process.env.DB_NAME) missingVars.push('DB_NAME');
+    if (!process.env.DB_USER) missingVars.push('DB_USER');
+    if (!process.env.DB_PASSWORD) missingVars.push('DB_PASSWORD');
+    if (!process.env.DB_HOST) missingVars.push('DB_HOST');
+    if (!process.env.DB_PORT) missingVars.push('DB_PORT');
+    
+    logger.warn(`Missing required database environment variables: ${missingVars.join(', ')}`);
   }
 } catch (error) {
-  console.warn('Failed to initialize Sequelize:', error.message);
+  logger.warn('Failed to initialize Sequelize:', error.message);
 }
 
 /**
@@ -62,24 +88,53 @@ const connectPostgres = async (required = false) => {
     if (required) {
       throw new Error(message);
     }
-    console.warn(message);
+    logger.warn(message);
     return null;
   }
 
   try {
     await sequelize.authenticate();
-    console.log('PostgreSQL Connected via Sequelize');
+    logger.info('PostgreSQL connection verified');
     return sequelize;
   } catch (error) {
     if (required) {
+      logger.error('Database connection failed (required):', error);
       throw error;
     }
-    console.warn('Unable to connect to the database:', error);
+    logger.warn('Unable to connect to the database:', error.message);
     return null;
   }
 };
 
+/**
+ * Close database connection gracefully
+ */
+const closeConnection = async () => {
+  if (sequelize) {
+    try {
+      await sequelize.close();
+      logger.info('Database connection closed');
+    } catch (error) {
+      logger.error('Error closing database connection:', error);
+    }
+  }
+};
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  logger.info('Received SIGINT, closing database connection...');
+  await closeConnection();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  logger.info('Received SIGTERM, closing database connection...');
+  await closeConnection();
+  process.exit(0);
+});
+
 module.exports = {
   sequelize,
-  connectPostgres
+  connectPostgres,
+  closeConnection
 }; 

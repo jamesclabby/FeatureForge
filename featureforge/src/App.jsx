@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation }
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastContextProvider } from './components/ui/toast';
 import { useAuth } from './contexts/AuthContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import MainLayout from './components/layout/MainLayout';
 import AuthContainer from './components/auth/AuthContainer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -81,54 +82,56 @@ function App() {
       <AuthProvider>
         <ToastContextProvider>
           <div id="toast-container" /> {/* Container for direct toast calls */}
-          <MainLayout>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-              <Route element={<ProtectedRoute />}>
-                {/* Dashboard now redirects to selector first */}
-                <Route path="/dashboard" element={<Navigate to="/selector" replace />} />
+          <ErrorBoundary>
+            <MainLayout>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
                 
-                {/* Direct access to team selector */}
-                <Route path="/selector" element={<TeamSelector />} />
+                <Route element={<ProtectedRoute />}>
+                  {/* Dashboard now redirects to selector first */}
+                  <Route path="/dashboard" element={<Navigate to="/selector" replace />} />
+                  
+                  {/* Direct access to team selector */}
+                  <Route path="/selector" element={<TeamSelector />} />
+                  
+                  {/* Team management routes */}
+                  <Route path="/teams" element={<TeamList />} />
+                  <Route path="/teams/new" element={<TeamNew />} />
+                  <Route path="/teams/:teamId" element={<TeamDetails />} />
+                  
+                  {/* Specific team dashboard - requires team selection */}
+                  <Route path="/team-dashboard/:teamId" element={
+                    <RequireSelectedTeam>
+                      <Dashboard />
+                    </RequireSelectedTeam>
+                  } />
+                  
+                  {/* Feature management routes */}
+                  <Route path="/features" element={
+                    <RequireSelectedTeam>
+                      <Features />
+                    </RequireSelectedTeam>
+                  } />
+                  <Route path="/features/new" element={
+                    <RequireSelectedTeam>
+                      <NewFeature />
+                    </RequireSelectedTeam>
+                  } />
+                  <Route path="/features/:featureId" element={
+                    <RequireSelectedTeam>
+                      <FeatureView />
+                    </RequireSelectedTeam>
+                  } />
+                </Route>
                 
-                {/* Team management routes */}
-                <Route path="/teams" element={<TeamList />} />
-                <Route path="/teams/new" element={<TeamNew />} />
-                <Route path="/teams/:teamId" element={<TeamDetails />} />
-                
-                {/* Specific team dashboard - requires team selection */}
-                <Route path="/team-dashboard/:teamId" element={
-                  <RequireSelectedTeam>
-                    <Dashboard />
-                  </RequireSelectedTeam>
-                } />
-                
-                {/* Feature management routes */}
-                <Route path="/features" element={
-                  <RequireSelectedTeam>
-                    <Features />
-                  </RequireSelectedTeam>
-                } />
-                <Route path="/features/new" element={
-                  <RequireSelectedTeam>
-                    <NewFeature />
-                  </RequireSelectedTeam>
-                } />
-                <Route path="/features/:featureId" element={
-                  <RequireSelectedTeam>
-                    <FeatureView />
-                  </RequireSelectedTeam>
-                } />
-              </Route>
-              
-              {/* Fallback route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </MainLayout>
+                {/* Fallback route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </MainLayout>
+          </ErrorBoundary>
         </ToastContextProvider>
       </AuthProvider>
     </Router>

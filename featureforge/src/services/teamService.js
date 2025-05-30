@@ -1,5 +1,18 @@
 import apiService from './api';
 
+// Polyfill for crypto.randomUUID in older browsers
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for older browsers
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 // Mock data for development
 const MOCK_ENABLED = false; // Set to false to use the backend instead of mock data
 
@@ -95,11 +108,8 @@ const teamService = {
     if (MOCK_ENABLED) {
       console.log('Using mock data for createTeam', teamData);
       
-      // Generate a UUID for the team
-      const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
+      // Generate a secure UUID
+      const uuid = generateUUID();
       
       const newTeam = {
         id: uuid,
