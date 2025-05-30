@@ -27,8 +27,8 @@ const MainLayout = ({ children }) => {
           <nav className="flex items-center gap-6">
             {currentUser ? (
               <>
-                <Link to="/dashboard" className="text-secondary-700 hover:text-primary-600 transition-colors">
-                  Dashboard
+                <Link to="/selector" className="text-secondary-700 hover:text-primary-600 transition-colors">
+                  Switch Team
                 </Link>
                 <Link to="/features" className="text-secondary-700 hover:text-primary-600 transition-colors">
                   Features

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation }
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastContextProvider } from './components/ui/toast';
 import { useAuth } from './contexts/AuthContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import MainLayout from './components/layout/MainLayout';
 import AuthContainer from './components/auth/AuthContainer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -18,6 +19,27 @@ import NotFound from './pages/NotFound';
 import Features from './pages/Features';
 import FeatureView from './pages/FeatureView';
 import NewFeature from './pages/NewFeature';
+
+// Smart root route component that redirects based on auth status
+const RootRoute = () => {
+  const { currentUser, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+  
+  // If user is logged in, redirect to team selector
+  if (currentUser) {
+    return <Navigate to="/selector" replace />;
+  }
+  
+  // If not logged in, show the marketing home page
+  return <Home />;
+};
 
 // Team access check component for routes that require a valid team selection
 const RequireSelectedTeam = ({ children }) => {
@@ -81,54 +103,56 @@ function App() {
       <AuthProvider>
         <ToastContextProvider>
           <div id="toast-container" /> {/* Container for direct toast calls */}
-          <MainLayout>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-              <Route element={<ProtectedRoute />}>
-                {/* Dashboard now redirects to selector first */}
-                <Route path="/dashboard" element={<Navigate to="/selector" replace />} />
+          <ErrorBoundary>
+            <MainLayout>
+              <Routes>
+                {/* Smart root route - redirects logged-in users to selector */}
+                <Route path="/" element={<RootRoute />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
                 
-                {/* Direct access to team selector */}
-                <Route path="/selector" element={<TeamSelector />} />
+                <Route element={<ProtectedRoute />}>
+                  {/* Dashboard now redirects to selector first */}
+                  <Route path="/dashboard" element={<Navigate to="/selector" replace />} />
+                  
+                  {/* Direct access to team selector */}
+                  <Route path="/selector" element={<TeamSelector />} />
+                  
+                  {/* Team management routes */}
+                  <Route path="/teams" element={<TeamList />} />
+                  <Route path="/teams/new" element={<TeamNew />} />
+                  <Route path="/teams/:teamId" element={<TeamDetails />} />
+                  
+                  {/* Specific team dashboard - requires team selection */}
+                  <Route path="/team-dashboard/:teamId" element={
+                    <RequireSelectedTeam>
+                      <Dashboard />
+                    </RequireSelectedTeam>
+                  } />
+                  
+                  {/* Feature management routes */}
+                  <Route path="/features" element={
+                    <RequireSelectedTeam>
+                      <Features />
+                    </RequireSelectedTeam>
+                  } />
+                  <Route path="/features/new" element={
+                    <RequireSelectedTeam>
+                      <NewFeature />
+                    </RequireSelectedTeam>
+                  } />
+                  <Route path="/features/:featureId" element={
+                    <RequireSelectedTeam>
+                      <FeatureView />
+                    </RequireSelectedTeam>
+                  } />
+                </Route>
                 
-                {/* Team management routes */}
-                <Route path="/teams" element={<TeamList />} />
-                <Route path="/teams/new" element={<TeamNew />} />
-                <Route path="/teams/:teamId" element={<TeamDetails />} />
-                
-                {/* Specific team dashboard - requires team selection */}
-                <Route path="/team-dashboard/:teamId" element={
-                  <RequireSelectedTeam>
-                    <Dashboard />
-                  </RequireSelectedTeam>
-                } />
-                
-                {/* Feature management routes */}
-                <Route path="/features" element={
-                  <RequireSelectedTeam>
-                    <Features />
-                  </RequireSelectedTeam>
-                } />
-                <Route path="/features/new" element={
-                  <RequireSelectedTeam>
-                    <NewFeature />
-                  </RequireSelectedTeam>
-                } />
-                <Route path="/features/:featureId" element={
-                  <RequireSelectedTeam>
-                    <FeatureView />
-                  </RequireSelectedTeam>
-                } />
-              </Route>
-              
-              {/* Fallback route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </MainLayout>
+                {/* Fallback route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </MainLayout>
+          </ErrorBoundary>
         </ToastContextProvider>
       </AuthProvider>
     </Router>

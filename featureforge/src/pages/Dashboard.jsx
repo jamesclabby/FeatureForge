@@ -261,11 +261,10 @@ const Dashboard = () => {
               Team Settings
             </Button>
             <Button 
-              variant="outline" 
               className="flex-1"
               onClick={() => navigate('/features')}
             >
-              View All Features
+              Manage Features
             </Button>
           </CardContent>
         </Card>
@@ -281,6 +280,14 @@ const Dashboard = () => {
           <CardContent>
             <div className="space-y-4">
               <div>
+                <p className="text-sm font-medium text-secondary-500">Team Name</p>
+                <p className="text-lg font-semibold">{team.name}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-secondary-500">Description</p>
+                <p>{team.description || 'No description provided'}</p>
+              </div>
+              <div>
                 <p className="text-sm font-medium text-secondary-500">Created on</p>
                 <p>{new Date(team.createdAt).toLocaleDateString()}</p>
               </div>
@@ -288,6 +295,41 @@ const Dashboard = () => {
                 <p className="text-sm font-medium text-secondary-500">Members</p>
                 <p>{team.memberCount} members</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Feature Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Feature Summary</CardTitle>
+            <CardDescription>
+              Overview of your team's feature requests
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-primary-50 rounded-lg">
+                <div className="text-2xl font-bold text-primary-600">{featureCount}</div>
+                <div className="text-sm text-primary-700">Total Features</div>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{inProgressCount}</div>
+                <div className="text-sm text-blue-700">In Progress</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{completedCount}</div>
+                <div className="text-sm text-green-700">Completed</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-2xl font-bold text-gray-600">{featureCount - inProgressCount - completedCount}</div>
+                <div className="text-sm text-gray-700">Backlog</div>
+              </div>
+            </div>
+            <div className="mt-4 text-center">
+              <Button variant="outline" onClick={() => navigate('/features')}>
+                View All Features
+              </Button>
             </div>
           </CardContent>
         </Card>

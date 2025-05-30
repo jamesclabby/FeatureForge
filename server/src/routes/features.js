@@ -28,7 +28,7 @@ router
   .delete(protectWithAny, deleteFeature);
 
 // Vote route
-router.route('/:id/vote').put(protectWithAny, voteFeature);
+router.route('/:id/vote').post(protectWithAny, voteFeature);
 
 // Comment routes
 router.route('/:id/comments').post(protectWithAny, addComment);
