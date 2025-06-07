@@ -1,5 +1,6 @@
-const { User, Comment, Notification, TeamMember, Team } = require('../models');
+const { User, Comment, Notification, TeamMember, Team, Feature } = require('../models');
 const { Op } = require('sequelize');
+const { sendMentionNotificationEmail } = require('../utils/email');
 
 class CommentService {
   /**
@@ -113,7 +114,41 @@ class CommentService {
       }));
 
     if (notifications.length > 0) {
+      // Create notification records
       await Notification.bulkCreate(notifications);
+
+      // Send email notifications
+      try {
+        // Get feature details for the email
+        const feature = await Feature.findByPk(comment.featureId, {
+          attributes: ['id', 'title']
+        });
+
+        // Send email to each mentioned user
+        const emailPromises = mentions
+          .filter(mention => mention.userId !== comment.userId)
+          .map(async (mention) => {
+            try {
+              await sendMentionNotificationEmail({
+                email: mention.email,
+                recipientName: mention.username,
+                mentionerName: comment.author?.name || 'Someone',
+                featureTitle: feature?.title || 'Unknown Feature',
+                commentContent: comment.content,
+                featureId: comment.featureId
+              });
+              console.log(`Mention notification email sent to ${mention.email}`);
+            } catch (error) {
+              console.error(`Failed to send mention email to ${mention.email}:`, error.message);
+              // Don't throw - we don't want email failures to break comment creation
+            }
+          });
+
+        await Promise.allSettled(emailPromises);
+      } catch (error) {
+        console.error('Error sending mention notification emails:', error);
+        // Don't throw - we don't want email failures to break comment creation
+      }
     }
   }
 

@@ -141,7 +141,88 @@ const sendPasswordResetEmail = async (email, resetToken) => {
   }
 };
 
+/**
+ * Send mention notification email
+ * @param {Object} options
+ * @param {string} options.email - Recipient email
+ * @param {string} options.recipientName - Name of the mentioned user
+ * @param {string} options.mentionerName - Name of the user who made the mention
+ * @param {string} options.featureTitle - Title of the feature
+ * @param {string} options.commentContent - Content of the comment (truncated)
+ * @param {string} options.featureId - Feature ID for the direct link
+ */
+const sendMentionNotificationEmail = async ({ email, recipientName, mentionerName, featureTitle, commentContent, featureId }) => {
+  // In test environment, just return success
+  if (process.env.NODE_ENV === 'test') {
+    logger.info(`Mock mention notification email sent to ${email}`);
+    return Promise.resolve({
+      success: true,
+      message: 'Mention notification email sent (mock)'
+    });
+  }
+
+  if (!transporter) {
+    logger.error('Email transporter not configured');
+    return Promise.reject(new Error('Email service not available'));
+  }
+
+  try {
+    const featureUrl = `${process.env.FRONTEND_URL}/features/${featureId}`;
+    
+    // Truncate comment content for email
+    const truncatedContent = commentContent.length > 200 
+      ? commentContent.substring(0, 200) + '...' 
+      : commentContent;
+
+    const mailOptions = {
+      from: `"FeatureForge" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `${mentionerName} mentioned you in a comment on FeatureForge`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #0ea5e9;">You were mentioned in a comment</h2>
+          <p>Hello ${recipientName || 'there'},</p>
+          <p><strong>${mentionerName}</strong> mentioned you in a comment on the feature "<strong>${featureTitle}</strong>".</p>
+          
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <h4 style="margin: 0 0 8px 0; color: #334155;">Comment:</h4>
+            <p style="margin: 0; color: #475569; font-style: italic;">"${truncatedContent}"</p>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${featureUrl}" 
+               style="background-color: #0ea5e9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              View Comment
+            </a>
+          </div>
+          
+          <p>Click the button above to view the full comment and respond.</p>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
+          <p style="color: #64748b; font-size: 14px;">
+            You received this email because you were mentioned in a FeatureForge comment. 
+            You can manage your notification preferences in your account settings.
+          </p>
+        </div>
+      `
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    logger.info(`Mention notification email sent successfully to ${email}`);
+    
+    return {
+      success: true,
+      message: 'Mention notification email sent successfully',
+      messageId: result.messageId
+    };
+  } catch (error) {
+    logger.error(`Failed to send mention notification email to ${email}:`, error);
+    return Promise.reject(new Error('Failed to send mention notification email'));
+  }
+};
+
 module.exports = {
   sendInvitationEmail,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendMentionNotificationEmail
 }; 
