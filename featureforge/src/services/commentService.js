@@ -47,7 +47,7 @@ class CommentService {
    */
   async getTeamMembersForMentions(teamId, query = '') {
     const params = query ? { q: query } : {};
-    return await apiService.get(`/teams/${teamId}/members/mentions`, { params });
+    return await apiService.get(`/teams/${teamId}/members/mentions`, params);
   }
 }
 

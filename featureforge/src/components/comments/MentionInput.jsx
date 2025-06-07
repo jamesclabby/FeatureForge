@@ -13,7 +13,7 @@ function MentionInput({ value, onChange, teamId, placeholder, className, ...prop
   const textareaRef = useRef(null);
 
   useEffect(() => {
-    if (mentionQuery && teamId) {
+    if (mentionQuery !== null && teamId) {
       loadTeamMembers(mentionQuery);
     } else {
       setSuggestions([]);
@@ -38,16 +38,44 @@ function MentionInput({ value, onChange, teamId, placeholder, className, ...prop
     const newValue = e.target.value;
     const cursorPosition = e.target.selectionStart;
     
+    // Always update the parent component first
     onChange(newValue);
 
-    // Check for @ mentions - allow dots, hyphens, underscores
+    // Check for @ mentions - find the last @ before cursor position
     const textBeforeCursor = newValue.slice(0, cursorPosition);
-    const mentionMatch = textBeforeCursor.match(/@([\w.-]*)$/);
+    
+    // Find all @ symbols and their positions
+    const atSymbols = [];
+    for (let i = 0; i < textBeforeCursor.length; i++) {
+      if (textBeforeCursor[i] === '@') {
+        atSymbols.push(i);
+      }
+    }
+    
+    if (atSymbols.length === 0) {
+      // No @ symbols found
+      setMentionQuery('');
+      setMentionStart(-1);
+      setShowSuggestions(false);
+      return;
+    }
+    
+    // Get the last @ symbol position
+    const lastAtPosition = atSymbols[atSymbols.length - 1];
+    
+    // Get text from last @ to cursor
+    const textFromAt = textBeforeCursor.slice(lastAtPosition);
+    
+    // Check if this looks like a valid mention (no spaces, only allowed characters)
+    const mentionMatch = textFromAt.match(/^@([\w.-]*)$/);
     
     if (mentionMatch) {
-      setMentionStart(cursorPosition - mentionMatch[0].length);
-      setMentionQuery(mentionMatch[1]);
+      // Valid mention pattern
+      const query = mentionMatch[1];
+      setMentionStart(lastAtPosition);
+      setMentionQuery(query);
     } else {
+      // Invalid mention pattern (contains spaces or invalid chars)
       setMentionQuery('');
       setMentionStart(-1);
       setShowSuggestions(false);
