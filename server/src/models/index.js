@@ -3,6 +3,8 @@ const Team = require('./Team')(sequelize);
 const User = require('./User')(sequelize);
 const TeamMember = require('./TeamMember')(sequelize);
 const Feature = require('./Feature')(sequelize);
+const Comment = require('./Comment')(sequelize);
+const Notification = require('./Notification')(sequelize);
 
 // Define relationships
 Team.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
@@ -37,10 +39,30 @@ Team.hasMany(Feature, {
 Feature.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
 User.hasMany(Feature, { foreignKey: 'createdBy' });
 
+// Comment relationships
+Comment.belongsTo(Feature, { foreignKey: 'featureId', as: 'feature' });
+Feature.hasMany(Comment, { foreignKey: 'featureId', as: 'commentsList' });
+
+Comment.belongsTo(User, { foreignKey: 'userId', as: 'author' });
+User.hasMany(Comment, { foreignKey: 'userId', as: 'userComments' });
+
+// Self-referencing for reply threading
+Comment.belongsTo(Comment, { foreignKey: 'parentId', as: 'parent' });
+Comment.hasMany(Comment, { foreignKey: 'parentId', as: 'replies' });
+
+// Notification relationships
+Notification.belongsTo(User, { foreignKey: 'userId', as: 'recipient' });
+User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
+
+Notification.belongsTo(User, { foreignKey: 'triggeredBy', as: 'trigger' });
+User.hasMany(Notification, { foreignKey: 'triggeredBy', as: 'triggeredNotifications' });
+
 module.exports = {
   sequelize,
   Team,
   User,
   TeamMember,
-  Feature
+  Feature,
+  Comment,
+  Notification
 }; 

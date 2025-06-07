@@ -3,7 +3,7 @@ import { auth } from './firebase';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5002/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -174,7 +174,7 @@ const apiService = {
   debugAuth: async () => {
     try {
       console.group("🔍 Authentication Debug Information");
-      console.log("API Base URL:", process.env.REACT_APP_API_URL || 'http://localhost:5001/api');
+      console.log("API Base URL:", process.env.REACT_APP_API_URL || 'http://localhost:5002/api');
       
       // Check if user is logged in
       const user = authUtils.getCurrentUser();

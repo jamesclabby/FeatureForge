@@ -26,6 +26,14 @@ const verifyFirebaseToken = async (idToken) => {
  */
 const findOrCreateUserFromFirebase = async (firebaseUser) => {
   try {
+    console.log('Firebase user data:', {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      name: firebaseUser.name,
+      display_name: firebaseUser.display_name,
+      all_fields: Object.keys(firebaseUser)
+    });
+
     // Check if user exists by Firebase UID
     let user = await User.findOne({ where: { firebaseUid: firebaseUser.uid } });
 
@@ -37,20 +45,40 @@ const findOrCreateUserFromFirebase = async (firebaseUser) => {
         // If found by email, update Firebase UID
         user.firebaseUid = firebaseUser.uid;
         await user.save();
+        console.log('Updated existing user with Firebase UID:', user.id);
       } else {
-        // Create new user
+        // Create new user - try multiple name sources
+        const userName = firebaseUser.name || 
+                        firebaseUser.display_name || 
+                        firebaseUser.email.split('@')[0];
+                        
+        console.log('Creating new user with name:', userName);
+        
         user = await User.create({
-          name: firebaseUser.name || firebaseUser.email.split('@')[0],
+          name: userName,
           email: firebaseUser.email,
           password: Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8),
           firebaseUid: firebaseUser.uid,
           avatar: firebaseUser.picture || null
         });
+        
+        console.log('Created new user:', {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        });
       }
+    } else {
+      console.log('Found existing user:', {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      });
     }
 
     return user;
   } catch (error) {
+    console.error('Error in findOrCreateUserFromFirebase:', error);
     throw new Error(`Error finding or creating user: ${error.message}`);
   }
 };
