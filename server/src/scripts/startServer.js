@@ -15,6 +15,8 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 const featureRoutes = require('../routes/features');
 const authRoutes = require('../routes/auth');
 const teamRoutes = require('../routes/teamRoutes');
+const commentRoutes = require('../routes/comments');
+const notificationRoutes = require('../routes/notifications');
 
 /**
  * Start the server with database connection
@@ -29,7 +31,7 @@ const startServer = async (options = {}) => {
     const app = express();
     
     // Set port
-    const PORT = process.env.PORT || 5000;
+    const PORT = process.env.PORT || 5002;
     
     // Database connection (optional)
     let dbConnection = null;
@@ -101,7 +103,9 @@ const startServer = async (options = {}) => {
         endpoints: {
           auth: '/api/auth',
           teams: '/api/teams',
-          features: '/api/features'
+          features: '/api/features',
+          comments: '/api/features/:featureId/comments',
+          notifications: '/api/notifications'
         },
         documentation: 'See README.md for API documentation'
       });
@@ -121,6 +125,8 @@ const startServer = async (options = {}) => {
     app.use('/api/teams', dbCheckMiddleware, teamRoutes);
     app.use('/api/features', dbCheckMiddleware, featureRoutes);
     app.use('/api/auth', authRoutes);
+    app.use('/api', dbCheckMiddleware, commentRoutes);
+    app.use('/api', dbCheckMiddleware, notificationRoutes);
     
     // Error handling middleware
     app.use(errorHandler);
