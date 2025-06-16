@@ -16,6 +16,18 @@ const MainLayout = ({ children }) => {
     }
   };
 
+  // Helper function to get the currently selected team ID
+  const getSelectedTeamId = () => {
+    try {
+      return localStorage.getItem('selectedTeamId');
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+      return null;
+    }
+  };
+
+  const selectedTeamId = getSelectedTeamId();
+
   return (
     <div className="flex flex-col min-h-screen bg-secondary-50">
       <header className="bg-white border-b border-secondary-200 py-4 shadow-sm">
@@ -30,6 +42,11 @@ const MainLayout = ({ children }) => {
                 <Link to="/selector" className="text-secondary-700 hover:text-primary-600 transition-colors">
                   Switch Team
                 </Link>
+                {selectedTeamId && (
+                  <Link to={`/team-dashboard/${selectedTeamId}`} className="text-secondary-700 hover:text-primary-600 transition-colors">
+                    Dashboard
+                  </Link>
+                )}
                 <Link to="/features" className="text-secondary-700 hover:text-primary-600 transition-colors">
                   Features
                 </Link>

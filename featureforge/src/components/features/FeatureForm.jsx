@@ -92,7 +92,7 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
       
       let response;
       if (isEdit) {
-        response = await featureService.updateFeature(initialData.id, dataToSubmit);
+        response = await featureService.updateFeature(initialData.id, dataToSubmit, initialData.teamId);
       } else {
         response = await featureService.createFeature(teamId, dataToSubmit);
       }

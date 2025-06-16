@@ -145,7 +145,7 @@ const FeatureDetail = () => {
       setChangingStatus(true);
       const response = await featureService.updateFeature(featureId, { 
         status: newStatus 
-      });
+      }, feature.teamId);
       setFeature(response.data);
       setSelectedStatus(response.data.status);
       toast.toast({
