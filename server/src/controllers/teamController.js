@@ -898,11 +898,10 @@ const getTeamFeatureStats = async (req, res) => {
     const stats = {
       total: features.length,
       byStatus: {
-        planned: features.filter(f => f.status === 'planned').length,
-        inProgress: features.filter(f => f.status === 'in-progress').length,
-        inReview: features.filter(f => f.status === 'in-review').length,
-        completed: features.filter(f => f.status === 'completed').length,
-        cancelled: features.filter(f => f.status === 'cancelled').length
+        backlog: features.filter(f => f.status === 'backlog').length,
+        inProgress: features.filter(f => f.status === 'in_progress').length,
+        review: features.filter(f => f.status === 'review').length,
+        done: features.filter(f => f.status === 'done').length
       },
       byPriority: {
         low: features.filter(f => f.priority === 'low').length,

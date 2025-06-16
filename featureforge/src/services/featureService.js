@@ -222,9 +222,10 @@ const featureService = {
    * Update an existing feature
    * @param {string} id - Feature ID
    * @param {Object} featureData - Updated feature data
+   * @param {string} teamId - Team ID (required for proper authorization)
    * @returns {Promise<{data: Object}>} - Updated feature
    */
-  updateFeature: async (id, featureData) => {
+  updateFeature: async (id, featureData, teamId) => {
     if (MOCK_ENABLED) {
       console.log(`Using mock data for updateFeature: ${id}`, featureData);
       const index = MOCK_FEATURES.findIndex(feature => feature.id === id);
@@ -239,8 +240,16 @@ const featureService = {
       MOCK_FEATURES[index] = updatedFeature;
       return Promise.resolve({ data: updatedFeature });
     }
-    return apiService.put(`/features/${id}`, featureData)
-      .catch(error => handleApiError(error, `updateFeature(${id})`));
+    
+    // Use team-specific endpoint for better authorization
+    if (teamId) {
+      return apiService.put(`/teams/${teamId}/features/${id}`, featureData)
+        .catch(error => handleApiError(error, `updateFeature(${id}) via team ${teamId}`));
+    } else {
+      // Fallback to generic endpoint if no teamId provided (for backward compatibility)
+      return apiService.put(`/features/${id}`, featureData)
+        .catch(error => handleApiError(error, `updateFeature(${id})`));
+    }
   },
 
   /**

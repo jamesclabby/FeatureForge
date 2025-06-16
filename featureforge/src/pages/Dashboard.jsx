@@ -7,6 +7,7 @@ import { useToast } from '../components/ui/toast';
 import teamService from '../services/teamService';
 import featureService from '../services/featureService';
 import CreateFeatureDialog from '../components/features/CreateFeatureDialog';
+import AnalyticsSection from '../components/analytics/AnalyticsSection';
 
 const Dashboard = () => {
   const [team, setTeam] = useState(null);
@@ -99,7 +100,7 @@ const Dashboard = () => {
       
       setFeatureCount(stats.total || 0);
       setInProgressCount(stats.byStatus?.inProgress || 0);
-      setCompletedCount(stats.byStatus?.completed || 0);
+      setCompletedCount(stats.byStatus?.done || 0);
     } catch (err) {
       console.error('Error fetching feature statistics:', err);
       // Don't let stats errors affect the main dashboard functionality
@@ -269,35 +270,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Team Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Team Information</CardTitle>
-            <CardDescription>
-              Details about your current team
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-secondary-500">Team Name</p>
-                <p className="text-lg font-semibold">{team.name}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-secondary-500">Description</p>
-                <p>{team.description || 'No description provided'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-secondary-500">Created on</p>
-                <p>{new Date(team.createdAt).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-secondary-500">Members</p>
-                <p>{team.memberCount} members</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Analytics Section */}
+        <div>
+          <AnalyticsSection teamId={getTeamId()} />
+        </div>
 
         {/* Feature Summary */}
         <Card>
@@ -330,6 +306,36 @@ const Dashboard = () => {
               <Button variant="outline" onClick={() => navigate('/features')}>
                 View All Features
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Team Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Team Information</CardTitle>
+            <CardDescription>
+              Details about your current team
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-secondary-500">Team Name</p>
+                <p className="text-lg font-semibold">{team.name}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-secondary-500">Description</p>
+                <p>{team.description || 'No description provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-secondary-500">Created on</p>
+                <p>{new Date(team.createdAt).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-secondary-500">Members</p>
+                <p>{team.memberCount} members</p>
+              </div>
             </div>
           </CardContent>
         </Card>

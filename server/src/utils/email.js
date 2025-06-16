@@ -9,14 +9,14 @@ const createTransporter = () => {
   }
 
   return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
+  host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT) || 587,
-    secure: process.env.EMAIL_SECURE === 'true',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
-    }
-  });
+  secure: process.env.EMAIL_SECURE === 'true',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
 };
 
 const transporter = createTransporter();
@@ -155,8 +155,8 @@ const sendMentionNotificationEmail = async ({ email, recipientName, mentionerNam
   // In test environment, just return success
   if (process.env.NODE_ENV === 'test') {
     logger.info(`Mock mention notification email sent to ${email}`);
-    return Promise.resolve({
-      success: true,
+  return Promise.resolve({
+    success: true,
       message: 'Mention notification email sent (mock)'
     });
   }

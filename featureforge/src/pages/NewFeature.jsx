@@ -83,7 +83,7 @@ const NewFeature = () => {
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Create New Feature</h1>
+          <h1 className="text-2xl font-bold">Create New Feature</h1>
             <p className="text-secondary-500 mt-1">
               Creating feature for <span className="font-semibold text-secondary-700">{team.name}</span>
             </p>
