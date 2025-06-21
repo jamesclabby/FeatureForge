@@ -17,6 +17,7 @@ const authRoutes = require('../routes/auth');
 const teamRoutes = require('../routes/teamRoutes');
 const commentRoutes = require('../routes/comments');
 const notificationRoutes = require('../routes/notifications');
+const chatRoutes = require('../routes/chatRoutes');
 
 /**
  * Start the server with database connection
@@ -125,6 +126,7 @@ const startServer = async (options = {}) => {
     app.use('/api/teams', dbCheckMiddleware, teamRoutes);
     app.use('/api/features', dbCheckMiddleware, featureRoutes);
     app.use('/api/auth', authRoutes);
+    app.use('/api/chat', chatRoutes);
     app.use('/api', dbCheckMiddleware, commentRoutes);
     app.use('/api', dbCheckMiddleware, notificationRoutes);
     

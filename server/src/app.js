@@ -23,6 +23,7 @@ const swaggerDocument = YAML.load(path.join(__dirname, 'docs/api.yaml'));
 
 const teamRoutes = require('./routes/teamRoutes');
 const featureRoutes = require('./routes/features');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/api/health', require('./routes/health'));
 app.use('/api/auth', authRateLimit, require('./routes/auth'));
 app.use('/api/teams', teamRoutes);
 app.use('/api/features', featureRoutes);
+app.use('/api/chat', chatRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

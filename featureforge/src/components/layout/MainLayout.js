@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTeamContext } from '../../hooks/useTeamContext';
 import { Button } from '../ui/button';
+import { AIChatWidget } from '../chat';
 
 const MainLayout = ({ children }) => {
   const { currentUser, logout } = useAuth();
+  const { teamId, teamName, userRole, isTeamSelected } = useTeamContext();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -93,6 +96,15 @@ const MainLayout = ({ children }) => {
           <p className="mt-2">A modern feature management platform for product teams.</p>
         </div>
       </footer>
+
+      {/* AI Chat Widget - Only show when user is logged in and has a team selected */}
+      {currentUser && isTeamSelected && (
+        <AIChatWidget
+          teamId={teamId}
+          teamName={teamName}
+          userRole={userRole}
+        />
+      )}
     </div>
   );
 };
