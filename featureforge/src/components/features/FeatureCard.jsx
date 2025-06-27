@@ -3,6 +3,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
+import { getFeatureTypeDetails } from '../../constants/featureTypes';
 
 // Helper function to get status/priority details
 const getStatusDetails = (statusValue) => {
@@ -34,6 +35,7 @@ const formatDate = (dateString) => {
 const FeatureCard = ({ feature, onVote, onClick }) => {
   const statusDetails = getStatusDetails(feature.status);
   const priorityDetails = getPriorityDetails(feature.priority);
+  const typeDetails = getFeatureTypeDetails(feature.type || 'task');
 
   // Set badge colors based on status
   const getStatusColor = () => {
@@ -79,6 +81,10 @@ const FeatureCard = ({ feature, onVote, onClick }) => {
             <p className="text-secondary-600 line-clamp-2">{feature.description}</p>
             
             <div className="flex flex-wrap gap-2 mt-3">
+              <Badge className={typeDetails.color}>
+                {typeDetails.icon} {typeDetails.label}
+              </Badge>
+              
               <Badge className={getStatusColor()}>
                 {statusDetails.label}
               </Badge>

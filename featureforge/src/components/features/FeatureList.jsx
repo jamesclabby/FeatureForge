@@ -7,8 +7,10 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useToast } from '../ui/toast';
 import featureService, { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
+import { FEATURE_TYPES_ARRAY } from '../../constants/featureTypes';
 import CreateFeatureDialog from './CreateFeatureDialog';
 import FeatureCard from './FeatureCard';
+import FeatureHierarchy from './FeatureHierarchy';
 
 const FeatureList = ({ teamId }) => {
   const [features, setFeatures] = useState([]);
@@ -16,8 +18,10 @@ const FeatureList = ({ teamId }) => {
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('votes-desc');
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'hierarchy'
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -92,6 +96,11 @@ const FeatureList = ({ teamId }) => {
       result = result.filter(feature => feature.priority === filterPriority);
     }
     
+    // Apply type filter
+    if (filterType !== 'all') {
+      result = result.filter(feature => feature.type === filterType);
+    }
+    
     // Apply search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -148,13 +157,38 @@ const FeatureList = ({ teamId }) => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-2xl font-bold">Feature Requests</h2>
-        <CreateFeatureDialog onFeatureCreated={handleFeatureCreated} />
+        <div className="flex items-center gap-3">
+          {/* View Mode Toggle */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                viewMode === 'list' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+              onClick={() => setViewMode('list')}
+            >
+              List View
+            </button>
+            <button
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                viewMode === 'hierarchy' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+              onClick={() => setViewMode('hierarchy')}
+            >
+              Hierarchy
+            </button>
+          </div>
+          <CreateFeatureDialog onFeatureCreated={handleFeatureCreated} />
+        </div>
       </div>
 
       {/* Filters and search */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label htmlFor="search" className="text-sm font-medium text-secondary-700 mb-1 block">
                 Search
@@ -207,6 +241,28 @@ const FeatureList = ({ teamId }) => {
             </div>
             
             <div>
+              <label htmlFor="typeFilter" className="text-sm font-medium text-secondary-700 mb-1 block">
+                Type
+              </label>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger id="typeFilter">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {FEATURE_TYPES_ARRAY.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{type.icon}</span>
+                        <span>{type.label}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
               <label htmlFor="sortBy" className="text-sm font-medium text-secondary-700 mb-1 block">
                 Sort By
               </label>
@@ -240,16 +296,26 @@ const FeatureList = ({ teamId }) => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {displayedFeatures.map(feature => (
-            <FeatureCard 
-              key={feature.id}
-              feature={feature}
+        <>
+          {viewMode === 'hierarchy' ? (
+            <FeatureHierarchy 
+              features={displayedFeatures}
+              onFeatureClick={(feature) => navigate(`/features/${feature.id}`)}
               onVote={handleVote}
-              onClick={() => navigate(`/features/${feature.id}`)}
             />
-          ))}
-        </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {displayedFeatures.map(feature => (
+                <FeatureCard 
+                  key={feature.id}
+                  feature={feature}
+                  onVote={handleVote}
+                  onClick={() => navigate(`/features/${feature.id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [featureCount, setFeatureCount] = useState(0);
   const [inProgressCount, setInProgressCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
+  const [typeStats, setTypeStats] = useState({ parent: 0, story: 0, task: 0, research: 0 });
   const navigate = useNavigate();
   const location = useLocation();
   const { teamId: urlTeamId } = useParams(); // Get teamId from URL parameter
@@ -101,6 +102,7 @@ const Dashboard = () => {
       setFeatureCount(stats.total || 0);
       setInProgressCount(stats.byStatus?.inProgress || 0);
       setCompletedCount(stats.byStatus?.done || 0);
+      setTypeStats(stats.byType || { parent: 0, story: 0, task: 0, research: 0 });
     } catch (err) {
       console.error('Error fetching feature statistics:', err);
       // Don't let stats errors affect the main dashboard functionality
@@ -108,6 +110,7 @@ const Dashboard = () => {
       setFeatureCount(0);
       setInProgressCount(0);
       setCompletedCount(0);
+      setTypeStats({ parent: 0, story: 0, task: 0, research: 0 });
     }
   };
 
@@ -306,6 +309,36 @@ const Dashboard = () => {
               <Button variant="outline" onClick={() => navigate('/features')}>
                 View All Features
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Feature Types Breakdown */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Feature Types</CardTitle>
+            <CardDescription>
+              Breakdown by feature type
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">{typeStats.parent}</div>
+                <div className="text-sm text-purple-700">📦 Parents</div>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{typeStats.story}</div>
+                <div className="text-sm text-blue-700">📖 Stories</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{typeStats.task}</div>
+                <div className="text-sm text-green-700">⚙️ Tasks</div>
+              </div>
+              <div className="text-center p-4 bg-orange-50 rounded-lg">
+                <div className="text-2xl font-bold text-orange-600">{typeStats.research}</div>
+                <div className="text-sm text-orange-700">🔍 Research</div>
+              </div>
             </div>
           </CardContent>
         </Card>

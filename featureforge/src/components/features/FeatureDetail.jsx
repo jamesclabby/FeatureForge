@@ -23,6 +23,7 @@ import {
 } from '../ui/tooltip';
 import { useToast } from '../ui/toast';
 import featureService, { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
+import { getFeatureTypeDetails } from '../../constants/featureTypes';
 import { useAuth } from '../../contexts/AuthContext';
 import FeatureForm from './FeatureForm';
 import { CommentList } from '../comments';
@@ -219,6 +220,7 @@ const FeatureDetail = () => {
 
   const statusDetails = getStatusDetails(feature.status);
   const priorityDetails = getPriorityDetails(feature.priority);
+  const typeDetails = getFeatureTypeDetails(feature.type || 'task');
 
   // Status badge color
   const getStatusColor = () => {
@@ -373,6 +375,11 @@ const FeatureDetail = () => {
             
             <Badge className={getPriorityColor()}>
               {priorityDetails.label} Priority
+            </Badge>
+            
+            <Badge className={typeDetails.color}>
+              <span className="mr-1">{typeDetails.icon}</span>
+              {typeDetails.label}
             </Badge>
             
             {feature.tags && feature.tags.map(tag => (

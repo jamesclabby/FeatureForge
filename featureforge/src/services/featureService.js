@@ -415,6 +415,12 @@ const featureService = {
           medium: teamFeatures.filter(f => f.priority === 'medium').length,
           high: teamFeatures.filter(f => f.priority === 'high').length,
           critical: teamFeatures.filter(f => f.priority === 'critical').length
+        },
+        byType: {
+          parent: teamFeatures.filter(f => f.type === 'parent').length,
+          story: teamFeatures.filter(f => f.type === 'story').length,
+          task: teamFeatures.filter(f => f.type === 'task').length,
+          research: teamFeatures.filter(f => f.type === 'research').length
         }
       };
       
@@ -449,6 +455,12 @@ const featureService = {
             medium: features.filter(f => f.priority === 'medium').length,
             high: features.filter(f => f.priority === 'high').length,
             critical: features.filter(f => f.priority === 'critical').length
+          },
+          byType: {
+            parent: features.filter(f => f.type === 'parent').length,
+            story: features.filter(f => f.type === 'story').length,
+            task: features.filter(f => f.type === 'task').length,
+            research: features.filter(f => f.type === 'research').length
           }
         };
         
@@ -460,7 +472,8 @@ const featureService = {
           data: { 
             total: 0, 
             byStatus: { backlog: 0, inProgress: 0, review: 0, done: 0 },
-            byPriority: { low: 0, medium: 0, high: 0, critical: 0 }
+            byPriority: { low: 0, medium: 0, high: 0, critical: 0 },
+            byType: { parent: 0, story: 0, task: 0, research: 0 }
           } 
         };
       }

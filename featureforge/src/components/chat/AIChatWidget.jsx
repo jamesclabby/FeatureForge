@@ -121,12 +121,21 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, newUserMessage]);
+    const updatedMessages = [...messages, newUserMessage];
+    setMessages(updatedMessages);
 
     try {
-      // Send message to AI using the authenticated endpoint with real team data
-      // This will build fresh context on the server side
-      const response = await chatService.sendMessage(userMessage, teamId);
+      // Prepare conversation history for the AI (last 10 messages to avoid token limits)
+      const conversationHistory = updatedMessages
+        .slice(-10) // Keep last 10 messages
+        .map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content,
+          timestamp: msg.timestamp
+        }));
+
+      // Send message to AI with conversation history
+      const response = await chatService.sendMessage(userMessage, teamId, conversationHistory);
       
       // Update actual team name from API response if available
       if (response.context?.teamName) {

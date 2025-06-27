@@ -75,7 +75,7 @@ router.post('/message-public', async (req, res) => {
  */
 router.post('/message', protectWithAny, async (req, res) => {
   try {
-    const { message, teamId } = req.body;
+    const { message, teamId, conversationHistory = [] } = req.body;
     const userId = req.user.id;
 
     // Validate input
@@ -96,7 +96,10 @@ router.post('/message', protectWithAny, async (req, res) => {
     // Build context for AI
     const context = await buildChatContext(userId, teamId);
     
-    console.log(`Chat request from user ${userId} for team ${teamId}: "${message.substring(0, 50)}..."`);
+    // Add conversation history to context
+    context.conversationHistory = conversationHistory;
+    
+    console.log(`Chat request from user ${userId} for team ${teamId}: "${message.substring(0, 50)}..." (${conversationHistory.length} previous messages)`);
 
     // Get AI response
     const aiResponse = await aiService.chat(message, context);
@@ -639,6 +642,10 @@ function generateContextualSuggestions(page, context) {
 async function executeCreateFeature(parameters, userId) {
   const { Feature } = require('../models');
   
+  console.log('=== FEATURE CREATION DEBUG ===');
+  console.log('Raw parameters received:', JSON.stringify(parameters, null, 2));
+  console.log('User ID:', userId);
+  
   // Map priority values to match the database enum
   const priorityMap = {
     'urgent': 'critical',
@@ -666,16 +673,29 @@ async function executeCreateFeature(parameters, userId) {
   const featureData = {
     title: parameters.title,
     description: parameters.description || '',
+    type: parameters.type || 'task', // Default to 'task' if not specified
     priority: priorityMap[parameters.priority] || 'medium',
     status: statusMap[parameters.status] || 'backlog',
     estimatedEffort: parameters.estimatedEffort || null,
     dueDate: parameters.dueDate || null,
+    parentId: parameters.parentId || null,
     teamId: parameters.teamId,
     createdBy: userId, // Fixed: use createdBy instead of requestedById
     createdByEmail: user ? user.email : parameters.createdByEmail || null
   };
 
+  console.log('Final feature data to create:', JSON.stringify(featureData, null, 2));
+
   const feature = await Feature.create(featureData);
+  
+  console.log('Feature created successfully:', {
+    id: feature.id,
+    title: feature.title,
+    status: feature.status,
+    priority: feature.priority
+  });
+  console.log('=== END FEATURE CREATION DEBUG ===');
+  
   return {
     id: feature.id,
     title: feature.title,

@@ -12,9 +12,10 @@ class ChatService {
    * Send a message to the AI
    * @param {string} message - The message to send
    * @param {string} teamId - The current team ID
+   * @param {Array} conversationHistory - Previous messages in the conversation
    * @returns {Promise<Object>} AI response
    */
-  async sendMessage(message, teamId) {
+  async sendMessage(message, teamId, conversationHistory = []) {
     try {
       const authToken = await this.getAuthToken();
       
@@ -26,7 +27,8 @@ class ChatService {
         },
         body: JSON.stringify({
           message,
-          teamId
+          teamId,
+          conversationHistory
         })
       });
 

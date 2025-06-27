@@ -17,6 +17,7 @@ class AnalyticsService {
         overview: this.calculateOverviewMetrics(features),
         statusDistribution: this.calculateStatusDistribution(features),
         priorityAnalysis: this.calculatePriorityAnalysis(features),
+        typeDistribution: this.calculateTypeDistribution(features),
         effortImpactMatrix: this.calculateEffortImpactMatrix(features),
         timelineAnalytics: this.calculateTimelineAnalytics(features),
         velocity: this.calculateVelocity(features),
@@ -82,6 +83,24 @@ class AnalyticsService {
       name: this.getPriorityLabel(priority),
       count: priorityCounts[priority] || 0,
       percentage: (((priorityCounts[priority] || 0) / features.length) * 100).toFixed(1)
+    }));
+  }
+
+  /**
+   * Calculate type distribution for pie chart
+   */
+  calculateTypeDistribution(features) {
+    const typeCounts = features.reduce((acc, feature) => {
+      const type = feature.type || 'unknown';
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(typeCounts).map(([type, count]) => ({
+      type,
+      name: this.getTypeLabel(type),
+      count,
+      percentage: ((count / features.length) * 100).toFixed(1)
     }));
   }
 
@@ -249,23 +268,28 @@ class AnalyticsService {
    * Helper functions
    */
   getStatusLabel(status) {
-    const labels = {
+    const statusLabels = {
       'backlog': 'Backlog',
       'in_progress': 'In Progress',
       'review': 'Review',
-      'done': 'Done'
+      'done': 'Done',
+      'planned': 'Planned',
+      'in-progress': 'In Progress',
+      'completed': 'Completed',
+      'cancelled': 'Cancelled'
     };
-    return labels[status] || status;
+    return statusLabels[status] || status;
   }
 
   getPriorityLabel(priority) {
-    const labels = {
+    const priorityLabels = {
       'low': 'Low',
       'medium': 'Medium',
       'high': 'High',
-      'critical': 'Critical'
+      'critical': 'Critical',
+      'urgent': 'Critical'
     };
-    return labels[priority] || priority;
+    return priorityLabels[priority] || priority;
   }
 
   formatWeekLabel(date) {
@@ -276,6 +300,20 @@ class AnalyticsService {
   formatMonthLabel(date) {
     const options = { month: 'short', year: 'numeric' };
     return date.toLocaleDateString('en-US', options);
+  }
+
+  /**
+   * Get human-readable type label
+   */
+  getTypeLabel(type) {
+    const typeLabels = {
+      'parent': 'Parent',
+      'story': 'Story', 
+      'task': 'Task',
+      'research': 'Research',
+      'unknown': 'Unknown'
+    };
+    return typeLabels[type] || type;
   }
 }
 

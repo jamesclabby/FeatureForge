@@ -495,14 +495,26 @@ const getTeamFeatures = async (req, res) => {
     const features = await Feature.findAll({
       attributes: [
         'id', 'title', 'description', 'status', 'priority', 
-        'teamId', 'createdBy', 'createdAt', 'updatedAt'
+        'type', 'parentId', 'teamId', 'createdBy', 'createdAt', 'updatedAt'
       ],
       where: { teamId },
-      include: [{
-        model: User,
-        as: 'creator',
-        attributes: ['id', 'name', 'email']
-      }],
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'name', 'email']
+        },
+        {
+          model: Feature,
+          as: 'parent',
+          attributes: ['id', 'title', 'type', 'status']
+        },
+        {
+          model: Feature,
+          as: 'children',
+          attributes: ['id', 'title', 'type', 'status', 'priority']
+        }
+      ],
       order: [
         ['priority', 'DESC'],
         ['createdAt', 'DESC']
@@ -547,6 +559,8 @@ const createTeamFeature = async (req, res) => {
   const { 
     title, 
     description, 
+    type,
+    parentId,
     priority,
     status,
     impact,
@@ -582,7 +596,7 @@ const createTeamFeature = async (req, res) => {
     
     // Log received values for troubleshooting
     console.log('Creating feature with data:', { 
-      title, description, priority, status, 
+      title, description, type, parentId, priority, status, 
       impact, effort, category, targetRelease, tags
     });
     
@@ -625,11 +639,15 @@ const createTeamFeature = async (req, res) => {
     }
     
     console.log(`Status received: "${status}" (${typeof status}), sanitized to: "${sanitizedStatus}"`);
+    console.log(`Type received: "${type}" (${typeof type})`);
+    console.log(`ParentId received: "${parentId}" (${typeof parentId})`);
 
     // Create feature with the sanitized status
     const feature = await Feature.create({
       title,
       description,
+      type: type || 'task', // Default to 'task' if not specified
+      parentId: parentId || null,
       priority,
       status: sanitizedStatus,
       teamId,
@@ -664,7 +682,7 @@ const createTeamFeature = async (req, res) => {
  */
 const updateTeamFeature = async (req, res) => {
   const { teamId, featureId } = req.params;
-  const { title, description, status, priority } = req.body;
+  const { title, description, type, parentId, status, priority } = req.body;
   const userId = req.user.id;
 
   try {
@@ -704,6 +722,8 @@ const updateTeamFeature = async (req, res) => {
     const updateData = {};
     if (title) updateData.title = title;
     if (description) updateData.description = description;
+    if (type) updateData.type = type;
+    if (parentId) updateData.parentId = parentId;
     if (status) updateData.status = status;
     if (priority) updateData.priority = priority;
 
@@ -885,7 +905,7 @@ const getTeamFeatureStats = async (req, res) => {
     let features = [];
     try {
       features = await Feature.findAll({
-        attributes: ['id', 'status', 'priority'],
+        attributes: ['id', 'status', 'priority', 'type'],
         where: { teamId }
       });
     } catch (featureError) {
@@ -908,6 +928,12 @@ const getTeamFeatureStats = async (req, res) => {
         medium: features.filter(f => f.priority === 'medium').length,
         high: features.filter(f => f.priority === 'high').length,
         critical: features.filter(f => f.priority === 'critical').length
+      },
+      byType: {
+        parent: features.filter(f => f.type === 'parent').length,
+        story: features.filter(f => f.type === 'story').length,
+        task: features.filter(f => f.type === 'task').length,
+        research: features.filter(f => f.type === 'research').length
       }
     };
 

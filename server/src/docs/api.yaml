@@ -80,12 +80,20 @@ components:
           type: string
         description:
           type: string
+        type:
+          type: string
+          enum: [parent, story, task, research]
+          default: task
+        parentId:
+          type: string
+          format: uuid
+          description: ID of parent feature (only for non-parent types)
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
         status:
           type: string
           enum: [backlog, in_progress, review, done]
-        priority:
-          type: string
-          enum: [low, medium, high, urgent]
         estimatedEffort:
           type: integer
         dueDate:
@@ -383,9 +391,17 @@ paths:
                   type: string
                 description:
                   type: string
+                type:
+                  type: string
+                  enum: [parent, story, task, research]
+                  default: task
+                parentId:
+                  type: string
+                  format: uuid
+                  description: ID of parent feature (only for non-parent types)
                 priority:
                   type: string
-                  enum: [low, medium, high, urgent]
+                  enum: [low, medium, high, critical]
                 status:
                   type: string
                   enum: [backlog, in_progress, review, done]

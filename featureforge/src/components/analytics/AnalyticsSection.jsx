@@ -45,6 +45,7 @@ const AnalyticsSection = ({ teamId }) => {
   // Chart type options
   const flowChartOptions = [
     { value: 'status-distribution', label: 'Feature Status Distribution' },
+    { value: 'type-distribution', label: 'Feature Type Distribution' },
     { value: 'feature-velocity', label: 'Feature Velocity' },
     { value: 'status-timeline', label: 'Status Timeline' }
   ];
@@ -88,6 +89,16 @@ const AnalyticsSection = ({ teamId }) => {
           return (
             <div className="h-64 flex items-center justify-center text-gray-500">
               <p>No status data available</p>
+            </div>
+          );
+        }
+      case 'type-distribution':
+        if (analytics.typeDistribution && Array.isArray(analytics.typeDistribution)) {
+          return <StatusDistributionChart data={analytics.typeDistribution} title="Feature Type Distribution" />;
+        } else {
+          return (
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              <p>No type data available</p>
             </div>
           );
         }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-const StatusDistributionChart = ({ data }) => {
+const StatusDistributionChart = ({ data, title = "Status Distribution" }) => {
   // Early return for safety
   if (!data) {
     return (
@@ -22,18 +22,29 @@ const StatusDistributionChart = ({ data }) => {
   if (data.length === 0) {
     return (
       <div className="h-80 flex items-center justify-center text-gray-500">
-        <p>No status data available</p>
+        <p>No data available</p>
       </div>
     );
   }
 
   // Color scheme that matches your app's design
-  const COLORS = {
+  const STATUS_COLORS = {
     'backlog': '#6b7280',      // Gray for backlog
     'in_progress': '#f59e0b',  // Amber for in progress  
     'review': '#8b5cf6',       // Purple for review
     'done': '#10b981'          // Green for done
   };
+
+  const TYPE_COLORS = {
+    'parent': '#8b5cf6',       // Purple for parent
+    'story': '#3b82f6',        // Blue for story
+    'task': '#10b981',         // Green for task
+    'research': '#f59e0b'      // Orange for research
+  };
+
+  // Determine if this is status or type data based on the data structure
+  const isTypeData = data.some(item => item.type && ['parent', 'story', 'task', 'research'].includes(item.type));
+  const COLORS = isTypeData ? TYPE_COLORS : STATUS_COLORS;
 
   // Transform the data for Recharts with safety checks
   const chartData = data
@@ -42,9 +53,9 @@ const StatusDistributionChart = ({ data }) => {
       name: item.name || 'Unknown',
       value: parseInt(item.count) || 0,
       percentage: parseFloat(item.percentage) || 0,
-      status: item.status || 'unknown'
+      status: item.status || item.type || 'unknown'
     }))
-    .filter(item => item.value > 0); // Only show statuses that have features
+    .filter(item => item.value > 0); // Only show items that have features
 
   if (chartData.length === 0) {
     return (

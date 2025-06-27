@@ -39,6 +39,14 @@ Team.hasMany(Feature, {
 Feature.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
 User.hasMany(Feature, { foreignKey: 'createdBy' });
 
+// Add assignee association
+Feature.belongsTo(User, { as: 'assignee', foreignKey: 'assignedTo' });
+User.hasMany(Feature, { foreignKey: 'assignedTo', as: 'assignedFeatures' });
+
+// Feature hierarchy relationships (self-referencing)
+Feature.belongsTo(Feature, { as: 'parent', foreignKey: 'parentId' });
+Feature.hasMany(Feature, { as: 'children', foreignKey: 'parentId' });
+
 // Comment relationships
 Comment.belongsTo(Feature, { foreignKey: 'featureId', as: 'feature' });
 Feature.hasMany(Comment, { foreignKey: 'featureId', as: 'commentsList' });

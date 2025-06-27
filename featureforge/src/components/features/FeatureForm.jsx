@@ -8,11 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../ui/badge';
 import { useToast } from '../ui/toast';
 import featureService, { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
+import { FEATURE_TYPES_ARRAY } from '../../constants/featureTypes';
 
 const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
   const emptyFormData = {
     title: '',
     description: '',
+    type: 'task',
+    parentId: null,
     status: 'planned',
     priority: 'medium',
     tags: []
@@ -21,6 +24,7 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
   const [formData, setFormData] = useState(isEdit && initialData ? { ...initialData } : emptyFormData);
   const [loading, setLoading] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [parentFeatures, setParentFeatures] = useState([]);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -29,6 +33,28 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
       setFormData({ ...initialData });
     }
   }, [isEdit, initialData]);
+
+  // Fetch parent features when component mounts or teamId changes
+  useEffect(() => {
+    const fetchParentFeatures = async () => {
+      if (!teamId && !initialData?.teamId) return;
+      
+      try {
+        const currentTeamId = teamId || initialData?.teamId;
+        const response = await featureService.getTeamFeatures(currentTeamId);
+        // Filter to only show parent features
+        const parents = response.data.filter(feature => 
+          feature.type === 'parent' && 
+          (!isEdit || feature.id !== initialData?.id) // Don't show current feature as parent option
+        );
+        setParentFeatures(parents);
+      } catch (error) {
+        console.error('Error fetching parent features:', error);
+      }
+    };
+
+    fetchParentFeatures();
+  }, [teamId, initialData?.teamId, initialData?.id, isEdit]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,10 +65,19 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
   };
 
   const handleSelectChange = (name, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+      
+      // If changing type to 'parent', clear parentId since parents can't have parents
+      if (name === 'type' && value === 'parent') {
+        newData.parentId = null;
+      }
+      
+      return newData;
+    });
   };
 
   const handleAddTag = () => {
@@ -154,6 +189,57 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="type">Type</Label>
+          <Select
+            value={formData.type}
+            onValueChange={(value) => handleSelectChange('type', value)}
+            disabled={loading || isEdit}
+          >
+            <SelectTrigger id="type">
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              {FEATURE_TYPES_ARRAY.map(type => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {isEdit && (
+            <p className="text-xs text-secondary-500">
+              Feature type cannot be changed after creation
+            </p>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="parentId">Parent Feature</Label>
+          <Select
+            value={formData.parentId || 'none'}
+            onValueChange={(value) => handleSelectChange('parentId', value === 'none' ? null : value)}
+            disabled={loading || formData.type === 'parent'}
+          >
+            <SelectTrigger id="parentId">
+              <SelectValue placeholder={formData.type === 'parent' ? 'Parent features cannot have parents' : 'Select parent feature (optional)'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {parentFeatures.map(feature => (
+                <SelectItem key={feature.id} value={feature.id}>
+                  {feature.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {formData.type === 'parent' && (
+            <p className="text-xs text-secondary-500">
+              Parent features cannot have parent features
+            </p>
+          )}
+        </div>
+        
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
           <Select

@@ -99,6 +99,12 @@ class AIService {
   async mockChat(message, context) {
     console.log('Processing chat message with mock provider');
     
+    // Check if we have conversation history
+    const hasHistory = context.conversationHistory && context.conversationHistory.length > 0;
+    if (hasHistory) {
+      console.log(`Mock AI: Processing message with ${context.conversationHistory.length} previous messages`);
+    }
+    
     // Simulate AI processing delay
     await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
     
@@ -262,12 +268,32 @@ Current context: ${features.total} features, ${members.length} members, ${analyt
 
     const systemPrompt = this.buildSystemPrompt(context);
     
+    // Build messages array with conversation history
+    const messages = [
+      { role: 'system', content: systemPrompt }
+    ];
+    
+    // Add conversation history if available
+    if (context.conversationHistory && Array.isArray(context.conversationHistory)) {
+      // Add previous messages (excluding the current one)
+      context.conversationHistory.slice(0, -1).forEach(msg => {
+        if (msg.role && msg.content) {
+          messages.push({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          });
+        }
+      });
+    }
+    
+    // Add current message
+    messages.push({ role: 'user', content: message });
+    
+    console.log(`OpenAI request with ${messages.length} messages (${messages.length - 2} from history)`);
+
     const response = await this.openai.chat.completions.create({
       model: this.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message }
-      ],
+      messages: messages,
       max_tokens: this.maxTokens,
       temperature: 0.7
     });
@@ -285,13 +311,32 @@ Current context: ${features.total} features, ${members.length} members, ${analyt
 
     const systemPrompt = this.buildSystemPrompt(context);
     
+    // Build messages array with conversation history
+    const messages = [];
+    
+    // Add conversation history if available
+    if (context.conversationHistory && Array.isArray(context.conversationHistory)) {
+      // Add previous messages (excluding the current one)
+      context.conversationHistory.slice(0, -1).forEach(msg => {
+        if (msg.role && msg.content) {
+          messages.push({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          });
+        }
+      });
+    }
+    
+    // Add current message
+    messages.push({ role: 'user', content: message });
+    
+    console.log(`Anthropic request with ${messages.length} messages (${messages.length - 1} from history)`);
+    
     const response = await this.anthropic.messages.create({
       model: this.model,
       max_tokens: this.maxTokens,
       system: systemPrompt,
-      messages: [
-        { role: 'user', content: message }
-      ]
+      messages: messages
     });
 
     return response.content[0].text;
@@ -466,14 +511,23 @@ Error details: ${error.message}`;
       requiresConfirmation: true
     };
 
-    // Feature creation patterns
+    // Feature creation patterns - expanded for more flexibility
     const createPatterns = [
       'create feature',
       'add feature',
       'new feature',
       'make a feature',
       'add a new feature',
-      'create a new feature'
+      'create a new feature',
+      'create a parent',
+      'create a story',
+      'create a task',
+      'add a parent',
+      'add a story',
+      'add a task',
+      'new parent',
+      'new story',
+      'new task'
     ];
 
     // Feature update patterns
@@ -487,15 +541,65 @@ Error details: ${error.message}`;
       'move feature to'
     ];
 
+    // Check for explicit creation patterns first
     if (createPatterns.some(pattern => lowerMessage.includes(pattern))) {
       result.hasAction = true;
       result.action = 'create_feature';
       result.parameters = this.extractFeatureCreationParams(message, context);
+      
+      // Auto-execute if we have required parameters (title and teamId)
+      if (result.parameters.title && result.parameters.teamId) {
+        result.requiresConfirmation = false;
+        console.log('Feature creation: Auto-execution enabled (has title and teamId)');
+      } else {
+        console.log('Feature creation: Requires confirmation (missing title or teamId)');
+      }
+      
     } else if (updatePatterns.some(pattern => lowerMessage.includes(pattern))) {
       result.hasAction = true;
       result.action = 'update_feature';
       result.parameters = this.extractFeatureUpdateParams(message, context);
+      
+      // Auto-execute if we have required parameters (featureId and something to update)
+      if (result.parameters.featureId && (result.parameters.status || result.parameters.priority || result.parameters.title)) {
+        result.requiresConfirmation = false;
+        console.log('Feature update: Auto-execution enabled (has featureId and update field)');
+      } else {
+        console.log('Feature update: Requires confirmation (missing featureId or update field)');
+      }
+    } else {
+      // Check for attribute-based feature creation (fallback pattern)
+      // Look for messages that contain feature attributes like "Name - 'X'. Type = 'Y'"
+      const hasFeatureAttributes = (
+        (message.match(/name\s*[-=:]\s*["']?([^"'\n]+)["']?/i) ||
+         message.match(/title\s*[-=:]\s*["']?([^"'\n]+)["']?/i)) &&
+        (message.match(/type\s*[=:]\s*["']?(parent|story|task|research)["']?/i) ||
+         message.match(/priority\s*[=:]\s*["']?(high|medium|low|urgent|critical)["']?/i) ||
+         message.match(/description\s*[-=:]/i))
+      );
+      
+      if (hasFeatureAttributes) {
+        console.log('Detected attribute-based feature creation request');
+        result.hasAction = true;
+        result.action = 'create_feature';
+        result.parameters = this.extractFeatureCreationParams(message, context);
+        
+        // Auto-execute if we have required parameters (title and teamId)
+        if (result.parameters.title && result.parameters.teamId) {
+          result.requiresConfirmation = false;
+          console.log('Attribute-based feature creation: Auto-execution enabled (has title and teamId)');
+        } else {
+          console.log('Attribute-based feature creation: Requires confirmation (missing title or teamId)');
+        }
+      }
     }
+
+    console.log('Action analysis result:', {
+      hasAction: result.hasAction,
+      action: result.action,
+      requiresConfirmation: result.requiresConfirmation,
+      parameterKeys: Object.keys(result.parameters)
+    });
 
     return result;
   }
@@ -504,37 +608,79 @@ Error details: ${error.message}`;
    * Extract parameters for feature creation
    */
   extractFeatureCreationParams(message, context) {
+    console.log('=== AI PARAMETER EXTRACTION DEBUG ===');
+    console.log('Message to analyze:', message);
+    console.log('Context teamId:', context.teamId);
+    
     const params = {
       teamId: context.teamId
     };
 
     // Extract title (look for quotes or "called" patterns)
     const titleMatch = message.match(/(?:title|name|called)\s+["']([^"']+)["']/i) ||
-                      message.match(/["']([^"']+)["']/);
+                      message.match(/(?:title|name)\s*[-=:]\s*["']?([^"'\n.]+)["']?/i) ||
+                      message.match(/["']([^"']+)["']/i) ||
+                      message.match(/(?:feature|task|story)\s+(?:for|called|named)\s+([^,.!?]+)/i) ||
+                      message.match(/(?:create|add|make)\s+(?:a|an)?\s*(?:feature|task|story)\s+([^,.!?]+)/i);
     if (titleMatch) {
-      params.title = titleMatch[1];
+      params.title = titleMatch[1].trim();
+      console.log('Extracted title:', params.title);
+    } else {
+      console.log('No title found in message');
     }
 
     // Extract description
-    const descMatch = message.match(/description\s+["']([^"']+)["']/i);
+    const descMatch = message.match(/description\s+["']([^"']+)["']/i) ||
+                     message.match(/description\s*[-=:]\s*["']?([^"'\n.]+)["']?/i);
     if (descMatch) {
       params.description = descMatch[1];
+      console.log('Extracted description:', params.description);
+    }
+
+    // Extract feature type
+    const typeMatch = message.match(/(?:type|as a|as an)\s+(parent|story|task|research)/i) ||
+                     message.match(/type\s*[=:]\s*["']?(parent|story|task|research)["']?/i) ||
+                     message.match(/type\s+of\s+["']?(parent|story|task|research)["']?/i) ||
+                     message.match(/(parent|story|task|research)\s+(?:feature|item)/i);
+    if (typeMatch) {
+      params.type = typeMatch[1].toLowerCase();
+      console.log('Extracted type:', params.type);
+    }
+
+    // Extract parent feature for hierarchy
+    const parentMatch = message.match(/(?:under|child of|parent)\s+["']([^"']+)["']/i) ||
+                       message.match(/(?:under|child of)\s+feature\s+["']([^"']+)["']/i);
+    if (parentMatch && context.features?.recent) {
+      const parentTitle = parentMatch[1].toLowerCase();
+      const parentFeature = context.features.recent.find(f => 
+        f.title.toLowerCase().includes(parentTitle) || 
+        parentTitle.includes(f.title.toLowerCase())
+      );
+      if (parentFeature) {
+        params.parentId = parentFeature.id;
+        console.log('Extracted parentId:', params.parentId);
+      }
     }
 
     // Extract priority - updated to match database enum values
-    const priorityMatch = message.match(/priority\s+(high|medium|low|urgent|critical)/i);
+    const priorityMatch = message.match(/priority\s+(high|medium|low|urgent|critical)/i) ||
+                         message.match(/priority\s*[=:]\s*["']?(high|medium|low|urgent|critical)["']?/i);
     if (priorityMatch) {
       // Map 'urgent' to 'critical' to match database enum
       const priority = priorityMatch[1].toLowerCase();
       params.priority = priority === 'urgent' ? 'critical' : priority;
+      console.log('Extracted priority:', params.priority);
     }
 
     // Extract effort
     const effortMatch = message.match(/effort\s+(\d+)/i);
     if (effortMatch) {
       params.estimatedEffort = parseInt(effortMatch[1]);
+      console.log('Extracted effort:', params.estimatedEffort);
     }
 
+    console.log('Final extracted parameters:', JSON.stringify(params, null, 2));
+    console.log('=== END AI PARAMETER EXTRACTION DEBUG ===');
     return params;
   }
 

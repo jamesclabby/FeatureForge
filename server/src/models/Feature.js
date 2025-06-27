@@ -32,6 +32,43 @@ module.exports = (sequelize) => {
       defaultValue: 'medium',
       allowNull: false
     },
+    type: {
+      type: DataTypes.ENUM('parent', 'story', 'task', 'research'),
+      defaultValue: 'task',
+      allowNull: false,
+      validate: {
+        isIn: [['parent', 'story', 'task', 'research']]
+      }
+    },
+    parentId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'features',
+        key: 'id'
+      },
+      validate: {
+        // Custom validation for hierarchy rules
+        async isValidParent(value) {
+          if (value && this.type === 'parent') {
+            throw new Error('Parent-type features cannot have a parent');
+          }
+          if (value) {
+            const Feature = this.constructor;
+            const parent = await Feature.findByPk(value);
+            if (!parent) {
+              throw new Error('Parent feature does not exist');
+            }
+            if (parent.type !== 'parent') {
+              throw new Error('Features can only be children of parent-type features');
+            }
+            if (parent.teamId !== this.teamId) {
+              throw new Error('Parent feature must be in the same team');
+            }
+          }
+        }
+      }
+    },
     teamId: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -143,6 +180,18 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['votes']
+      },
+      {
+        fields: ['type']
+      },
+      {
+        fields: ['parentId']
+      },
+      {
+        fields: ['teamId', 'type']
+      },
+      {
+        fields: ['teamId', 'parentId']
       }
     ]
   });

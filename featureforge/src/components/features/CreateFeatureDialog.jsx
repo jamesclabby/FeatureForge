@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import featureService, { FEATURE_PRIORITIES, FEATURE_STATUSES } from '../../services/featureService';
+import { FEATURE_TYPES_ARRAY } from '../../constants/featureTypes';
 import apiService from '../../services/api';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -26,6 +27,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    type: 'task',
     priority: 'medium',
     status: 'in_progress',
     impact: 5,
@@ -121,6 +123,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
       setFormData({
         title: '',
         description: '',
+        type: 'task',
         priority: 'medium',
         status: 'in_progress',
         impact: 5,
@@ -222,6 +225,32 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
               required
               disabled={loading}
             />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="type">Type</Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value) => handleSelectChange('type', value)}
+              disabled={loading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select feature type" />
+              </SelectTrigger>
+              <SelectContent>
+                {FEATURE_TYPES_ARRAY.map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    <span className="flex items-center gap-2">
+                      <span>{type.icon}</span>
+                      <span>{type.label}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-secondary-500">
+              {FEATURE_TYPES_ARRAY.find(t => t.value === formData.type)?.description}
+            </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

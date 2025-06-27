@@ -1,5 +1,6 @@
 const { Feature, User, Comment } = require('../models');
 const { Op } = require('sequelize');
+const { FEATURE_TYPES, validateHierarchy } = require('../constants/featureTypes');
 
 /**
  * @desc    Get all features
@@ -12,7 +13,7 @@ exports.getFeatures = async (req, res) => {
     const queryObj = { ...req.query };
     
     // Fields to exclude from filtering
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    const excludedFields = ['page', 'sort', 'limit', 'fields', 'includeChildren'];
     excludedFields.forEach(field => delete queryObj[field]);
     
     // Build where clause for Sequelize
@@ -21,8 +22,13 @@ exports.getFeatures = async (req, res) => {
     // Handle specific filters
     if (queryObj.status) where.status = queryObj.status;
     if (queryObj.category) where.category = queryObj.category;
-    if (queryObj.requestedById) where.requestedById = queryObj.requestedById;
-    if (queryObj.assignedToId) where.assignedToId = queryObj.assignedToId;
+    if (queryObj.createdBy) where.createdBy = queryObj.createdBy;
+    if (queryObj.assignedTo) where.assignedTo = queryObj.assignedTo;
+    if (queryObj.type) where.type = queryObj.type;
+    if (queryObj.parentId) where.parentId = queryObj.parentId;
+    
+    // If teamId is provided, filter by it
+    if (queryObj.teamId) where.teamId = queryObj.teamId;
     
     // Pagination
     const page = parseInt(req.query.page, 10) || 1;
@@ -41,24 +47,43 @@ exports.getFeatures = async (req, res) => {
       });
     }
     
+    // Build includes array
+    const includes = [
+      {
+        model: User,
+        as: 'creator',
+        attributes: ['id', 'name', 'email', 'avatar']
+      },
+      {
+        model: Feature,
+        as: 'parent',
+        attributes: ['id', 'title', 'type', 'status']
+      }
+    ];
+    
+    // Optionally include children if requested
+    if (req.query.includeChildren === 'true') {
+      includes.push({
+        model: Feature,
+        as: 'children',
+        attributes: ['id', 'title', 'type', 'status', 'priority'],
+        include: [
+          {
+            model: User,
+            as: 'creator',
+            attributes: ['id', 'name', 'email']
+          }
+        ]
+      });
+    }
+    
     // Execute query
     const { count, rows: features } = await Feature.findAndCountAll({
       where,
       limit,
       offset,
       order,
-      include: [
-        {
-          model: User,
-          as: 'requestedBy',
-          attributes: ['id', 'name', 'email', 'avatar']
-        },
-        {
-          model: User,
-          as: 'assignedTo',
-          attributes: ['id', 'name', 'email', 'avatar']
-        }
-      ]
+      include: includes
     });
     
     res.status(200).json({
@@ -88,13 +113,35 @@ exports.getFeatures = async (req, res) => {
  */
 exports.getFeature = async (req, res) => {
   try {
-    // Get the feature with minimal includes to avoid association errors
+    // Get the feature with hierarchy relationships
     const feature = await Feature.findByPk(req.params.id, {
       include: [
         {
           model: User,
           as: 'creator',
-          attributes: ['id', 'name', 'email']
+          attributes: ['id', 'name', 'email', 'avatar']
+        },
+        {
+          model: User,
+          as: 'assignee',
+          attributes: ['id', 'name', 'email', 'avatar']
+        },
+        {
+          model: Feature,
+          as: 'parent',
+          attributes: ['id', 'title', 'type', 'status']
+        },
+        {
+          model: Feature,
+          as: 'children',
+          attributes: ['id', 'title', 'type', 'status', 'priority'],
+          include: [
+            {
+              model: User,
+              as: 'creator',
+              attributes: ['id', 'name', 'email']
+            }
+          ]
         }
       ]
     });
@@ -142,14 +189,65 @@ exports.createFeature = async (req, res) => {
     // Log authentication info for debugging
     console.log('Creating feature with user:', req.user ? req.user.id : 'No user');
     
-    // Add user to req.body
-    req.body.requestedById = req.user.id;
+    // Validate hierarchy if parentId is provided
+    if (req.body.parentId && req.body.type) {
+      const parent = await Feature.findByPk(req.body.parentId);
+      if (!parent) {
+        return res.status(400).json({
+          success: false,
+          message: 'Parent feature not found'
+        });
+      }
+      
+      // Validate hierarchy rules
+      try {
+        validateHierarchy(parent.type, req.body.type);
+      } catch (err) {
+        return res.status(400).json({
+          success: false,
+          message: err.message
+        });
+      }
+      
+      // Ensure parent is in the same team
+      if (parent.teamId !== req.body.teamId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Parent feature must be in the same team'
+        });
+      }
+    }
+    
+    // Set default type if not provided
+    if (!req.body.type) {
+      req.body.type = FEATURE_TYPES.TASK;
+    }
+    
+    // Add user to req.body with correct field name
+    req.body.createdBy = req.user.id;
+    req.body.createdByEmail = req.user.email;
     
     const feature = await Feature.create(req.body);
     
+    // Fetch the created feature with relationships
+    const createdFeature = await Feature.findByPk(feature.id, {
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'name', 'email']
+        },
+        {
+          model: Feature,
+          as: 'parent',
+          attributes: ['id', 'title', 'type', 'status']
+        }
+      ]
+    });
+    
     res.status(201).json({
       success: true,
-      data: feature
+      data: createdFeature
     });
   } catch (err) {
     console.error('Error creating feature:', err);
@@ -178,7 +276,7 @@ exports.updateFeature = async (req, res) => {
     
     // Check if user is authorized to update
     if (
-      feature.requestedById !== req.user.id &&
+      feature.createdBy !== req.user.id &&
       req.user.role !== 'admin' &&
       req.user.role !== 'product-manager'
     ) {
@@ -195,12 +293,12 @@ exports.updateFeature = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'requestedBy',
+          as: 'creator',
           attributes: ['id', 'name', 'email', 'avatar']
         },
         {
           model: User,
-          as: 'assignedTo',
+          as: 'assignee',
           attributes: ['id', 'name', 'email', 'avatar']
         }
       ]
@@ -236,7 +334,7 @@ exports.deleteFeature = async (req, res) => {
     
     // Check if user is authorized to delete
     if (
-      feature.requestedById !== req.user.id &&
+      feature.createdBy !== req.user.id &&
       req.user.role !== 'admin' &&
       req.user.role !== 'product-manager'
     ) {
