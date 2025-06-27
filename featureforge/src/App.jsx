@@ -19,6 +19,7 @@ import NotFound from './pages/NotFound';
 import Features from './pages/Features';
 import FeatureView from './pages/FeatureView';
 import NewFeature from './pages/NewFeature';
+import { KanbanBoard } from './components/kanban';
 
 // Smart root route component that redirects based on auth status
 const RootRoute = () => {
@@ -144,6 +145,13 @@ function App() {
                   <Route path="/features/:featureId" element={
                     <RequireSelectedTeam>
                       <FeatureView />
+                    </RequireSelectedTeam>
+                  } />
+                  
+                  {/* Kanban Board */}
+                  <Route path="/board" element={
+                    <RequireSelectedTeam>
+                      <KanbanBoard />
                     </RequireSelectedTeam>
                   } />
                 </Route>

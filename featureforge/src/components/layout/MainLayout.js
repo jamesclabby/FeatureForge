@@ -53,6 +53,9 @@ const MainLayout = ({ children }) => {
                 <Link to="/features" className="text-secondary-700 hover:text-primary-600 transition-colors">
                   Features
                 </Link>
+                <Link to="/board" className="text-secondary-700 hover:text-primary-600 transition-colors">
+                  Board
+                </Link>
                 <div className="flex items-center gap-4 ml-4 pl-4 border-l border-secondary-200">
                   <div className="flex flex-col items-end">
                     <span className="text-sm font-medium text-secondary-900">

@@ -270,6 +270,12 @@ const Dashboard = () => {
             >
               Manage Features
             </Button>
+            <Button 
+              className="flex-1"
+              onClick={() => navigate('/board')}
+            >
+              Kanban Board
+            </Button>
           </CardContent>
         </Card>
 
