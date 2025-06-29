@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import KanbanCard from './KanbanCard';
 
-function KanbanColumn({ column, features, updating, bulkMode, selectedCards, onCardSelect, onFeatureUpdate }) {
+function KanbanColumn({ column, features, updating, bulkMode, selectedCards, onCardSelect, onFeatureUpdate, onCardClick }) {
   return (
     <Card className="h-fit min-h-[500px]">
       <CardHeader className={`${column.color} rounded-t-lg`}>
@@ -36,6 +36,7 @@ function KanbanColumn({ column, features, updating, bulkMode, selectedCards, onC
                   isSelected={selectedCards?.has(feature.id)}
                   onSelect={onCardSelect}
                   onFeatureUpdate={onFeatureUpdate}
+                  onCardClick={onCardClick}
                 />
               ))}
               {provided.placeholder}

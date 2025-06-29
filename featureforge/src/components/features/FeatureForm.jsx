@@ -6,6 +6,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
+import { DatePicker } from '../ui/date-picker';
 import { useToast } from '../ui/toast';
 import featureService, { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
 import { FEATURE_TYPES_ARRAY } from '../../constants/featureTypes';
@@ -18,7 +19,8 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
     parentId: null,
     status: 'planned',
     priority: 'medium',
-    tags: []
+    tags: [],
+    dueDate: ''
   };
   
   const [formData, setFormData] = useState(isEdit && initialData ? { ...initialData } : emptyFormData);
@@ -30,7 +32,10 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
 
   useEffect(() => {
     if (isEdit && initialData) {
-      setFormData({ ...initialData });
+      setFormData({ 
+        ...initialData,
+        dueDate: initialData.dueDate || initialData.due_date || ''
+      });
     }
   }, [isEdit, initialData]);
 
@@ -80,6 +85,13 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
     });
   };
 
+  const handleDateChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      dueDate: value
+    }));
+  };
+
   const handleAddTag = () => {
     if (!tagInput.trim()) return;
     
@@ -121,15 +133,22 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
     try {
       setLoading(true);
       
-      const dataToSubmit = {
-        ...formData
+      // Clean up form data before sending
+      const cleanedFormData = {
+        ...formData,
+        // Convert empty strings to null for UUID fields
+        parentId: formData.parentId && formData.parentId !== 'none' ? formData.parentId : null,
+        // Convert empty strings to null for date fields
+        dueDate: formData.dueDate && formData.dueDate.trim() !== '' ? formData.dueDate : null,
+        // Ensure tags is always an array
+        tags: Array.isArray(formData.tags) ? formData.tags : []
       };
       
       let response;
       if (isEdit) {
-        response = await featureService.updateFeature(initialData.id, dataToSubmit, initialData.teamId);
+        response = await featureService.updateFeature(initialData.id, cleanedFormData, initialData.teamId);
       } else {
-        response = await featureService.createFeature(teamId, dataToSubmit);
+        response = await featureService.createFeature(teamId, cleanedFormData);
       }
       
       // Notify parent component about successful submission
@@ -280,6 +299,15 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
           </Select>
         </div>
       </div>
+      
+      {/* Due Date Field */}
+      <DatePicker
+        label="Due Date"
+        value={formData.dueDate}
+        onChange={handleDateChange}
+        disabled={loading}
+        placeholder="Select due date (optional)"
+      />
       
       <div className="space-y-2">
         <Label htmlFor="tags">Tags</Label>

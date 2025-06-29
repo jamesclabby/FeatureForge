@@ -7,7 +7,7 @@ import { getFeatureTypeDetails } from '../../constants/featureTypes';
 import { MessageSquare, ThumbsUp, Calendar, Clock, Edit2, Save, X, AlertTriangle } from 'lucide-react';
 import featureService from '../../services/featureService';
 
-const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureUpdate }) => {
+const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureUpdate, onCardClick }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(feature.title);
   const [editedDescription, setEditedDescription] = useState(feature.description || '');
@@ -79,6 +79,10 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
       e.preventDefault();
       e.stopPropagation();
       onSelect?.(feature.id);
+    } else if (!isEditing && onCardClick) {
+      e.preventDefault();
+      e.stopPropagation();
+      onCardClick(feature);
     }
   };
 

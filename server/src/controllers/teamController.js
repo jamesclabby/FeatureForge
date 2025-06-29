@@ -495,13 +495,19 @@ const getTeamFeatures = async (req, res) => {
     const features = await Feature.findAll({
       attributes: [
         'id', 'title', 'description', 'status', 'priority', 
-        'type', 'parentId', 'teamId', 'createdBy', 'createdAt', 'updatedAt'
+        'type', 'parentId', 'teamId', 'createdBy', 'createdAt', 'updatedAt',
+        'dueDate', 'tags', 'estimatedEffort', 'assignedTo'
       ],
       where: { teamId },
       include: [
         {
           model: User,
           as: 'creator',
+          attributes: ['id', 'name', 'email']
+        },
+        {
+          model: User,
+          as: 'assignee',
           attributes: ['id', 'name', 'email']
         },
         {
@@ -527,6 +533,7 @@ const getTeamFeatures = async (req, res) => {
       // Add fields that might be missing with default values
       return {
         ...featureJson,
+        due_date: featureJson.dueDate, // Add snake_case version for frontend compatibility
         votes: 0,
         impact: 5,
         effort: 5,
@@ -568,6 +575,7 @@ const createTeamFeature = async (req, res) => {
     category,
     targetRelease,
     tags,
+    dueDate
   } = req.body;
   const userId = req.user.id;
   const userEmail = req.user.email;
@@ -597,7 +605,7 @@ const createTeamFeature = async (req, res) => {
     // Log received values for troubleshooting
     console.log('Creating feature with data:', { 
       title, description, type, parentId, priority, status, 
-      impact, effort, category, targetRelease, tags
+      impact, effort, category, targetRelease, tags, dueDate
     });
     
     // Check the actual database enum values
@@ -647,7 +655,7 @@ const createTeamFeature = async (req, res) => {
       title,
       description,
       type: type || 'task', // Default to 'task' if not specified
-      parentId: parentId || null,
+      parentId: parentId === '' || parentId === 'none' ? null : parentId,
       priority,
       status: sanitizedStatus,
       teamId,
@@ -659,7 +667,8 @@ const createTeamFeature = async (req, res) => {
       category,
       targetRelease,
       tags: tags || [],
-      comments: []
+      comments: [],
+      dueDate: dueDate === '' ? null : dueDate
     });
 
     res.status(201).json({
@@ -682,7 +691,7 @@ const createTeamFeature = async (req, res) => {
  */
 const updateTeamFeature = async (req, res) => {
   const { teamId, featureId } = req.params;
-  const { title, description, type, parentId, status, priority } = req.body;
+  const { title, description, type, parentId, status, priority, dueDate, tags } = req.body;
   const userId = req.user.id;
 
   try {
@@ -718,14 +727,16 @@ const updateTeamFeature = async (req, res) => {
       });
     }
 
-    // Only update fields that are guaranteed to exist
+    // Build update data with all supported fields
     const updateData = {};
-    if (title) updateData.title = title;
-    if (description) updateData.description = description;
-    if (type) updateData.type = type;
-    if (parentId) updateData.parentId = parentId;
-    if (status) updateData.status = status;
-    if (priority) updateData.priority = priority;
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (type !== undefined) updateData.type = type;
+    if (parentId !== undefined) updateData.parentId = parentId === '' || parentId === 'none' ? null : parentId;
+    if (status !== undefined) updateData.status = status;
+    if (priority !== undefined) updateData.priority = priority;
+    if (dueDate !== undefined) updateData.dueDate = dueDate === '' ? null : dueDate;
+    if (tags !== undefined) updateData.tags = tags;
 
     await feature.update(updateData);
 
@@ -733,6 +744,7 @@ const updateTeamFeature = async (req, res) => {
     const updatedFeature = feature.toJSON();
     const enhancedFeature = {
       ...updatedFeature,
+      due_date: updatedFeature.dueDate, // Add snake_case version for frontend compatibility
       votes: updatedFeature.votes || 0,
       impact: updatedFeature.impact || 5,
       effort: updatedFeature.effort || 5,

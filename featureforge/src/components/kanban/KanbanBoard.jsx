@@ -6,6 +6,7 @@ import featureService from '../../services/featureService';
 import KanbanColumn from './KanbanColumn';
 import KanbanSwimlanes from './KanbanSwimlanes';
 import KanbanFilters from './KanbanFilters';
+import FeatureDetailModal from './FeatureDetailModal';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { 
@@ -46,6 +47,8 @@ const KanbanBoard = () => {
   const [bulkMode, setBulkMode] = useState(false);
   const [viewMode, setViewMode] = useState('columns');
   const [showViewMenu, setShowViewMenu] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const { teamId, teamMembers } = useTeamContext();
   const { toast } = useToast();
@@ -252,6 +255,26 @@ const KanbanBoard = () => {
     ));
   };
 
+  const handleCardClick = (feature) => {
+    // Only open modal if not in bulk mode
+    if (!bulkMode) {
+      setSelectedFeature(feature);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedFeature(null);
+  };
+
+  const handleModalFeatureUpdate = (updatedFeature) => {
+    // Update the feature in the local state
+    handleFeatureUpdate(updatedFeature);
+    // Close the modal
+    handleModalClose();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -393,6 +416,7 @@ const KanbanBoard = () => {
                     selectedCards={selectedCards}
                     onCardSelect={handleCardSelect}
                     onFeatureUpdate={handleFeatureUpdate}
+                    onCardClick={handleCardClick}
                   />
                 ))}
               </div>
@@ -406,12 +430,21 @@ const KanbanBoard = () => {
               selectedCards={selectedCards}
               onCardSelect={handleCardSelect}
               onFeatureUpdate={handleFeatureUpdate}
+              onCardClick={handleCardClick}
               teamMembers={teamMembers}
               updating={updating}
             />
           )}
         </CardContent>
       </Card>
+
+      {/* Feature Detail Modal */}
+      <FeatureDetailModal
+        feature={selectedFeature}
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onFeatureUpdate={handleModalFeatureUpdate}
+      />
     </div>
   );
 };

@@ -62,6 +62,7 @@ function KanbanSwimlanes({
   selectedCards, 
   onCardSelect,
   onFeatureUpdate,
+  onCardClick,
   teamMembers = [],
   updating 
 }) {
@@ -200,6 +201,7 @@ function KanbanSwimlanes({
                                     isSelected={selectedCards?.has(feature.id)}
                                     onSelect={onCardSelect}
                                     onFeatureUpdate={onFeatureUpdate}
+                                    onCardClick={onCardClick}
                                   />
                                 ))}
                                 {provided.placeholder}
