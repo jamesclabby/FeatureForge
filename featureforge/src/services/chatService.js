@@ -5,21 +5,23 @@ import api from './api';
  */
 class ChatService {
   constructor() {
-    this.baseURL = '/api/chat';
+    this.baseURL = '/chat';
+    // Get the API base URL from environment or default to localhost
+    this.apiBaseURL = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
   }
 
   /**
-   * Send a message to the AI
+   * Send a message to the AI chat endpoint
    * @param {string} message - The message to send
-   * @param {string} teamId - The current team ID
-   * @param {Array} conversationHistory - Previous messages in the conversation
+   * @param {string} teamId - The team ID for context
+   * @param {Array} conversationHistory - Previous messages for context
    * @returns {Promise<Object>} AI response
    */
   async sendMessage(message, teamId, conversationHistory = []) {
     try {
       const authToken = await this.getAuthToken();
       
-      const response = await fetch('http://localhost:5002/api/chat/message', {
+      const response = await fetch(`${this.apiBaseURL}/chat/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +55,7 @@ class ChatService {
    */
   async sendPublicMessage(message, teamName = 'Test Team', userRole = 'member') {
     try {
-      const response = await fetch('http://localhost:5002/api/chat/message-public', {
+      const response = await fetch(`${this.apiBaseURL}/chat/message-public`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -106,7 +108,7 @@ class ChatService {
       if (teamId) params.append('teamId', teamId);
       
       // Use direct fetch to avoid double /api/ issue
-      const response = await fetch(`http://localhost:5002/api/chat/suggestions?${params}`, {
+      const response = await fetch(`${this.apiBaseURL}/chat/suggestions?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +153,7 @@ class ChatService {
    */
   async checkHealth() {
     try {
-      const response = await fetch('http://localhost:5002/api/chat/health-public');
+      const response = await fetch(`${this.apiBaseURL}/chat/health-public`);
       const data = await response.json();
       return data.data;
     } catch (error) {
