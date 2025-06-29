@@ -27,6 +27,7 @@ import { getFeatureTypeDetails } from '../../constants/featureTypes';
 import { useAuth } from '../../contexts/AuthContext';
 import FeatureForm from './FeatureForm';
 import { CommentList } from '../comments';
+import { DependencyDisplay } from '../dependencies';
 
 // Helper function to get status/priority details
 const getStatusDetails = (statusValue) => {
@@ -424,6 +425,12 @@ const FeatureDetail = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dependencies section */}
+      <div>
+        <h3 className="text-lg font-medium mb-4">Dependencies</h3>
+        <DependencyDisplay feature={feature} compact={true} />
+      </div>
 
       {/* Comments section */}
       <CommentList featureId={featureId} teamId={feature.teamId} />

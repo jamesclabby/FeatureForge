@@ -17,6 +17,11 @@ const {
   getTeamById,
   getTeamFeatureStats
 } = require('../controllers/teamController');
+
+const {
+  getTeamDependencies
+} = require('../controllers/dependencies');
+
 const { protectWithAny } = require('../middleware/auth');
 
 // Base route: /api/teams
@@ -45,5 +50,8 @@ router.get('/:teamId/features/stats', protectWithAny, getTeamFeatureStats);
 router.post('/:teamId/features', protectWithAny, createTeamFeature);
 router.put('/:teamId/features/:featureId', protectWithAny, updateTeamFeature);
 router.delete('/:teamId/features/:featureId', protectWithAny, deleteTeamFeature);
+
+// Team dependency routes
+router.get('/:teamId/dependencies', protectWithAny, getTeamDependencies);
 
 module.exports = router; 

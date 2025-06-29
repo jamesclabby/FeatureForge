@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { getFeatureTypeDetails } from '../../constants/featureTypes';
-import { MessageSquare, ThumbsUp, Calendar, Clock, Edit2, Save, X, AlertTriangle } from 'lucide-react';
+import { MessageSquare, ThumbsUp, Calendar, Clock, Edit2, Save, X, AlertTriangle, Ban, Link } from 'lucide-react';
 import featureService from '../../services/featureService';
 
 const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureUpdate, onCardClick }) => {
@@ -51,6 +51,56 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
     if (!feature.due_date) return false;
     return new Date(feature.due_date) < new Date();
   };
+
+  // Check if feature has dependencies or is blocked
+  const getDependencyStatus = () => {
+    if (!feature.dependencyStats) return null;
+    
+    const { isBlocked, totalOutgoing, totalIncoming, blockingCount, blockedByCount } = feature.dependencyStats;
+    
+    // Priority 1: Feature is blocked by incomplete dependencies (most critical)
+    if (isBlocked) {
+      return {
+        type: 'blocked',
+        icon: Ban,
+        color: 'text-red-600',
+        bgColor: 'bg-red-50',
+        borderColor: 'border-red-200',
+        tooltip: `⚠️ Blocked by ${blockedByCount} incomplete feature${blockedByCount !== 1 ? 's' : ''}`,
+        severity: 'critical'
+      };
+    }
+    
+    // Priority 2: Feature is blocking others (important but not critical)
+    if (blockingCount > 0) {
+      return {
+        type: 'blocking',
+        icon: AlertTriangle,
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-200',
+        tooltip: `Blocking ${blockingCount} feature${blockingCount !== 1 ? 's' : ''}`,
+        severity: 'warning'
+      };
+    }
+    
+    // Priority 3: Feature has dependencies but not blocking/blocked (informational)
+    if (totalOutgoing > 0 || totalIncoming > 0) {
+      return {
+        type: 'has_dependencies',
+        icon: Link,
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-50',
+        borderColor: 'border-blue-200',
+        tooltip: `${totalOutgoing + totalIncoming} dependencies`,
+        severity: 'info'
+      };
+    }
+    
+    return null;
+  };
+
+  const dependencyStatus = getDependencyStatus();
 
   const handleSave = async () => {
     try {
@@ -113,6 +163,16 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
           </div>
           
           <div className="flex items-center gap-1 flex-shrink-0">
+            {/* Dependency indicator - only show for has_dependencies type */}
+            {dependencyStatus && dependencyStatus.type === 'has_dependencies' && (
+              <div 
+                className={`${dependencyStatus.color} p-1 rounded hover:${dependencyStatus.bgColor} transition-colors`}
+                title={dependencyStatus.tooltip}
+              >
+                {React.createElement(dependencyStatus.icon, { className: "h-3 w-3" })}
+              </div>
+            )}
+            
             {/* Type icon */}
             <span className="text-lg">{typeDetails.icon}</span>
             
@@ -146,6 +206,14 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
       </CardHeader>
       
       <CardContent className="pt-0 space-y-3">
+        {/* Only show has_dependencies banner */}
+        {dependencyStatus?.type === 'has_dependencies' && (
+          <div className={`flex items-center gap-2 p-2 ${dependencyStatus.bgColor} border ${dependencyStatus.borderColor} rounded text-blue-700 text-xs`}>
+            <Link className="h-3 w-3" />
+            <span>{dependencyStatus.tooltip}</span>
+          </div>
+        )}
+
         {/* Description */}
         {(feature.description || isEditing) && (
           <div>
@@ -257,6 +325,32 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
         {/* Footer with stats */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <div className="flex items-center gap-3">
+            {/* Subtle blocked indicator in footer */}
+            {dependencyStatus?.type === 'blocked' && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full">
+                <Ban className="h-3 w-3" />
+                <span className="text-xs font-medium">Blocked</span>
+              </div>
+            )}
+            
+            {/* Subtle blocking indicator */}
+            {dependencyStatus?.type === 'blocking' && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+                <AlertTriangle className="h-3 w-3" />
+                <span className="text-xs font-medium">Blocking {feature.dependencyStats.blockingCount}</span>
+              </div>
+            )}
+            
+            {/* Dependencies count */}
+            {dependencyStatus && dependencyStatus.type === 'has_dependencies' && (
+              <div className="flex items-center gap-1">
+                <Link className="h-3 w-3 text-blue-500" />
+                <span className="text-xs text-gray-600">
+                  {feature.dependencyStats.totalOutgoing + feature.dependencyStats.totalIncoming}
+                </span>
+              </div>
+            )}
+            
             {/* Votes */}
             {feature.votes_count > 0 && (
               <div className="flex items-center gap-1">

@@ -5,6 +5,7 @@ const TeamMember = require('./TeamMember')(sequelize);
 const Feature = require('./Feature')(sequelize);
 const Comment = require('./Comment')(sequelize);
 const Notification = require('./Notification')(sequelize);
+const FeatureDependency = require('./FeatureDependency')(sequelize);
 
 // Define relationships
 Team.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
@@ -47,6 +48,15 @@ User.hasMany(Feature, { foreignKey: 'assignedTo', as: 'assignedFeatures' });
 Feature.belongsTo(Feature, { as: 'parent', foreignKey: 'parentId' });
 Feature.hasMany(Feature, { as: 'children', foreignKey: 'parentId' });
 
+// Feature dependency relationships
+FeatureDependency.belongsTo(Feature, { as: 'sourceFeature', foreignKey: 'sourceFeatureId' });
+FeatureDependency.belongsTo(Feature, { as: 'targetFeature', foreignKey: 'targetFeatureId' });
+FeatureDependency.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
+
+Feature.hasMany(FeatureDependency, { as: 'outgoingDependencies', foreignKey: 'sourceFeatureId' });
+Feature.hasMany(FeatureDependency, { as: 'incomingDependencies', foreignKey: 'targetFeatureId' });
+User.hasMany(FeatureDependency, { foreignKey: 'createdBy', as: 'createdDependencies' });
+
 // Comment relationships
 Comment.belongsTo(Feature, { foreignKey: 'featureId', as: 'feature' });
 Feature.hasMany(Comment, { foreignKey: 'featureId', as: 'commentsList' });
@@ -72,5 +82,6 @@ module.exports = {
   TeamMember,
   Feature,
   Comment,
-  Notification
+  Notification,
+  FeatureDependency
 }; 

@@ -10,6 +10,8 @@ import { DatePicker } from '../ui/date-picker';
 import { useToast } from '../ui/toast';
 import featureService, { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
 import { FEATURE_TYPES_ARRAY } from '../../constants/featureTypes';
+import { DependencyFormField } from '../dependencies';
+import dependencyService from '../../services/dependencyService';
 
 const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
   const emptyFormData = {
@@ -27,6 +29,8 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
   const [loading, setLoading] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [parentFeatures, setParentFeatures] = useState([]);
+  const [dependencies, setDependencies] = useState([]);
+  const [loadingDependencies, setLoadingDependencies] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -36,8 +40,43 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
         ...initialData,
         dueDate: initialData.dueDate || initialData.due_date || ''
       });
+      
+      // Load existing dependencies for edit mode
+      if (initialData.id) {
+        loadExistingDependencies(initialData.id);
+      }
     }
   }, [isEdit, initialData]);
+
+  // Load existing dependencies for edit mode
+  const loadExistingDependencies = async (featureId) => {
+    try {
+      setLoadingDependencies(true);
+      const response = await dependencyService.getFeatureDependencies(featureId);
+      const responseData = response?.data || response || {};
+      
+      // Convert to format expected by DependencyFormField
+      const outgoingDeps = (responseData.outgoing || []).map(dep => ({
+        ...dep,
+        targetFeature: dep.targetFeature,
+        sourceFeature: dep.sourceFeature
+      }));
+      
+      setDependencies(outgoingDeps);
+    } catch (error) {
+      console.error('Error loading dependencies:', error);
+      // Don't show error toast for 404 (no dependencies exist yet)
+      if (error.response?.status !== 404) {
+        toast.toast({
+          title: 'Warning',
+          description: 'Could not load existing dependencies.',
+          variant: 'warning',
+        });
+      }
+    } finally {
+      setLoadingDependencies(false);
+    }
+  };
 
   // Fetch parent features when component mounts or teamId changes
   useEffect(() => {
@@ -90,6 +129,10 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
       ...prev,
       dueDate: value
     }));
+  };
+
+  const handleDependenciesChange = (updatedDependencies) => {
+    setDependencies(updatedDependencies);
   };
 
   const handleAddTag = () => {
@@ -147,8 +190,18 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
       let response;
       if (isEdit) {
         response = await featureService.updateFeature(initialData.id, cleanedFormData, initialData.teamId);
+        
+        // Handle dependency updates for edit mode
+        if (dependencies.length > 0) {
+          await handleDependencyUpdates(initialData.id);
+        }
       } else {
         response = await featureService.createFeature(teamId, cleanedFormData);
+        
+        // Handle dependencies for new feature
+        if (dependencies.length > 0 && response.data?.id) {
+          await handleDependencyCreation(response.data.id);
+        }
       }
       
       // Notify parent component about successful submission
@@ -175,6 +228,51 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDependencyCreation = async (featureId) => {
+    const newDependencies = dependencies.filter(dep => dep.isNew);
+    
+    for (const dependency of newDependencies) {
+      try {
+        await dependencyService.createDependency(featureId, {
+          targetFeatureId: dependency.targetFeature.id,
+          dependencyType: dependency.dependencyType,
+          description: dependency.description || null
+        });
+      } catch (error) {
+        console.error('Error creating dependency:', error);
+        // Don't fail the whole operation for dependency errors
+        toast.toast({
+          title: 'Warning',
+          description: `Could not create dependency to "${dependency.targetFeature.title}".`,
+          variant: 'warning',
+        });
+      }
+    }
+  };
+
+  const handleDependencyUpdates = async (featureId) => {
+    // For simplicity in edit mode, we'll just handle new dependencies
+    // Full CRUD operations would require more complex state management
+    const newDependencies = dependencies.filter(dep => dep.isNew);
+    
+    for (const dependency of newDependencies) {
+      try {
+        await dependencyService.createDependency(featureId, {
+          targetFeatureId: dependency.targetFeature.id,
+          dependencyType: dependency.dependencyType,
+          description: dependency.description || null
+        });
+      } catch (error) {
+        console.error('Error creating dependency:', error);
+        toast.toast({
+          title: 'Warning',
+          description: `Could not create dependency to "${dependency.targetFeature.title}".`,
+          variant: 'warning',
+        });
+      }
     }
   };
 
@@ -307,6 +405,15 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
         onChange={handleDateChange}
         disabled={loading}
         placeholder="Select due date (optional)"
+      />
+      
+      {/* Dependencies Field */}
+      <DependencyFormField
+        feature={formData}
+        teamId={teamId || initialData?.teamId}
+        dependencies={dependencies}
+        onDependenciesChange={handleDependenciesChange}
+        disabled={loading || loadingDependencies}
       />
       
       <div className="space-y-2">

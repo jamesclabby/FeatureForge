@@ -7,11 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../ui/badge';
 import { DatePicker } from '../ui/date-picker';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { X } from 'lucide-react';
 import { useToast } from '../ui/toast';
 import featureService, { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
 import { FEATURE_TYPES_ARRAY } from '../../constants/featureTypes';
 import { useTeamContext } from '../../hooks/useTeamContext';
+import { DependencyManager, DependencyFormField } from '../dependencies';
+import dependencyService from '../../services/dependencyService';
 
 const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
   const [formData, setFormData] = useState({
@@ -27,6 +30,9 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [parentFeatures, setParentFeatures] = useState([]);
+  const [dependencies, setDependencies] = useState([]);
+  const [loadingDependencies, setLoadingDependencies] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
   const { teamId } = useTeamContext();
   const { toast } = useToast();
 
@@ -43,8 +49,43 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
         tags: feature.tags || [],
         dueDate: feature.dueDate || feature.due_date || ''
       });
+
+      // Load existing dependencies
+      if (feature.id) {
+        loadExistingDependencies(feature.id);
+      }
     }
   }, [feature]);
+
+  // Load existing dependencies
+  const loadExistingDependencies = async (featureId) => {
+    try {
+      setLoadingDependencies(true);
+      const response = await dependencyService.getFeatureDependencies(featureId);
+      const responseData = response?.data || response || {};
+      
+      // Convert to format expected by DependencyFormField
+      const outgoingDeps = (responseData.outgoing || []).map(dep => ({
+        ...dep,
+        targetFeature: dep.targetFeature,
+        sourceFeature: dep.sourceFeature
+      }));
+      
+      setDependencies(outgoingDeps);
+    } catch (error) {
+      console.error('Error loading dependencies:', error);
+      // Don't show error toast for 404 (no dependencies exist yet)
+      if (error.response?.status !== 404) {
+        toast({
+          title: 'Warning',
+          description: 'Could not load existing dependencies.',
+          variant: 'warning',
+        });
+      }
+    } finally {
+      setLoadingDependencies(false);
+    }
+  };
 
   // Fetch parent features when component mounts or teamId changes
   useEffect(() => {
@@ -100,6 +141,10 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
     }));
   };
 
+  const handleDependenciesChange = (updatedDependencies) => {
+    setDependencies(updatedDependencies);
+  };
+
   const handleAddTag = () => {
     if (!tagInput.trim()) return;
     
@@ -134,6 +179,28 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
     }
   };
 
+  const handleDependencyUpdates = async (featureId) => {
+    // Handle new dependencies
+    const newDependencies = dependencies.filter(dep => dep.isNew);
+    
+    for (const dependency of newDependencies) {
+      try {
+        await dependencyService.createDependency(featureId, {
+          targetFeatureId: dependency.targetFeature.id,
+          dependencyType: dependency.dependencyType,
+          description: dependency.description || null
+        });
+      } catch (error) {
+        console.error('Error creating dependency:', error);
+        toast({
+          title: 'Warning',
+          description: `Could not create dependency to "${dependency.targetFeature.title}".`,
+          variant: 'warning',
+        });
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
@@ -153,6 +220,11 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
       };
       
       const response = await featureService.updateFeature(feature.id, cleanedFormData);
+      
+      // Handle dependency updates
+      if (dependencies.some(dep => dep.isNew)) {
+        await handleDependencyUpdates(feature.id);
+      }
       
       // Notify parent component about successful update
       onFeatureUpdate?.(response.data || response);
@@ -188,198 +260,235 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
         tags: feature.tags || [],
         dueDate: feature.dueDate || feature.due_date || ''
       });
+      
+      // Reset dependencies
+      if (feature.id) {
+        loadExistingDependencies(feature.id);
+      }
     }
     setTagInput('');
+    setActiveTab('details');
     onClose();
+  };
+
+  const handleDependencyUpdate = (updatedFeature) => {
+    // When dependencies change, we don't need to close the modal
+    // Just silently update the feature data if needed
+    console.log('Dependencies updated for feature:', updatedFeature?.id);
   };
 
   if (!feature) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Feature</DialogTitle>
-          <DialogDescription>Make changes to this feature.</DialogDescription>
+          <DialogTitle>Feature Details</DialogTitle>
+          <DialogDescription>View and edit feature information and dependencies.</DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="Enter feature title"
-              required
-              disabled={loading}
-            />
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="dependencies">Dependencies</TabsTrigger>
+          </TabsList>
           
-          <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Describe the feature in detail"
-              className="min-h-[120px]"
-              required
-              disabled={loading}
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="type">Type</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) => handleSelectChange('type', value)}
-                disabled={loading}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FEATURE_TYPES_ARRAY.map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                Feature type cannot be changed after creation
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="parentId">Parent Feature</Label>
-              <Select
-                value={formData.parentId || 'none'}
-                onValueChange={(value) => handleSelectChange('parentId', value === 'none' ? null : value)}
-                disabled={loading || formData.type === 'parent'}
-              >
-                <SelectTrigger id="parentId">
-                  <SelectValue placeholder={formData.type === 'parent' ? 'Parent features cannot have parents' : 'Select parent feature (optional)'} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {parentFeatures.map(feature => (
-                    <SelectItem key={feature.id} value={feature.id}>
-                      {feature.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {formData.type === 'parent' && (
-                <p className="text-xs text-gray-500">
-                  Parent features cannot have parent features
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleSelectChange('status', value)}
-                disabled={loading}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FEATURE_STATUSES.map(status => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value) => handleSelectChange('priority', value)}
-                disabled={loading}
-              >
-                <SelectTrigger id="priority">
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FEATURE_PRIORITIES.map(priority => (
-                    <SelectItem key={priority.value} value={priority.value}>
-                      {priority.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* Due Date Field */}
-          <DatePicker
-            label="Due Date"
-            value={formData.dueDate}
-            onChange={handleDateChange}
-            disabled={loading}
-            placeholder="Select due date (optional)"
-          />
-          
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags</Label>
-            <div className="flex">
-              <Input
-                id="tags"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                placeholder="Add tags (press Enter to add)"
-                className="flex-1"
-                onKeyDown={handleTagInputKeyDown}
-                disabled={loading}
-              />
-              <Button
-                type="button"
-                onClick={handleAddTag}
-                className="ml-2"
-                disabled={!tagInput.trim() || loading}
-              >
-                Add
-              </Button>
-            </div>
-            
-            {/* Display tags */}
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.tags && formData.tags.map(tag => (
-                <Badge key={tag} variant="secondary" className="flex items-center">
-                  {tag}
-                  <button
-                    type="button"
-                    className="ml-1 text-gray-500 hover:text-gray-700"
-                    onClick={() => handleRemoveTag(tag)}
+          <TabsContent value="details" className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  placeholder="Enter feature title"
+                  required
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Description *</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Describe the feature in detail"
+                  className="min-h-[120px]"
+                  required
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="type">Type</Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value) => handleSelectChange('type', value)}
                     disabled={loading}
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          </div>
+                    <SelectTrigger id="type">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FEATURE_TYPES_ARRAY.map(type => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">
+                    Feature type cannot be changed after creation
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="parentId">Parent Feature</Label>
+                  <Select
+                    value={formData.parentId || 'none'}
+                    onValueChange={(value) => handleSelectChange('parentId', value === 'none' ? null : value)}
+                    disabled={loading || formData.type === 'parent'}
+                  >
+                    <SelectTrigger id="parentId">
+                      <SelectValue placeholder={formData.type === 'parent' ? 'Parent features cannot have parents' : 'Select parent feature (optional)'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {parentFeatures.map(feature => (
+                        <SelectItem key={feature.id} value={feature.id}>
+                          {feature.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.type === 'parent' && (
+                    <p className="text-xs text-gray-500">
+                      Parent features cannot have parent features
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => handleSelectChange('status', value)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FEATURE_STATUSES.map(status => (
+                        <SelectItem key={status.value} value={status.value}>
+                          {status.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select
+                    value={formData.priority}
+                    onValueChange={(value) => handleSelectChange('priority', value)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger id="priority">
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FEATURE_PRIORITIES.map(priority => (
+                        <SelectItem key={priority.value} value={priority.value}>
+                          {priority.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {/* Due Date Field */}
+              <DatePicker
+                label="Due Date"
+                value={formData.dueDate}
+                onChange={handleDateChange}
+                disabled={loading}
+                placeholder="Select due date (optional)"
+              />
+
+              {/* Dependencies Field */}
+              <DependencyFormField
+                feature={feature}
+                teamId={teamId}
+                dependencies={dependencies}
+                onDependenciesChange={handleDependenciesChange}
+                disabled={loading || loadingDependencies}
+              />
+              
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags</Label>
+                <div className="flex">
+                  <Input
+                    id="tags"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    placeholder="Add tags (press Enter to add)"
+                    className="flex-1"
+                    onKeyDown={handleTagInputKeyDown}
+                    disabled={loading}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddTag}
+                    className="ml-2"
+                    disabled={!tagInput.trim() || loading}
+                  >
+                    Add
+                  </Button>
+                </div>
+                
+                {/* Display tags */}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.tags && formData.tags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="flex items-center">
+                      {tag}
+                      <button
+                        type="button"
+                        className="ml-1 text-gray-500 hover:text-gray-700"
+                        onClick={() => handleRemoveTag(tag)}
+                        disabled={loading}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button type="button" variant="outline" onClick={handleCancel} disabled={loading}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Updating...' : 'Update Feature'}
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
           
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={handleCancel} disabled={loading}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Updating...' : 'Update Feature'}
-            </Button>
-          </div>
-        </form>
+          <TabsContent value="dependencies" className="space-y-4">
+            <DependencyManager 
+              feature={feature} 
+              onFeatureUpdate={handleDependencyUpdate}
+            />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

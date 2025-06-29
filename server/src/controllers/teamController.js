@@ -1,4 +1,4 @@
-const { Team, User, TeamMember, Feature, Comment } = require('../models');
+const { Team, User, TeamMember, Feature, Comment, FeatureDependency } = require('../models');
 const { validateTeamSize, validateUserTeamCount } = require('../utils/teamValidation');
 const { sendInvitationEmail } = require('../utils/email');
 const ApiError = require('../utils/ApiError');
@@ -533,9 +533,93 @@ const getTeamFeatures = async (req, res) => {
       ]
     });
 
-    // Add default values for missing columns
+    // Get all dependencies for features in this team
+    let allDependencies = [];
+    try {
+      allDependencies = await FeatureDependency.findAll({
+        include: [
+          {
+            model: Feature,
+            as: 'sourceFeature',
+            where: { teamId },
+            attributes: ['id', 'title', 'status', 'priority', 'type', 'teamId']
+          },
+          {
+            model: Feature,
+            as: 'targetFeature',
+            attributes: ['id', 'title', 'status', 'priority', 'type']
+          }
+        ]
+      });
+    } catch (dependencyError) {
+      console.error('Error loading dependencies for team features:', dependencyError);
+      // Continue without dependencies if there's an error
+      allDependencies = [];
+    }
+
+    // Build dependency maps for efficient lookup
+    const outgoingDependenciesMap = new Map();
+    const incomingDependenciesMap = new Map();
+
+    allDependencies.forEach(dep => {
+      const sourceId = dep.sourceFeatureId;
+      const targetId = dep.targetFeatureId;
+
+      // Outgoing dependencies (this feature depends on others)
+      if (!outgoingDependenciesMap.has(sourceId)) {
+        outgoingDependenciesMap.set(sourceId, []);
+      }
+      outgoingDependenciesMap.get(sourceId).push(dep);
+
+      // Incoming dependencies (others depend on this feature)
+      if (!incomingDependenciesMap.has(targetId)) {
+        incomingDependenciesMap.set(targetId, []);
+      }
+      incomingDependenciesMap.get(targetId).push(dep);
+    });
+
+    // Add default values for missing columns and dependency stats
     const enhancedFeatures = features.map(feature => {
       const featureJson = feature.toJSON();
+      const featureId = featureJson.id;
+      
+      // Get dependencies for this feature
+      const outgoingDeps = outgoingDependenciesMap.get(featureId) || [];
+      const incomingDeps = incomingDependenciesMap.get(featureId) || [];
+
+      // Calculate dependency statistics
+      const dependencyStats = {
+        totalOutgoing: outgoingDeps.length,
+        totalIncoming: incomingDeps.length,
+        blockingCount: outgoingDeps.filter(dep => dep.dependencyType === 'blocks').length,
+        blockedByCount: incomingDeps.filter(dep => dep.dependencyType === 'blocks').length,
+        dependsOnCount: outgoingDeps.filter(dep => dep.dependencyType === 'depends_on').length,
+        relatedCount: outgoingDeps.filter(dep => dep.dependencyType === 'relates_to').length + 
+                     incomingDeps.filter(dep => dep.dependencyType === 'relates_to').length
+      };
+
+      // Check if feature is blocked by incomplete dependencies
+      const isBlocked = incomingDeps.some(dep => 
+        ['blocks', 'depends_on'].includes(dep.dependencyType) && 
+        dep.sourceFeature && dep.sourceFeature.status !== 'done'
+      );
+
+      dependencyStats.isBlocked = isBlocked;
+
+      // Debug logging for features with dependencies
+      if (outgoingDeps.length > 0 || incomingDeps.length > 0) {
+        console.log(`Feature "${featureJson.title}" (${featureId}) dependency stats:`, {
+          outgoing: outgoingDeps.length,
+          incoming: incomingDeps.length,
+          isBlocked,
+          incomingDeps: incomingDeps.map(dep => ({
+            type: dep.dependencyType,
+            sourceFeature: dep.sourceFeature?.title,
+            sourceStatus: dep.sourceFeature?.status
+          }))
+        });
+      }
+
       // Add fields that might be missing with default values
       return {
         ...featureJson,
@@ -546,7 +630,8 @@ const getTeamFeatures = async (req, res) => {
         category: 'functionality',
         tags: featureJson.tags || [],
         comments: featureJson.commentsList || [], // Use the actual comments list
-        comments_count: featureJson.commentsList ? featureJson.commentsList.length : 0 // Add comment count
+        comments_count: featureJson.commentsList ? featureJson.commentsList.length : 0, // Add comment count
+        dependencyStats // Add dependency statistics
       };
     });
 
