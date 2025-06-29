@@ -1,6 +1,6 @@
 const { Team, User, TeamMember, Feature, Comment, FeatureDependency } = require('../models');
 const { validateTeamSize, validateUserTeamCount } = require('../utils/teamValidation');
-const { sendInvitationEmail } = require('../utils/email');
+const emailService = require('../services/email/EmailService');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -204,14 +204,15 @@ const addTeamMember = async (req, res) => {
 
     // Send invitation email
     try {
-      await sendInvitationEmail(
-        userToAdd.email,
-        team.name,
-        req.user.name || req.user.email,
-        isNewUser
-      );
+      await emailService.sendInvitation({
+        email: userToAdd.email,
+        teamName: team.name,
+        inviterName: req.user.name || req.user.email,
+        inviteToken: isNewUser ? null : undefined
+      });
     } catch (emailError) {
       // Don't fail the request if email fails, just log it
+      console.log('Email sending failed:', emailError.message);
     }
 
     res.status(201).json({

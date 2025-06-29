@@ -1,6 +1,6 @@
 const { User, Comment, Notification, TeamMember, Team, Feature } = require('../models');
 const { Op } = require('sequelize');
-const { sendMentionNotificationEmail } = require('../utils/email');
+const emailService = require('./email/EmailService');
 
 class CommentService {
   /**
@@ -129,7 +129,7 @@ class CommentService {
           .filter(mention => mention.userId !== comment.userId)
           .map(async (mention) => {
             try {
-              await sendMentionNotificationEmail({
+              await emailService.sendMentionNotification({
                 email: mention.email,
                 recipientName: mention.username,
                 mentionerName: comment.author?.name || 'Someone',
