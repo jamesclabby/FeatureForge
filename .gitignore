@@ -47,3 +47,4 @@ database_backups/
 # Misc
 .DS_Store
 *.pem 
+.vercel

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const emailService = require('../services/email/EmailService');
-const { requireAuth } = require('../middleware/auth');
+const { protectWithAny } = require('../middleware/auth');
 const logger = require('../utils/logger');
 
 /**
@@ -37,7 +37,7 @@ router.post('/webhook', async (req, res) => {
  * @route GET /api/email/analytics
  * @access Private
  */
-router.get('/analytics', requireAuth, async (req, res) => {
+router.get('/analytics', protectWithAny, async (req, res) => {
   try {
     const { startDate, endDate, emailType } = req.query;
     
@@ -66,7 +66,7 @@ router.get('/analytics', requireAuth, async (req, res) => {
  * @route GET /api/email/analytics/report
  * @access Private
  */
-router.get('/analytics/report', requireAuth, async (req, res) => {
+router.get('/analytics/report', protectWithAny, async (req, res) => {
   try {
     const report = await emailService.analytics.generateReport();
 
@@ -89,7 +89,7 @@ router.get('/analytics/report', requireAuth, async (req, res) => {
  * @route GET /api/email/queue/stats
  * @access Private
  */
-router.get('/queue/stats', requireAuth, async (req, res) => {
+router.get('/queue/stats', protectWithAny, async (req, res) => {
   try {
     const stats = await emailService.queue.getStats();
 
@@ -112,7 +112,7 @@ router.get('/queue/stats', requireAuth, async (req, res) => {
  * @route POST /api/email/test
  * @access Private
  */
-router.post('/test', requireAuth, async (req, res) => {
+router.post('/test', protectWithAny, async (req, res) => {
   try {
     const result = await emailService.testConfiguration();
 
@@ -136,7 +136,7 @@ router.post('/test', requireAuth, async (req, res) => {
  * @route POST /api/email/test/send
  * @access Private
  */
-router.post('/test/send', requireAuth, async (req, res) => {
+router.post('/test/send', protectWithAny, async (req, res) => {
   try {
     const { type, recipient } = req.body;
     
@@ -204,7 +204,7 @@ router.post('/test/send', requireAuth, async (req, res) => {
  * @route GET /api/email/details/:messageId
  * @access Private
  */
-router.get('/details/:messageId', requireAuth, async (req, res) => {
+router.get('/details/:messageId', protectWithAny, async (req, res) => {
   try {
     const { messageId } = req.params;
     const details = await emailService.analytics.getEmailDetails(messageId);
@@ -235,7 +235,7 @@ router.get('/details/:messageId', requireAuth, async (req, res) => {
  * @route GET /api/email/activity
  * @access Private
  */
-router.get('/activity', requireAuth, async (req, res) => {
+router.get('/activity', protectWithAny, async (req, res) => {
   try {
     const { limit = 10 } = req.query;
     const activity = await emailService.analytics.getRecentActivity(parseInt(limit));
