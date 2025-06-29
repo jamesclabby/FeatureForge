@@ -137,7 +137,7 @@ const FeatureCard = ({ feature, onVote, onClick }) => {
       <CardFooter className="border-t border-secondary-100 bg-secondary-50 py-3 text-xs text-secondary-500">
         <div className="flex justify-between items-center w-full">
           <span>Created {formatDate(feature.createdAt)}</span>
-          <span>{feature.comments?.length || 0} comments</span>
+          <span>{feature.comments_count || feature.comments?.length || 0} comments</span>
         </div>
       </CardFooter>
     </Card>

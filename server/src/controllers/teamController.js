@@ -1,4 +1,4 @@
-const { Team, User, TeamMember, Feature } = require('../models');
+const { Team, User, TeamMember, Feature, Comment } = require('../models');
 const { validateTeamSize, validateUserTeamCount } = require('../utils/teamValidation');
 const { sendInvitationEmail } = require('../utils/email');
 const ApiError = require('../utils/ApiError');
@@ -488,7 +488,7 @@ const getTeamFeatures = async (req, res) => {
     });
 
     if (!membership) {
-      throw new ApiError('Not authorized to view team features', 403);
+      throw new ApiError(403, 'Not authorized to view team features');
     }
 
     // Get only columns that are guaranteed to exist
@@ -519,6 +519,12 @@ const getTeamFeatures = async (req, res) => {
           model: Feature,
           as: 'children',
           attributes: ['id', 'title', 'type', 'status', 'priority']
+        },
+        {
+          model: Comment,
+          as: 'commentsList',
+          attributes: ['id'],
+          required: false
         }
       ],
       order: [
@@ -539,7 +545,8 @@ const getTeamFeatures = async (req, res) => {
         effort: 5,
         category: 'functionality',
         tags: featureJson.tags || [],
-        comments: featureJson.comments || []
+        comments: featureJson.commentsList || [], // Use the actual comments list
+        comments_count: featureJson.commentsList ? featureJson.commentsList.length : 0 // Add comment count
       };
     });
 

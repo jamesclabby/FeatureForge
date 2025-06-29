@@ -6,7 +6,7 @@ import { Textarea } from '../ui/textarea';
 import { useToast } from '../ui/toast';
 import teamService from '../../services/teamService';
 
-const TeamForm = ({ team, onSubmit, onCancel }) => {
+const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: ''
@@ -28,22 +28,27 @@ const TeamForm = ({ team, onSubmit, onCancel }) => {
     setLoading(true);
 
     try {
+      let result;
       if (team) {
-        await teamService.updateTeam(team.id, formData);
+        result = await teamService.updateTeam(team.id, formData);
         toast.toast({
           title: 'Success',
           description: 'Team updated successfully',
           variant: 'default'
         });
       } else {
-        await teamService.createTeam(formData);
+        result = await teamService.createTeam(formData);
         toast.toast({
           title: 'Success',
-          description: 'Team created successfully',
+          description: isNewUser 
+            ? 'Welcome to FeatureForge! Your team has been created successfully.' 
+            : 'Team created successfully',
           variant: 'default'
         });
       }
-      onSubmit();
+      
+      // Pass the created/updated team data to the parent
+      onSubmit(result.data || result);
     } catch (error) {
       toast.toast({
         title: 'Error',
@@ -66,15 +71,22 @@ const TeamForm = ({ team, onSubmit, onCancel }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Team Name</Label>
+        <Label htmlFor="name">
+          Team Name {isNewUser && <span className="text-red-500">*</span>}
+        </Label>
         <Input
           id="name"
           name="name"
           value={formData.name}
           onChange={handleChange}
-          placeholder="Enter team name"
+          placeholder={isNewUser ? "e.g., Product Team, Marketing Team, Development Team" : "Enter team name"}
           required
         />
+        {isNewUser && (
+          <p className="text-xs text-secondary-500">
+            Choose a name that clearly identifies your team or project
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -84,9 +96,17 @@ const TeamForm = ({ team, onSubmit, onCancel }) => {
           name="description"
           value={formData.description}
           onChange={handleChange}
-          placeholder="Enter team description"
+          placeholder={isNewUser 
+            ? "Briefly describe what your team works on (optional)" 
+            : "Enter team description"
+          }
           rows={4}
         />
+        {isNewUser && (
+          <p className="text-xs text-secondary-500">
+            Help others understand what your team focuses on
+          </p>
+        )}
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">
@@ -96,10 +116,16 @@ const TeamForm = ({ team, onSubmit, onCancel }) => {
           onClick={onCancel}
           disabled={loading}
         >
-          Cancel
+          {isNewUser ? 'Back' : 'Cancel'}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Saving...' : team ? 'Update Team' : 'Create Team'}
+          {loading 
+            ? (isNewUser ? 'Creating Team...' : 'Saving...') 
+            : (team 
+                ? 'Update Team' 
+                : (isNewUser ? 'Create Team & Continue' : 'Create Team')
+              )
+          }
         </Button>
       </div>
     </form>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -11,7 +12,18 @@ const SignUp = ({ onLoginClick }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signup, loginWithGoogle } = useAuth();
+  const { signup, loginWithGoogle, currentUser } = useAuth();
+  const navigate = useNavigate();
+
+  // Navigate to team selector when user is authenticated after signup
+  useEffect(() => {
+    if (currentUser && !loading) {
+      console.log('SignUp: User authenticated after signup, navigating to team selector');
+      // Mark this as a new user signup for onboarding
+      localStorage.setItem('isNewUserSignup', 'true');
+      navigate('/selector', { replace: true });
+    }
+  }, [currentUser, loading, navigate]);
 
   const validateForm = () => {
     if (!displayName.trim()) {
@@ -58,9 +70,12 @@ const SignUp = ({ onLoginClick }) => {
     try {
       setError('');
       setLoading(true);
+      console.log('SignUp: Starting signup process for:', email);
       await signup(email, password, displayName);
-      // Successful signup will be handled by the AuthContext which updates the currentUser
+      console.log('SignUp: Signup successful, waiting for auth state change...');
+      // Navigation will be handled by useEffect when currentUser updates
     } catch (err) {
+      console.error('SignUp: Signup failed:', err);
       setError('Failed to create an account: ' + (err.message || 'Please try again'));
     } finally {
       setLoading(false);
@@ -71,9 +86,14 @@ const SignUp = ({ onLoginClick }) => {
     try {
       setError('');
       setLoading(true);
+      console.log('SignUp: Starting Google signup process');
       await loginWithGoogle();
-      // Successful login will be handled by the AuthContext
+      console.log('SignUp: Google signup successful, waiting for auth state change...');
+      // Mark as new user signup for Google users too
+      localStorage.setItem('isNewUserSignup', 'true');
+      // Navigation will be handled by useEffect when currentUser updates
     } catch (err) {
+      console.error('SignUp: Google signup failed:', err);
       setError('Failed to sign in with Google: ' + (err.message || 'Please try again'));
     } finally {
       setLoading(false);
