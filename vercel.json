@@ -12,12 +12,7 @@
       "dest": "server/src/index.js"
     }
   ],
-  "functions": {
-    "server/src/index.js": {
-      "maxDuration": 30
-    }
-  },
   "env": {
     "NODE_ENV": "production"
   }
-} 
+}
