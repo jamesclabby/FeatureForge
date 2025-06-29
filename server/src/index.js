@@ -1,14 +1,7 @@
-const dotenv = require('dotenv');
-const path = require('path');
+// Vercel Serverless Function Entry Point
+// Environment variables are automatically loaded by Vercel
 
-// Load environment variables with explicit path
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+const app = require('./app');
 
-const startServer = require('./scripts/startServer');
-
-// Start the server with database as optional
-startServer({ requireDb: false })
-  .catch(error => {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }); 
+// Export the Express app as a Vercel serverless function
+module.exports = app; 

@@ -4,11 +4,9 @@ const compression = require('compression');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
-const dotenv = require('dotenv');
 
-// Load environment variables based on NODE_ENV
-const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
-dotenv.config({ path: path.resolve(__dirname, '..', envFile) });
+// Environment variables are automatically provided by Vercel
+// No need to load .env files in serverless functions
 
 const { 
   generalRateLimit, 
