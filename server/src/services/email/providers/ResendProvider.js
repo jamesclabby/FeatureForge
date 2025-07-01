@@ -60,17 +60,10 @@ class ResendProvider {
       throw new Error('Resend provider not configured. Check RESEND_API_KEY.');
     }
 
-    if (!this.templates[type]) {
-      throw new Error(`Unknown email template type: ${type}`);
-    }
-
     try {
-      // Get template and render it
-      const Template = this.templates[type];
+      // Get subject and HTML content
       const subject = this.getSubject(type, data);
-      
-      // Render React component to HTML
-      const html = render(Template(data));
+      const html = this.getHtmlContent(type, data);
 
       const emailOptions = {
         from: `${process.env.EMAIL_FROM_NAME || 'FeatureForge'} <${process.env.EMAIL_FROM_ADDRESS}>`,
@@ -127,6 +120,233 @@ class ResendProvider {
       default:
         return 'Notification from FeatureForge';
     }
+  }
+
+  /**
+   * Get HTML content based on type and data
+   * @param {string} type - Email type
+   * @param {Object} data - Template data
+   */
+  getHtmlContent(type, data) {
+    switch (type) {
+      case 'invitation':
+        return this.getInvitationHtml(data);
+      case 'password-reset':
+        return this.getPasswordResetHtml(data);
+      case 'mention':
+        return this.getMentionHtml(data);
+      default:
+        throw new Error(`Unknown email template type: ${type}`);
+    }
+  }
+
+  /**
+   * Get invitation email HTML
+   */
+  getInvitationHtml(data) {
+    const { teamName, inviterName, inviteUrl } = data;
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Invitation to join ${teamName} on FeatureForge</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 0;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+            
+            <!-- Header -->
+            <div style="background-color: #0ea5e9; padding: 40px 40px 30px 40px; text-align: center;">
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0; line-height: 1.2;">
+                You're invited to join ${teamName}
+              </h1>
+            </div>
+            
+            <!-- Content -->
+            <div style="padding: 40px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                Hello!
+              </p>
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                <strong>${inviterName}</strong> has invited you to join the team "<strong>${teamName}</strong>" on FeatureForge.
+              </p>
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                FeatureForge is a collaborative platform for feature prioritization and management. Join your team to contribute to product decisions and track feature development.
+              </p>
+            </div>
+            
+            <!-- Button -->
+            <div style="text-align: center; padding: 0 40px 40px 40px;">
+              <a href="${inviteUrl}" style="background-color: #0ea5e9; color: #ffffff; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block; border: none;">
+                Accept Invitation
+              </a>
+            </div>
+            
+            <!-- Link Section -->
+            <div style="padding: 0 40px 40px 40px;">
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;">
+                If the button doesn't work, you can copy and paste this link into your browser:
+              </p>
+              <p style="color: #0ea5e9; font-size: 14px; word-break: break-all; margin: 0;">
+                ${inviteUrl}
+              </p>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0 40px;">
+            
+            <!-- Footer -->
+            <div style="padding: 30px 40px 40px 40px;">
+              <p style="color: #9ca3af; font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;">
+                If you didn't expect this invitation, you can safely ignore this email.
+              </p>
+              <p style="color: #9ca3af; font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;">
+                This invitation was sent from FeatureForge.
+              </p>
+            </div>
+            
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Get password reset email HTML
+   */
+  getPasswordResetHtml(data) {
+    const { resetUrl } = data;
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Password Reset Request - FeatureForge</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 0;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+            
+            <!-- Header -->
+            <div style="background-color: #dc2626; padding: 40px 40px 30px 40px; text-align: center;">
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0; line-height: 1.2;">
+                Password Reset Request
+              </h1>
+            </div>
+            
+            <!-- Content -->
+            <div style="padding: 40px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                Hello,
+              </p>
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                We received a request to reset your password for your FeatureForge account.
+              </p>
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                Click the button below to reset your password:
+              </p>
+            </div>
+            
+            <!-- Button -->
+            <div style="text-align: center; padding: 0 40px 40px 40px;">
+              <a href="${resetUrl}" style="background-color: #dc2626; color: #ffffff; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block; border: none;">
+                Reset Password
+              </a>
+            </div>
+            
+            <!-- Link Section -->
+            <div style="padding: 0 40px 40px 40px;">
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;">
+                If the button doesn't work, you can copy and paste this link into your browser:
+              </p>
+              <p style="color: #dc2626; font-size: 14px; word-break: break-all; margin: 0;">
+                ${resetUrl}
+              </p>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0 40px;">
+            
+            <!-- Footer -->
+            <div style="padding: 30px 40px 40px 40px;">
+              <p style="color: #9ca3af; font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;">
+                If you didn't request this password reset, you can safely ignore this email.
+              </p>
+              <p style="color: #9ca3af; font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;">
+                This link will expire in 1 hour for security reasons.
+              </p>
+            </div>
+            
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Get mention notification email HTML
+   */
+  getMentionHtml(data) {
+    const { recipientName, mentionerName, featureTitle, commentContent, featureId } = data;
+    const featureUrl = `${process.env.FRONTEND_URL}/features/${featureId}`;
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${mentionerName} mentioned you in a comment on FeatureForge</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 0;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+            
+            <!-- Header -->
+            <div style="background-color: #7c3aed; padding: 40px 40px 30px 40px; text-align: center;">
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0; line-height: 1.2;">
+                You were mentioned in a comment
+              </h1>
+            </div>
+            
+            <!-- Content -->
+            <div style="padding: 40px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                Hello ${recipientName},
+              </p>
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                <strong>${mentionerName}</strong> mentioned you in a comment on the feature "<strong>${featureTitle}</strong>".
+              </p>
+              <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; border-left: 4px solid #7c3aed; margin: 16px 0;">
+                <p style="color: #374151; font-size: 14px; line-height: 1.5; margin: 0; font-style: italic;">
+                  "${commentContent}"
+                </p>
+              </div>
+            </div>
+            
+            <!-- Button -->
+            <div style="text-align: center; padding: 0 40px 40px 40px;">
+              <a href="${featureUrl}" style="background-color: #7c3aed; color: #ffffff; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block; border: none;">
+                View Comment
+              </a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0 40px;">
+            
+            <!-- Footer -->
+            <div style="padding: 30px 40px 40px 40px;">
+              <p style="color: #9ca3af; font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;">
+                You received this notification because you were mentioned in a comment.
+              </p>
+              <p style="color: #9ca3af; font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;">
+                This email was sent from FeatureForge.
+              </p>
+            </div>
+            
+          </div>
+        </body>
+      </html>
+    `;
   }
 
   /**
