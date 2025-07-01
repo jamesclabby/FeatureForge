@@ -16,6 +16,14 @@ const {
   sanitizeInput 
 } = require('./middleware/security');
 const logger = require('./utils/logger');
+const { initializeFirebaseAdmin } = require('./config/firebase');
+
+// Initialize Firebase Admin SDK
+initializeFirebaseAdmin().then(() => {
+  console.log('Firebase initialization completed');
+}).catch((error) => {
+  console.warn('Firebase initialization failed:', error.message);
+});
 
 const swaggerDocument = YAML.load(path.join(__dirname, 'docs/api.yaml'));
 

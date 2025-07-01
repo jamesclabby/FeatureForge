@@ -14,11 +14,13 @@ const initializeFirebaseAdmin = async (required = false) => {
     // Check if Firebase Admin is already initialized
     if (admin.apps.length === 0) {
       // Check if required environment variables are present
-      const hasServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-      const hasProjectId = process.env.FIREBASE_PROJECT_ID;
+      const hasServiceAccountFile = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+      const hasIndividualVars = process.env.FIREBASE_PROJECT_ID && 
+                                process.env.FIREBASE_CLIENT_EMAIL && 
+                                process.env.FIREBASE_PRIVATE_KEY;
       
-      if (!hasServiceAccount && !hasProjectId) {
-        const message = 'Firebase configuration missing. Check your environment variables.';
+      if (!hasServiceAccountFile && !hasIndividualVars) {
+        const message = 'Firebase configuration missing. Need either FIREBASE_SERVICE_ACCOUNT_KEY or (FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY)';
         if (required) {
           throw new Error(message);
         } else {
@@ -27,8 +29,8 @@ const initializeFirebaseAdmin = async (required = false) => {
         }
       }
       
-      // If service account key path is provided, use it
-      if (hasServiceAccount) {
+      // Option 1: Use service account file path (for local development)
+      if (hasServiceAccountFile) {
         try {
           const serviceAccount = require(path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_KEY));
           
@@ -36,8 +38,34 @@ const initializeFirebaseAdmin = async (required = false) => {
             credential: admin.credential.cert(serviceAccount),
             storageBucket: process.env.FIREBASE_STORAGE_BUCKET
           });
+          console.log('Firebase Admin SDK initialized with service account file');
         } catch (error) {
-          const message = `Error loading Firebase service account: ${error.message}`;
+          const message = `Error loading Firebase service account file: ${error.message}`;
+          if (required) {
+            throw new Error(message);
+          } else {
+            console.warn(message);
+            return null;
+          }
+        }
+      } 
+      // Option 2: Use individual environment variables (for production/Vercel)
+      else if (hasIndividualVars) {
+        try {
+          // Replace \n characters in private key (common issue with env vars)
+          const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+          
+          admin.initializeApp({
+            credential: admin.credential.cert({
+              projectId: process.env.FIREBASE_PROJECT_ID,
+              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+              privateKey: privateKey,
+            }),
+            storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+          });
+          console.log('Firebase Admin SDK initialized with environment variables');
+        } catch (error) {
+          const message = `Error initializing Firebase with environment variables: ${error.message}`;
           if (required) {
             throw new Error(message);
           } else {
@@ -46,15 +74,25 @@ const initializeFirebaseAdmin = async (required = false) => {
           }
         }
       } else {
-        // Otherwise, use application default credentials
-        admin.initializeApp({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-        });
+        // Fallback: try application default credentials
+        try {
+          admin.initializeApp({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+          });
+          console.log('Firebase Admin SDK initialized with application default credentials');
+        } catch (error) {
+          const message = `Error with application default credentials: ${error.message}`;
+          if (required) {
+            throw new Error(message);
+          } else {
+            console.warn(message);
+            return null;
+          }
+        }
       }
       
       isInitialized = true;
-      console.log('Firebase Admin SDK initialized');
     }
     
     return admin;
