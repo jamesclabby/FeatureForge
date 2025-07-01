@@ -52,8 +52,21 @@ const initializeFirebaseAdmin = async (required = false) => {
       // Option 2: Use individual environment variables (for production/Vercel)
       else if (hasIndividualVars) {
         try {
-          // Replace \n characters in private key (common issue with env vars)
-          const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+          let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+          
+          // Check if the private key is Base64 encoded
+          if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+            // It's likely Base64 encoded, decode it
+            try {
+              privateKey = Buffer.from(privateKey, 'base64').toString('utf8');
+              console.log('Decoded Base64 private key');
+            } catch (decodeError) {
+              console.warn('Failed to decode private key as Base64, using as-is');
+            }
+          }
+          
+          // Replace \n characters in private key (in case they're still literal)
+          privateKey = privateKey.replace(/\\n/g, '\n');
           
           admin.initializeApp({
             credential: admin.credential.cert({
