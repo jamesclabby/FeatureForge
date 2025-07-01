@@ -1,7 +1,10 @@
 const { Team, User, TeamMember, Feature, Comment, FeatureDependency } = require('../models');
 const { validateTeamSize, validateUserTeamCount } = require('../utils/teamValidation');
-const emailService = require('../services/email/EmailService');
+const ResendProvider = require('../services/email/providers/ResendProvider');
 const ApiError = require('../utils/ApiError');
+
+// Use ResendProvider directly instead of the complex EmailService
+const emailProvider = new ResendProvider();
 
 /**
  * Create a new team
@@ -238,11 +241,14 @@ const addTeamMember = async (req, res) => {
     // Send invitation email with timeout
     try {
       // Add timeout wrapper to prevent infinite hangs
-      const emailPromise = emailService.sendInvitation({
-        email: userToAdd.email,
-        teamName: team.name,
-        inviterName: req.user.name || req.user.email,
-        inviteToken: isNewUser ? null : undefined
+      const emailPromise = emailProvider.send({
+        to: userToAdd.email,
+        type: 'invitation',
+        data: {
+          teamName: team.name,
+          inviterName: req.user.name || req.user.email,
+          inviteUrl: `${process.env.FRONTEND_URL || 'https://www.featureforge.dev'}/register`
+        }
       });
       
       // Set 10 second timeout for email sending to match frontend timeout
