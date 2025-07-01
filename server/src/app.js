@@ -31,6 +31,7 @@ const teamRoutes = require('./routes/teamRoutes');
 const featureRoutes = require('./routes/features');
 const chatRoutes = require('./routes/chatRoutes');
 const emailRoutes = require('./routes/emailRoutes');
+const commentRoutes = require('./routes/comments');
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/features', featureRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api', commentRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

@@ -51,8 +51,25 @@ const generalRateLimit = createRateLimiter(
 const sanitizeInput = (req, res, next) => {
   const sanitizeValue = (value) => {
     if (typeof value === 'string') {
-      // Remove potential XSS
-      return validator.escape(value.trim());
+      // Trim whitespace
+      let sanitized = value.trim();
+      
+      // Remove potential XSS patterns but preserve normal punctuation
+      // Remove script tags and dangerous HTML tags
+      sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gi, '');
+      sanitized = sanitized.replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
+      sanitized = sanitized.replace(/<object[^>]*>.*?<\/object>/gi, '');
+      sanitized = sanitized.replace(/<embed[^>]*>.*?<\/embed>/gi, '');
+      sanitized = sanitized.replace(/<form[^>]*>.*?<\/form>/gi, '');
+      
+      // Remove javascript: and data: URLs but keep normal URLs
+      sanitized = sanitized.replace(/javascript\s*:/gi, '');
+      sanitized = sanitized.replace(/data\s*:\s*text\/html/gi, '');
+      
+      // Remove on* event handlers
+      sanitized = sanitized.replace(/\son\w+\s*=/gi, '');
+      
+      return sanitized;
     }
     if (typeof value === 'object' && value !== null) {
       for (const key in value) {
