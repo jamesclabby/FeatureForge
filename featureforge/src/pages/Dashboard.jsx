@@ -75,6 +75,16 @@ const Dashboard = () => {
       }
       
       setTeam(response.data);
+      
+      // Store team name and role in localStorage for useTeamContext
+      try {
+        localStorage.setItem('selectedTeamName', response.data.name);
+        localStorage.setItem('selectedUserRole', 'admin'); // Default role, could be improved with actual role from API
+        console.log('Dashboard: Updated team name and role in localStorage');
+      } catch (storageError) {
+        console.error('Dashboard: Error storing team data in localStorage:', storageError);
+      }
+      
       setError(null);
     } catch (err) {
       console.error('Error fetching team details:', err);
@@ -116,9 +126,11 @@ const Dashboard = () => {
 
   const handleSwitchTeam = () => {
     console.log('Dashboard: Switch Team button clicked');
-    // Clear the selected team from localStorage
+    // Clear all team-related data from localStorage
     localStorage.removeItem('selectedTeamId');
-    console.log('Dashboard: Cleared selectedTeamId from localStorage');
+    localStorage.removeItem('selectedTeamName');
+    localStorage.removeItem('selectedUserRole');
+    console.log('Dashboard: Cleared all team data from localStorage');
     // Navigate directly to the team selector
     console.log('Dashboard: Navigating to /selector');
     navigate('/selector');
@@ -164,8 +176,10 @@ const Dashboard = () => {
           </Button>
           <Button
             onClick={() => {
-              // Clear the selected team and go to selector
+              // Clear all team-related data and go to selector
               localStorage.removeItem('selectedTeamId');
+              localStorage.removeItem('selectedTeamName');
+              localStorage.removeItem('selectedUserRole');
               navigate('/selector');
             }}
             variant="outline"
@@ -206,6 +220,8 @@ const Dashboard = () => {
               onClick={() => {
                 console.log('Switch Team button clicked (inline)');
                 localStorage.removeItem('selectedTeamId');
+                localStorage.removeItem('selectedTeamName');
+                localStorage.removeItem('selectedUserRole');
                 navigate('/selector');
               }}
             >

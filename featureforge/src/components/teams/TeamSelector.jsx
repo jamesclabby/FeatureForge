@@ -61,9 +61,27 @@ const TeamSelector = () => {
         return;
       }
       
-      // Store the selected team ID in localStorage for persistence
+      // Find the team to get its name
+      const selectedTeam = teams.find(team => team.id === teamId);
+      if (!selectedTeam) {
+        console.error('Team not found in teams list:', teamId);
+        toast.toast({
+          title: 'Error',
+          description: 'Team not found. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Store the selected team data in localStorage for persistence
       localStorage.setItem('selectedTeamId', teamId);
-      console.log('TeamSelector: Stored teamId in localStorage:', teamId);
+      localStorage.setItem('selectedTeamName', selectedTeam.name);
+      localStorage.setItem('selectedUserRole', 'admin'); // Default role, this could be improved
+      console.log('TeamSelector: Stored team data in localStorage:', {
+        teamId,
+        teamName: selectedTeam.name,
+        userRole: 'admin'
+      });
       
       // Navigate to the specific team dashboard instead of the general dashboard
       const teamDashboardUrl = `/team-dashboard/${teamId}?t=${Date.now()}`;
@@ -238,6 +256,8 @@ const TeamSelector = () => {
                     e.preventDefault();
                     console.log('Direct team selection for:', team.id);
                     localStorage.setItem('selectedTeamId', team.id);
+                    localStorage.setItem('selectedTeamName', team.name);
+                    localStorage.setItem('selectedUserRole', 'admin');
                     window.location.href = `/team-dashboard/${team.id}`;
                   }}
                 >
