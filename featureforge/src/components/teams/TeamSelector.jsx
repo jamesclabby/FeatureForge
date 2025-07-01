@@ -32,7 +32,7 @@ const TeamSelector = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     // Check if this is a new user signup
