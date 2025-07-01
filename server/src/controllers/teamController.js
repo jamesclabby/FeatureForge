@@ -180,6 +180,17 @@ const addTeamMember = async (req, res) => {
     });
 
     if (existingMember) {
+      // If user was just created but membership already exists, this is likely a retry
+      // Clean up the newly created user if they were just created
+      if (isNewUser) {
+        try {
+          await userToAdd.destroy();
+          console.log(`Cleaned up duplicate user: ${userToAdd.email}`);
+        } catch (cleanupError) {
+          console.error('Failed to cleanup duplicate user:', cleanupError);
+        }
+      }
+      
       return res.status(400).json({
         success: false,
         error: 'User is already a team member'
@@ -195,24 +206,34 @@ const addTeamMember = async (req, res) => {
       });
     }
 
-    // Add user to team
+    // Add user to team with mapped role
     const teamMember = await TeamMember.create({
       teamId,
       userId: userToAdd.id,
       role: role || 'member'
     });
 
-    // Send invitation email
+    // Send invitation email with timeout
     try {
-      await emailService.sendInvitation({
+      // Add timeout wrapper to prevent infinite hangs
+      const emailPromise = emailService.sendInvitation({
         email: userToAdd.email,
         teamName: team.name,
         inviterName: req.user.name || req.user.email,
         inviteToken: isNewUser ? null : undefined
       });
+      
+      // Set 30 second timeout for email sending
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Email sending timeout after 30 seconds')), 30000);
+      });
+      
+      await Promise.race([emailPromise, timeoutPromise]);
+      console.log(`Invitation email sent successfully to ${userToAdd.email}`);
     } catch (emailError) {
       // Don't fail the request if email fails, just log it
-      console.log('Email sending failed:', emailError.message);
+      console.error('Email sending failed:', emailError.message);
+      console.error('Email error details:', emailError);
     }
 
     res.status(201).json({
@@ -231,6 +252,7 @@ const addTeamMember = async (req, res) => {
         : `${email} has been added to the team.`
     });
   } catch (error) {
+    console.error('Error in addTeamMember:', error);
     res.status(error.statusCode || 400).json({
       success: false,
       error: error.message
