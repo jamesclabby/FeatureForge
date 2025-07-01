@@ -133,10 +133,22 @@ const deleteTeam = async (req, res) => {
  */
 const addTeamMember = async (req, res) => {
   const { teamId } = req.params;
-  const { email, role = 'member' } = req.body;
+  const { email, role = 'user' } = req.body;
   const userId = req.user.id;
 
   try {
+    // Map frontend role values to database enum values
+    const roleMapping = {
+      'member': 'user',        // Frontend 'member' -> DB 'user'
+      'viewer': 'user',        // Frontend 'viewer' -> DB 'user' (we can distinguish this in frontend)
+      'admin': 'admin',        // Frontend 'admin' -> DB 'admin'
+      'product-owner': 'product-owner', // Direct mapping
+      'user': 'user'           // Direct mapping
+    };
+    
+    const mappedRole = roleMapping[role] || 'user';
+    console.log(`Role mapping: ${role} -> ${mappedRole}`);
+
     // Check if user is team admin
     const membership = await TeamMember.findOne({
       where: { teamId, userId, role: 'admin' }
@@ -207,11 +219,21 @@ const addTeamMember = async (req, res) => {
     }
 
     // Add user to team with mapped role
-    const teamMember = await TeamMember.create({
-      teamId,
-      userId: userToAdd.id,
-      role: role || 'member'
-    });
+    let teamMember;
+    try {
+      teamMember = await TeamMember.create({
+        teamId,
+        userId: userToAdd.id,
+        role: mappedRole
+      });
+      console.log(`TeamMember created successfully with role: ${mappedRole}`);
+    } catch (createError) {
+      console.error('Error creating TeamMember:', createError);
+      return res.status(400).json({
+        success: false,
+        error: `Failed to create team membership: ${createError.message}`
+      });
+    }
 
     // Send invitation email with timeout
     try {
@@ -223,9 +245,9 @@ const addTeamMember = async (req, res) => {
         inviteToken: isNewUser ? null : undefined
       });
       
-      // Set 30 second timeout for email sending
+      // Set 10 second timeout for email sending to match frontend timeout
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Email sending timeout after 30 seconds')), 30000);
+        setTimeout(() => reject(new Error('Email sending timeout after 10 seconds')), 10000);
       });
       
       await Promise.race([emailPromise, timeoutPromise]);
