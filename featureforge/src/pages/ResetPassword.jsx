@@ -1,15 +1,15 @@
 import React from 'react';
 import { Card } from '../components/ui/card';
-import Login from '../components/auth/Login';
+import ResetPassword from '../components/auth/ResetPassword';
 
-const LoginPage = () => {
+const ResetPasswordPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary-50 px-4 py-12">
       <Card className="w-full max-w-md p-8 shadow-lg">
-        <Login />
+        <ResetPassword />
       </Card>
     </div>
   );
 };
 
-export default LoginPage; 
+export default ResetPasswordPage; 

@@ -15,6 +15,8 @@ import TeamNew from './components/teams/TeamNew';
 import TeamSelector from './components/teams/TeamSelector';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import SignUpPage from './pages/SignUp';
+import ResetPasswordPage from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
 import Features from './pages/Features';
 import FeatureView from './pages/FeatureView';
@@ -111,6 +113,8 @@ function App() {
                 <Route path="/" element={<RootRoute />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/signup" element={<SignUpPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 
                 <Route element={<ProtectedRoute />}>
                   {/* Dashboard now redirects to selector first */}

@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const Login = ({ onSignUpClick, onResetPasswordClick }) => {
   const [email, setEmail] = useState('');
@@ -100,13 +100,22 @@ const Login = ({ onSignUpClick, onResetPasswordClick }) => {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <button 
-              type="button"
-              onClick={onResetPasswordClick} 
-              className="text-sm text-primary-600 hover:text-primary-800"
-            >
-              Forgot password?
-            </button>
+            {onResetPasswordClick ? (
+              <button 
+                type="button"
+                onClick={onResetPasswordClick} 
+                className="text-sm text-primary-600 hover:text-primary-800"
+              >
+                Forgot password?
+              </button>
+            ) : (
+              <Link 
+                to="/reset-password"
+                className="text-sm text-primary-600 hover:text-primary-800"
+              >
+                Forgot password?
+              </Link>
+            )}
           </div>
           <Input
             type="password"
@@ -168,13 +177,22 @@ const Login = ({ onSignUpClick, onResetPasswordClick }) => {
       
       <div className="text-center text-sm">
         <span className="text-secondary-500">Don't have an account?</span>{' '}
-        <button 
-          type="button"
-          onClick={onSignUpClick} 
-          className="text-primary-600 hover:text-primary-800 font-medium"
-        >
-          Sign up
-        </button>
+        {onSignUpClick ? (
+          <button 
+            type="button"
+            onClick={onSignUpClick} 
+            className="text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Sign up
+          </button>
+        ) : (
+          <Link 
+            to="/signup"
+            className="text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Sign up
+          </Link>
+        )}
       </div>
     </div>
   );

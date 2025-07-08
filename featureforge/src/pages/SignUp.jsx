@@ -1,15 +1,15 @@
 import React from 'react';
 import { Card } from '../components/ui/card';
-import Login from '../components/auth/Login';
+import SignUp from '../components/auth/SignUp';
 
-const LoginPage = () => {
+const SignUpPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary-50 px-4 py-12">
       <Card className="w-full max-w-md p-8 shadow-lg">
-        <Login />
+        <SignUp />
       </Card>
     </div>
   );
 };
 
-export default LoginPage; 
+export default SignUpPage; 

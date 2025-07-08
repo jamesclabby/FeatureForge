@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -216,13 +216,22 @@ const SignUp = ({ onLoginClick }) => {
       
       <div className="text-center text-sm">
         <span className="text-secondary-500">Already have an account?</span>{' '}
-        <button 
-          type="button"
-          onClick={onLoginClick} 
-          className="text-primary-600 hover:text-primary-800 font-medium"
-        >
-          Log in
-        </button>
+        {onLoginClick ? (
+          <button 
+            type="button"
+            onClick={onLoginClick} 
+            className="text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Log in
+          </button>
+        ) : (
+          <Link 
+            to="/login"
+            className="text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Log in
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Link } from 'react-router-dom';
 
 const ResetPassword = ({ onLoginClick }) => {
   const [email, setEmail] = useState('');
@@ -74,13 +75,22 @@ const ResetPassword = ({ onLoginClick }) => {
       </form>
       
       <div className="text-center text-sm">
-        <button 
-          type="button"
-          onClick={onLoginClick} 
-          className="text-primary-600 hover:text-primary-800 font-medium"
-        >
-          Back to Login
-        </button>
+        {onLoginClick ? (
+          <button 
+            type="button"
+            onClick={onLoginClick} 
+            className="text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Back to Login
+          </button>
+        ) : (
+          <Link 
+            to="/login"
+            className="text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Back to Login
+          </Link>
+        )}
       </div>
     </div>
   );
