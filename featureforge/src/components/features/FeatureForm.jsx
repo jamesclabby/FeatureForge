@@ -4,10 +4,12 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { CharacterCounter } from '../ui/character-counter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { DatePicker } from '../ui/date-picker';
 import { useToast } from '../ui/toast';
+import { FIELD_LIMITS, validateFeatureTitle, validateFeatureDescription, validateTag } from '../../utils/validation';
 import featureService, { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
 import { FEATURE_TYPES_ARRAY } from '../../constants/featureTypes';
 import { DependencyFormField } from '../dependencies';
@@ -27,6 +29,7 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
   
   const [formData, setFormData] = useState(isEdit && initialData ? { ...initialData } : emptyFormData);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const [tagInput, setTagInput] = useState('');
   const [parentFeatures, setParentFeatures] = useState([]);
   const [dependencies, setDependencies] = useState([]);
@@ -100,12 +103,33 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
     fetchParentFeatures();
   }, [teamId, initialData?.teamId, initialData?.id, isEdit]);
 
+  const validateForm = () => {
+    const newErrors = {};
+    
+    const titleError = validateFeatureTitle(formData.title);
+    if (titleError) newErrors.title = titleError;
+    
+    const descriptionError = validateFeatureDescription(formData.description);
+    if (descriptionError) newErrors.description = descriptionError;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
   };
 
   const handleSelectChange = (name, value) => {
@@ -137,6 +161,17 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
 
   const handleAddTag = () => {
     if (!tagInput.trim()) return;
+    
+    // Validate tag length
+    const tagError = validateTag(tagInput);
+    if (tagError) {
+      toast.toast({
+        title: 'Invalid Tag',
+        description: tagError,
+        variant: 'destructive',
+      });
+      return;
+    }
     
     // Check if tag already exists
     if (formData.tags && formData.tags.includes(tagInput.trim())) {
@@ -172,6 +207,10 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       setLoading(true);
@@ -288,7 +327,17 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
           placeholder="Enter feature title"
           required
           disabled={loading}
+          maxLength={FIELD_LIMITS.FEATURE_TITLE}
+          className={errors.title ? 'border-red-500' : ''}
         />
+        <div className="flex justify-between items-center">
+          <div>
+            {errors.title && (
+              <p className="text-xs text-red-600">{errors.title}</p>
+            )}
+          </div>
+          <CharacterCounter value={formData.title} limit={FIELD_LIMITS.FEATURE_TITLE} />
+        </div>
       </div>
       
       <div className="space-y-2">
@@ -299,10 +348,19 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
           value={formData.description}
           onChange={handleChange}
           placeholder="Describe the feature in detail"
-          className="min-h-[120px]"
+          className={`min-h-[120px] ${errors.description ? 'border-red-500' : ''}`}
           required
           disabled={loading}
+          maxLength={FIELD_LIMITS.FEATURE_DESCRIPTION}
         />
+        <div className="flex justify-between items-center">
+          <div>
+            {errors.description && (
+              <p className="text-xs text-red-600">{errors.description}</p>
+            )}
+          </div>
+          <CharacterCounter value={formData.description} limit={FIELD_LIMITS.FEATURE_DESCRIPTION} />
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -427,6 +485,7 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
             className="flex-1"
             onKeyDown={handleTagInputKeyDown}
             disabled={loading}
+            maxLength={FIELD_LIMITS.TAG}
           />
           <Button
             type="button"
@@ -436,6 +495,13 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
           >
             Add
           </Button>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <p className="text-xs text-secondary-500">
+            Tags help categorize and filter features
+          </p>
+          <CharacterCounter value={tagInput} limit={FIELD_LIMITS.TAG} />
         </div>
         
         {/* Display tags */}

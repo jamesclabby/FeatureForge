@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from '../ui/textarea';
+import { CharacterCounter } from '../ui/character-counter';
 import { Card } from '../ui/card';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { FIELD_LIMITS } from '../../utils/validation';
 import { commentService } from '../../services/commentService';
 
-function MentionInput({ value, onChange, teamId, placeholder, className, ...props }) {
+function MentionInput({ value, onChange, teamId, placeholder, className, showCharacterCount = true, ...props }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -140,6 +142,8 @@ function MentionInput({ value, onChange, teamId, placeholder, className, ...prop
       .slice(0, 2);
   };
 
+  const isOverLimit = value && value.length > FIELD_LIMITS.COMMENT_CONTENT;
+
   return (
     <div className="relative">
       <Textarea
@@ -148,9 +152,16 @@ function MentionInput({ value, onChange, teamId, placeholder, className, ...prop
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={className}
+        className={`${className} ${isOverLimit ? 'border-red-500' : ''}`}
+        maxLength={FIELD_LIMITS.COMMENT_CONTENT}
         {...props}
       />
+      
+      {showCharacterCount && (
+        <div className="mt-1">
+          <CharacterCounter value={value} limit={FIELD_LIMITS.COMMENT_CONTENT} />
+        </div>
+      )}
       
       {showSuggestions && suggestions.length > 0 && (
         <Card className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto border shadow-lg">

@@ -15,6 +15,8 @@ import { FEATURE_TYPES_ARRAY } from '../../constants/featureTypes';
 import { useTeamContext } from '../../hooks/useTeamContext';
 import { DependencyManager, DependencyFormField } from '../dependencies';
 import dependencyService from '../../services/dependencyService';
+import { FIELD_LIMITS, validateFeatureTitle, validateFeatureDescription, validateTag } from '../../utils/validation';
+import { CharacterCounter } from '../ui/character-counter';
 
 const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
   const [formData, setFormData] = useState({
@@ -147,6 +149,17 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
 
   const handleAddTag = () => {
     if (!tagInput.trim()) return;
+    
+    // Validate tag length
+    const tagError = validateTag(tagInput);
+    if (tagError) {
+      toast({
+        title: 'Invalid Tag',
+        description: tagError,
+        variant: 'destructive',
+      });
+      return;
+    }
     
     // Check if tag already exists
     if (formData.tags && formData.tags.includes(tagInput.trim())) {
@@ -442,6 +455,7 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
                     className="flex-1"
                     onKeyDown={handleTagInputKeyDown}
                     disabled={loading}
+                    maxLength={FIELD_LIMITS.TAG}
                   />
                   <Button
                     type="button"
@@ -451,6 +465,13 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
                   >
                     Add
                   </Button>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-secondary-500">
+                    Tags help categorize and filter features
+                  </p>
+                  <CharacterCounter value={tagInput} limit={FIELD_LIMITS.TAG} />
                 </div>
                 
                 {/* Display tags */}

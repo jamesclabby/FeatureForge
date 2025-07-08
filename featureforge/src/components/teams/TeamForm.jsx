@@ -3,7 +3,9 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { CharacterCounter } from '../ui/character-counter';
 import { useToast } from '../ui/toast';
+import { FIELD_LIMITS, validateTeamName, validateTeamDescription } from '../../utils/validation';
 import teamService from '../../services/teamService';
 
 const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
@@ -12,6 +14,7 @@ const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
     description: ''
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const toast = useToast();
 
   useEffect(() => {
@@ -23,8 +26,26 @@ const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
     }
   }, [team]);
 
+  const validateForm = () => {
+    const newErrors = {};
+    
+    const nameError = validateTeamName(formData.name);
+    if (nameError) newErrors.name = nameError;
+    
+    const descriptionError = validateTeamDescription(formData.description);
+    if (descriptionError) newErrors.description = descriptionError;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -66,6 +87,14 @@ const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
   };
 
   return (
@@ -81,12 +110,22 @@ const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
           onChange={handleChange}
           placeholder={isNewUser ? "e.g., Product Team, Marketing Team, Development Team" : "Enter team name"}
           required
+          maxLength={FIELD_LIMITS.TEAM_NAME}
+          className={errors.name ? 'border-red-500' : ''}
         />
-        {isNewUser && (
-          <p className="text-xs text-secondary-500">
-            Choose a name that clearly identifies your team or project
-          </p>
-        )}
+        <div className="flex justify-between items-center">
+          <div>
+            {errors.name && (
+              <p className="text-xs text-red-600">{errors.name}</p>
+            )}
+            {isNewUser && !errors.name && (
+              <p className="text-xs text-secondary-500">
+                Choose a name that clearly identifies your team or project
+              </p>
+            )}
+          </div>
+          <CharacterCounter value={formData.name} limit={FIELD_LIMITS.TEAM_NAME} />
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -101,12 +140,22 @@ const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
             : "Enter team description"
           }
           rows={4}
+          maxLength={FIELD_LIMITS.TEAM_DESCRIPTION}
+          className={errors.description ? 'border-red-500' : ''}
         />
-        {isNewUser && (
-          <p className="text-xs text-secondary-500">
-            Help others understand what your team focuses on
-          </p>
-        )}
+        <div className="flex justify-between items-center">
+          <div>
+            {errors.description && (
+              <p className="text-xs text-red-600">{errors.description}</p>
+            )}
+            {isNewUser && !errors.description && (
+              <p className="text-xs text-secondary-500">
+                Help others understand what your team focuses on
+              </p>
+            )}
+          </div>
+          <CharacterCounter value={formData.description} limit={FIELD_LIMITS.TEAM_DESCRIPTION} />
+        </div>
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">

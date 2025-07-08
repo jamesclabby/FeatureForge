@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { CharacterCounter } from '../ui/character-counter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Slider } from '../ui/slider';
 import { DatePicker } from '../ui/date-picker';
@@ -21,6 +22,7 @@ import {
   DialogClose
 } from '../ui/dialog';
 import { useToast } from '../ui/toast';
+import { FIELD_LIMITS, validateFeatureTitle, validateFeatureDescription } from '../../utils/validation';
 
 const CreateFeatureDialog = ({ onFeatureCreated }) => {
   const { currentUser, verifyAuth, refreshToken } = useAuth();
@@ -40,6 +42,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
   const [parentFeatures, setParentFeatures] = useState([]);
   const [loadingParents, setLoadingParents] = useState(false);
 
@@ -77,12 +80,33 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
     return ['task', 'story', 'research'].includes(formData.type);
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    
+    const titleError = validateFeatureTitle(formData.title);
+    if (titleError) newErrors.title = titleError;
+    
+    const descriptionError = validateFeatureDescription(formData.description);
+    if (descriptionError) newErrors.description = descriptionError;
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
   };
 
   const handleDateChange = (name, value) => {
@@ -122,6 +146,10 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
     // Prevent multiple submissions
     if (loading) {
       console.log('Submission already in progress, ignoring duplicate request');
+      return;
+    }
+    
+    if (!validateForm()) {
       return;
     }
     
@@ -194,6 +222,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
         dueDate: '',
         parentId: ''
       });
+      setErrors({});
       
       // Close dialog
       setOpen(false);
@@ -274,7 +303,17 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
                 placeholder="Enter a clear, concise title"
                 required
                 disabled={loading}
+                maxLength={FIELD_LIMITS.FEATURE_TITLE}
+                className={errors.title ? 'border-red-500' : ''}
               />
+              <div className="flex justify-between items-center">
+                <div>
+                  {errors.title && (
+                    <p className="text-xs text-red-600">{errors.title}</p>
+                  )}
+                </div>
+                <CharacterCounter value={formData.title} limit={FIELD_LIMITS.FEATURE_TITLE} />
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -285,10 +324,19 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
                 value={formData.description}
                 onChange={handleChange}
                 placeholder="Describe the feature in detail, including the problem it solves"
-                className="min-h-[120px]"
+                className={`min-h-[120px] ${errors.description ? 'border-red-500' : ''}`}
                 required
                 disabled={loading}
+                maxLength={FIELD_LIMITS.FEATURE_DESCRIPTION}
               />
+              <div className="flex justify-between items-center">
+                <div>
+                  {errors.description && (
+                    <p className="text-xs text-red-600">{errors.description}</p>
+                  )}
+                </div>
+                <CharacterCounter value={formData.description} limit={FIELD_LIMITS.FEATURE_DESCRIPTION} />
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -469,28 +517,11 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
           </form>
         </div>
         
-        <DialogFooter className="pt-4 flex-shrink-0">
-          <DialogClose asChild>
-            <Button variant="outline" type="button" disabled={loading}>Cancel</Button>
-          </DialogClose>
-          {error && (
-            <Button 
-              variant="secondary" 
-              type="button" 
-              onClick={async () => {
-                console.log("Running auth debug...");
-                await apiService.debugAuth();
-              }}
-              className="mr-2"
-            >
-              Debug Auth
-            </Button>
-          )}
-          <Button 
-            type="submit" 
-            disabled={loading}
-            onClick={handleSubmit}
-          >
+        <DialogFooter className="flex-shrink-0">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={handleSubmit} disabled={loading}>
             {loading ? 'Creating...' : 'Create Feature'}
           </Button>
         </DialogFooter>

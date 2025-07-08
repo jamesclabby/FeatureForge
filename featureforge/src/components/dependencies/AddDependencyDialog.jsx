@@ -11,10 +11,12 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { CharacterCounter } from '../ui/character-counter';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Search, Check } from 'lucide-react';
 import { useTeamContext } from '../../hooks/useTeamContext';
+import { FIELD_LIMITS, validateDependencyDescription } from '../../utils/validation';
 import dependencyService from '../../services/dependencyService';
 import { DEPENDENCY_TYPES, getDependencyTypeConfig } from '../../constants/dependencyTypes';
 import { getFeatureTypeDetails } from '../../constants/featureTypes';
@@ -25,6 +27,7 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [description, setDescription] = useState('');
+  const [descriptionError, setDescriptionError] = useState('');
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   
@@ -38,6 +41,7 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
       setSearchResults([]);
       setSelectedFeature(null);
       setDescription('');
+      setDescriptionError('');
       
       // Load initial features
       searchFeatures('');
@@ -76,10 +80,30 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
     }
   };
 
+  const validateForm = () => {
+    const error = validateDependencyDescription(description);
+    setDescriptionError(error || '');
+    return !error;
+  };
+
+  const handleDescriptionChange = (e) => {
+    const value = e.target.value;
+    setDescription(value);
+    
+    // Clear error when user starts typing
+    if (descriptionError) {
+      setDescriptionError('');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!selectedFeature || !selectedDependencyType) {
+      return;
+    }
+
+    if (!validateForm()) {
       return;
     }
 
@@ -175,59 +199,40 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
                       </Badge>
                     </div>
                     <h4 className="font-medium text-sm">{selectedFeature.title}</h4>
-                    {selectedFeature.assignee && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <Avatar className="h-4 w-4">
-                          <AvatarImage src={selectedFeature.assignee.avatar} />
-                          <AvatarFallback className="text-xs">
-                            {selectedFeature.assignee.name?.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs text-gray-600">
-                          {selectedFeature.assignee.name || selectedFeature.assignee.email}
-                        </span>
-                      </div>
-                    )}
                   </div>
-                  <Check className="h-5 w-5 text-green-600" />
+                  <Check className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
             )}
 
             {/* Search Results */}
             {!selectedFeature && searchResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
-                {searchResults.map((feature) => (
-                  <button
-                    key={feature.id}
-                    type="button"
-                    onClick={() => setSelectedFeature(feature)}
-                    className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline" className={`${getFeatureTypeDetails(feature.type).color} text-xs`}>
-                        {getFeatureTypeDetails(feature.type).label}
-                      </Badge>
-                      <Badge variant="outline" className={`${getStatusBadgeColor(feature.status)} text-xs`}>
-                        {feature.status?.replace('_', ' ').toUpperCase()}
-                      </Badge>
-                    </div>
-                    <h4 className="font-medium text-sm line-clamp-2">{feature.title}</h4>
-                    {feature.assignee && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <Avatar className="h-4 w-4">
-                          <AvatarImage src={feature.assignee.avatar} />
-                          <AvatarFallback className="text-xs">
-                            {feature.assignee.name?.slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs text-gray-600">
-                          {feature.assignee.name || feature.assignee.email}
-                        </span>
+              <div className="max-h-48 overflow-y-auto border rounded-lg">
+                {searchResults.map((feature) => {
+                  const typeDetails = getFeatureTypeDetails(feature.type);
+                  return (
+                    <div
+                      key={feature.id}
+                      onClick={() => setSelectedFeature(feature)}
+                      className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{typeDetails.icon}</span>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{feature.title}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge className={`text-xs ${getStatusBadgeColor(feature.status)}`}>
+                              {feature.status?.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                            <Badge variant="outline" className={`text-xs ${typeDetails.color}`}>
+                              {typeDetails.label}
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </button>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -251,9 +256,19 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
               id="description"
               placeholder="Describe the dependency relationship..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={handleDescriptionChange}
               rows={3}
+              maxLength={FIELD_LIMITS.DEPENDENCY_DESCRIPTION}
+              className={descriptionError ? 'border-red-500' : ''}
             />
+            <div className="flex justify-between items-center">
+              <div>
+                {descriptionError && (
+                  <p className="text-xs text-red-600">{descriptionError}</p>
+                )}
+              </div>
+              <CharacterCounter value={description} limit={FIELD_LIMITS.DEPENDENCY_DESCRIPTION} />
+            </div>
           </div>
 
           <DialogFooter>
