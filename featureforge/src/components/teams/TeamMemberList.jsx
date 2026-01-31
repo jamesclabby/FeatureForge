@@ -3,6 +3,8 @@ import { Button } from '../ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { useToast } from '../ui/toast';
 import teamService from '../../services/teamService';
 
@@ -99,7 +101,7 @@ const TeamMemberList = ({ teamId }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -107,7 +109,7 @@ const TeamMemberList = ({ teamId }) => {
   if (error) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-red-500">{error}</p>
+        <p className="text-error">{error}</p>
       </div>
     );
   }
@@ -115,7 +117,7 @@ const TeamMemberList = ({ teamId }) => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Team Members</h2>
+        <h2 className="text-2xl font-bold text-foreground">Team Members</h2>
         <Button onClick={() => setIsAddMemberDialogOpen(true)}>
           Add Member
         </Button>
@@ -126,7 +128,7 @@ const TeamMemberList = ({ teamId }) => {
           <Card key={member.id}>
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
-                <span>{member.email}</span>
+                <span className="text-foreground">{member.email}</span>
                 <Select
                   value={member.role}
                   onValueChange={(value) => handleUpdateRole(member.userId, value)}
@@ -144,7 +146,7 @@ const TeamMemberList = ({ teamId }) => {
             </CardHeader>
             <CardContent>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-secondary-400">
+                <span className="text-sm text-foreground-muted">
                   Joined {new Date(member.joinedAt).toLocaleDateString()}
                 </span>
                 <Button
@@ -162,7 +164,7 @@ const TeamMemberList = ({ teamId }) => {
 
       {members.length === 0 && (
         <div className="text-center py-8">
-          <p className="text-secondary-500">No members found</p>
+          <p className="text-foreground-muted">No members found</p>
         </div>
       )}
 
@@ -173,17 +175,16 @@ const TeamMemberList = ({ teamId }) => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <input
+              <Label className="text-foreground-secondary">Email</Label>
+              <Input
                 type="email"
-                className="w-full px-3 py-2 border rounded-md"
                 value={newMemberEmail}
                 onChange={(e) => setNewMemberEmail(e.target.value)}
                 placeholder="Enter member email"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
+              <Label className="text-foreground-secondary">Role</Label>
               <Select value={newMemberRole} onValueChange={setNewMemberRole}>
                 <SelectTrigger>
                   <SelectValue />
@@ -213,4 +214,4 @@ const TeamMemberList = ({ teamId }) => {
   );
 };
 
-export default TeamMemberList; 
+export default TeamMemberList;

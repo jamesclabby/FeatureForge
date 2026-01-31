@@ -5,7 +5,7 @@ const FeatureVelocityChart = ({ data }) => {
   // Early return for safety
   if (!data) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>No velocity data provided</p>
       </div>
     );
@@ -13,7 +13,7 @@ const FeatureVelocityChart = ({ data }) => {
 
   if (!data.weeklyData || !Array.isArray(data.weeklyData)) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>Invalid velocity data format</p>
       </div>
     );
@@ -21,7 +21,7 @@ const FeatureVelocityChart = ({ data }) => {
 
   if (data.weeklyData.length === 0) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>No velocity data available</p>
       </div>
     );
@@ -32,13 +32,13 @@ const FeatureVelocityChart = ({ data }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{data.weekLabel}</p>
-          <p className="text-sm text-green-600">
+        <div className="bg-background-surface p-3 border border-border rounded-lg shadow-lg">
+          <p className="font-medium text-foreground">{data.weekLabel}</p>
+          <p className="text-sm text-success">
             {data.completed} feature{data.completed !== 1 ? 's' : ''} completed
           </p>
           {data.created > 0 && (
-            <p className="text-sm text-blue-600">
+            <p className="text-sm text-info">
               {data.created} feature{data.created !== 1 ? 's' : ''} created
             </p>
           )}
@@ -53,8 +53,8 @@ const FeatureVelocityChart = ({ data }) => {
       <div className="h-80 p-4">
         <div className="mb-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-gray-700">Weekly Feature Completion</h4>
-            <div className="text-sm text-gray-500">
+            <h4 className="text-sm font-medium text-foreground-secondary">Weekly Feature Completion</h4>
+            <div className="text-sm text-foreground-muted">
               Avg: {data.averagePerWeek} features/week
             </div>
           </div>
@@ -97,7 +97,7 @@ const FeatureVelocityChart = ({ data }) => {
   } catch (error) {
     console.error('Error rendering FeatureVelocityChart:', error);
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>Error rendering velocity chart</p>
       </div>
     );

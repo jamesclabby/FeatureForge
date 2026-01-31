@@ -152,7 +152,7 @@ function MentionInput({ value, onChange, teamId, placeholder, className, showCha
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={`${className} ${isOverLimit ? 'border-red-500' : ''}`}
+        className={`${className} ${isOverLimit ? 'border-error' : ''}`}
         maxLength={FIELD_LIMITS.COMMENT_CONTENT}
         {...props}
       />
@@ -171,8 +171,8 @@ function MentionInput({ value, onChange, teamId, placeholder, className, showCha
                 key={user.id}
                 className={`flex items-center space-x-3 p-2 rounded cursor-pointer ${
                   index === selectedIndex 
-                    ? 'bg-blue-50 text-blue-900' 
-                    : 'hover:bg-gray-50'
+                    ? 'bg-accent-100 text-accent' 
+                    : 'hover:bg-background-elevated'
                 }`}
                 onClick={() => insertMention(user)}
               >
@@ -182,8 +182,8 @@ function MentionInput({ value, onChange, teamId, placeholder, className, showCha
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  <p className="text-sm font-medium truncate text-foreground">{user.name}</p>
+                  <p className="text-xs text-foreground-muted truncate">{user.email}</p>
                 </div>
               </div>
             ))}

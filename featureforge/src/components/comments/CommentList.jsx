@@ -94,8 +94,8 @@ function CommentList({ featureId, teamId }) {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center space-x-2">
-            <MessageCircle className="h-5 w-5 text-gray-400" />
-            <span className="text-gray-500">Loading comments...</span>
+            <MessageCircle className="h-5 w-5 text-foreground-muted" />
+            <span className="text-foreground-secondary">Loading comments...</span>
           </div>
         </CardContent>
       </Card>
@@ -108,16 +108,16 @@ function CommentList({ featureId, teamId }) {
         <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center space-x-2">
-            <MessageCircle className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold">
+            <MessageCircle className="h-5 w-5 text-info" />
+            <h3 className="text-lg font-semibold text-foreground">
               Comments ({comments.length})
             </h3>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="bg-error-50 border border-error/30 rounded-md p-3">
+              <p className="text-error text-sm">{error}</p>
             </div>
           )}
 
@@ -145,8 +145,8 @@ function CommentList({ featureId, teamId }) {
           {/* Comments List */}
           <div className="space-y-4">
             {comments.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <MessageCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <div className="text-center py-8 text-foreground-muted">
+                <MessageCircle className="h-12 w-12 mx-auto mb-3 text-foreground-muted" />
                 <p>No comments yet. Be the first to comment!</p>
               </div>
             ) : (

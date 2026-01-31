@@ -1,3 +1,5 @@
+import { FEATURE_TYPE_ICONS as ICONS, getFeatureTypeIcon } from './icons';
+
 // Feature type constants (matching backend)
 export const FEATURE_TYPES = {
   PARENT: 'parent',
@@ -8,10 +10,10 @@ export const FEATURE_TYPES = {
 
 // Array version for UI components
 export const FEATURE_TYPES_ARRAY = [
-  { value: 'parent', label: 'Parent', icon: '📦', description: 'High-level deliverable that contains other features' },
-  { value: 'story', label: 'Story', icon: '📖', description: 'User-facing feature or functionality' },
-  { value: 'task', label: 'Task', icon: '⚙️', description: 'Technical implementation work' },
-  { value: 'research', label: 'Research', icon: '🔍', description: 'Discovery or dependency research work' }
+  { value: 'parent', label: 'Parent', description: 'High-level deliverable that contains other features' },
+  { value: 'story', label: 'Story', description: 'User-facing feature or functionality' },
+  { value: 'task', label: 'Task', description: 'Technical implementation work' },
+  { value: 'research', label: 'Research', description: 'Discovery or dependency research work' }
 ];
 
 export const FEATURE_TYPE_LABELS = {
@@ -28,18 +30,15 @@ export const FEATURE_TYPE_DESCRIPTIONS = {
   [FEATURE_TYPES.RESEARCH]: 'Discovery or dependency research work'
 };
 
-export const FEATURE_TYPE_ICONS = {
-  [FEATURE_TYPES.PARENT]: '📦', // Package/container
-  [FEATURE_TYPES.STORY]: '📖', // Book/story
-  [FEATURE_TYPES.TASK]: '⚙️', // Gear/technical
-  [FEATURE_TYPES.RESEARCH]: '🔍' // Magnifying glass/research
-};
+// Re-export icons from centralized icons file
+export const FEATURE_TYPE_ICONS = ICONS;
 
+// Subdued color palette with left-border accents for professional look
 export const FEATURE_TYPE_COLORS = {
-  [FEATURE_TYPES.PARENT]: 'bg-purple-100 text-purple-800',
-  [FEATURE_TYPES.STORY]: 'bg-blue-100 text-blue-800',
-  [FEATURE_TYPES.TASK]: 'bg-green-100 text-green-800',
-  [FEATURE_TYPES.RESEARCH]: 'bg-orange-100 text-orange-800'
+  [FEATURE_TYPES.PARENT]: 'bg-secondary-100 text-secondary-700',
+  [FEATURE_TYPES.STORY]: 'bg-secondary-100 text-secondary-700',
+  [FEATURE_TYPES.TASK]: 'bg-secondary-100 text-secondary-700',
+  [FEATURE_TYPES.RESEARCH]: 'bg-secondary-100 text-secondary-700'
 };
 
 // Validation rules
@@ -70,13 +69,15 @@ export function canBeChild(type) {
 
 /**
  * Get feature type details
+ * @param {string} type - Feature type
+ * @returns {object} - Object with type, label, description, Icon (component), and color
  */
 export function getFeatureTypeDetails(type) {
   return {
     type,
     label: FEATURE_TYPE_LABELS[type] || type,
     description: FEATURE_TYPE_DESCRIPTIONS[type] || '',
-    icon: FEATURE_TYPE_ICONS[type] || '📄',
-    color: FEATURE_TYPE_COLORS[type] || 'bg-gray-100 text-gray-800'
+    Icon: getFeatureTypeIcon(type),
+    color: FEATURE_TYPE_COLORS[type] || 'bg-secondary-100 text-secondary-700'
   };
 } 

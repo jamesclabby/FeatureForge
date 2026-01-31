@@ -8,6 +8,7 @@ import teamService from '../services/teamService';
 import featureService from '../services/featureService';
 import CreateFeatureDialog from '../components/features/CreateFeatureDialog';
 import AnalyticsSection from '../components/analytics/AnalyticsSection';
+import { FEATURE_TYPE_ICONS } from '../constants/icons';
 
 const Dashboard = () => {
   const [team, setTeam] = useState(null);
@@ -152,7 +153,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -160,7 +161,7 @@ const Dashboard = () => {
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center h-64 gap-4 p-6 text-center">
-        <p className="text-red-500 mb-2">{error}</p>
+        <p className="text-error mb-2">{error}</p>
         <div className="flex gap-4">
           <Button 
             onClick={() => {
@@ -194,7 +195,7 @@ const Dashboard = () => {
   if (!team) {
     return (
       <div className="flex flex-col justify-center items-center h-64 space-y-4">
-        <p className="text-secondary-500">Team not found</p>
+        <p className="text-foreground-muted">Team not found</p>
         <Button onClick={() => navigate('/selector')}>Select a Team</Button>
       </div>
     );
@@ -204,19 +205,18 @@ const Dashboard = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col space-y-6">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg p-6 text-white">
+        <div className="bg-background-overlay rounded-lg p-6 text-foreground border border-border">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold mb-2">
-                Welcome to {team.name}
+              <h1 className="text-3xl font-semibold mb-2">
+                {team.name}
               </h1>
-              <p className="text-primary-100">
+              <p className="text-foreground-secondary">
                 {team.description}
               </p>
             </div>
             <Button 
               variant="outline" 
-              className="bg-white text-primary-800 hover:bg-primary-100 hover:text-primary-900" 
               onClick={() => {
                 console.log('Switch Team button clicked (inline)');
                 localStorage.removeItem('selectedTeamId');
@@ -238,7 +238,7 @@ const Dashboard = () => {
               <CardDescription>Total feature requests</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-primary-600">{featureCount}</p>
+              <p className="text-4xl font-semibold text-foreground">{featureCount}</p>
             </CardContent>
           </Card>
           
@@ -248,7 +248,7 @@ const Dashboard = () => {
               <CardDescription>Features being worked on</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-amber-500">{inProgressCount}</p>
+              <p className="text-4xl font-semibold text-info">{inProgressCount}</p>
             </CardContent>
           </Card>
           
@@ -258,7 +258,7 @@ const Dashboard = () => {
               <CardDescription>Implemented features</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-green-500">{completedCount}</p>
+              <p className="text-4xl font-semibold text-success">{completedCount}</p>
             </CardContent>
           </Card>
         </div>
@@ -310,21 +310,21 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-primary-50 rounded-lg">
-                <div className="text-2xl font-bold text-primary-600">{featureCount}</div>
-                <div className="text-sm text-primary-700">Total Features</div>
+              <div className="text-center p-4 bg-background-elevated rounded-lg">
+                <div className="text-2xl font-semibold text-foreground">{featureCount}</div>
+                <div className="text-sm text-foreground-secondary">Total Features</div>
               </div>
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{inProgressCount}</div>
-                <div className="text-sm text-blue-700">In Progress</div>
+              <div className="text-center p-4 bg-info-50 rounded-lg">
+                <div className="text-2xl font-semibold text-info">{inProgressCount}</div>
+                <div className="text-sm text-info">In Progress</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{completedCount}</div>
-                <div className="text-sm text-green-700">Completed</div>
+              <div className="text-center p-4 bg-success-50 rounded-lg">
+                <div className="text-2xl font-semibold text-success">{completedCount}</div>
+                <div className="text-sm text-success">Completed</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-600">{featureCount - inProgressCount - completedCount}</div>
-                <div className="text-sm text-gray-700">Backlog</div>
+              <div className="text-center p-4 bg-background-elevated rounded-lg">
+                <div className="text-2xl font-semibold text-foreground">{featureCount - inProgressCount - completedCount}</div>
+                <div className="text-sm text-foreground-secondary">Backlog</div>
               </div>
             </div>
             <div className="mt-4 text-center">
@@ -345,21 +345,29 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">{typeStats.parent}</div>
-                <div className="text-sm text-purple-700">📦 Parents</div>
+              <div className="text-center p-4 bg-background-elevated rounded-lg">
+                <div className="text-2xl font-semibold text-foreground">{typeStats.parent}</div>
+                <div className="text-sm text-foreground-secondary flex items-center justify-center gap-1">
+                  <FEATURE_TYPE_ICONS.parent className="h-4 w-4" /> Parents
+                </div>
               </div>
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{typeStats.story}</div>
-                <div className="text-sm text-blue-700">📖 Stories</div>
+              <div className="text-center p-4 bg-background-elevated rounded-lg">
+                <div className="text-2xl font-semibold text-foreground">{typeStats.story}</div>
+                <div className="text-sm text-foreground-secondary flex items-center justify-center gap-1">
+                  <FEATURE_TYPE_ICONS.story className="h-4 w-4" /> Stories
+                </div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{typeStats.task}</div>
-                <div className="text-sm text-green-700">⚙️ Tasks</div>
+              <div className="text-center p-4 bg-background-elevated rounded-lg">
+                <div className="text-2xl font-semibold text-foreground">{typeStats.task}</div>
+                <div className="text-sm text-foreground-secondary flex items-center justify-center gap-1">
+                  <FEATURE_TYPE_ICONS.task className="h-4 w-4" /> Tasks
+                </div>
               </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">{typeStats.research}</div>
-                <div className="text-sm text-orange-700">🔍 Research</div>
+              <div className="text-center p-4 bg-warning-50 rounded-lg">
+                <div className="text-2xl font-semibold text-warning">{typeStats.research}</div>
+                <div className="text-sm text-warning flex items-center justify-center gap-1">
+                  <FEATURE_TYPE_ICONS.research className="h-4 w-4" /> Research
+                </div>
               </div>
             </div>
           </CardContent>
@@ -376,20 +384,20 @@ const Dashboard = () => {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-secondary-500">Team Name</p>
-                <p className="text-lg font-semibold">{team.name}</p>
+                <p className="text-sm font-medium text-foreground-muted">Team Name</p>
+                <p className="text-lg font-semibold text-foreground">{team.name}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-secondary-500">Description</p>
-                <p>{team.description || 'No description provided'}</p>
+                <p className="text-sm font-medium text-foreground-muted">Description</p>
+                <p className="text-foreground-secondary">{team.description || 'No description provided'}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-secondary-500">Created on</p>
-                <p>{new Date(team.createdAt).toLocaleDateString()}</p>
+                <p className="text-sm font-medium text-foreground-muted">Created on</p>
+                <p className="text-foreground-secondary">{new Date(team.createdAt).toLocaleDateString()}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-secondary-500">Members</p>
-                <p>{team.memberCount} members</p>
+                <p className="text-sm font-medium text-foreground-muted">Members</p>
+                <p className="text-foreground-secondary">{team.memberCount} members</p>
               </div>
             </div>
           </CardContent>
@@ -404,12 +412,12 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-secondary-500">
+            <div className="text-center py-8 text-foreground-muted">
               <p>No recent activity to display.</p>
               <p className="mt-2">Start by creating your first feature request!</p>
             </div>
           </CardContent>
-          <CardFooter className="border-t border-secondary-100 bg-secondary-50 rounded-b-lg">
+          <CardFooter className="border-t border-border bg-background-elevated rounded-b-lg">
             <Button variant="ghost" size="sm" className="ml-auto">
               View All Activity
             </Button>
@@ -420,4 +428,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

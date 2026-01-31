@@ -5,7 +5,7 @@ const EffortImpactAnalysis = ({ data }) => {
   // Early return for safety
   if (!data) {
     return (
-      <div className="h-96 flex items-center justify-center text-gray-500">
+      <div className="h-96 flex items-center justify-center text-foreground-muted">
         <p>No effort/impact data provided</p>
       </div>
     );
@@ -13,7 +13,7 @@ const EffortImpactAnalysis = ({ data }) => {
 
   if (!Array.isArray(data)) {
     return (
-      <div className="h-96 flex items-center justify-center text-gray-500">
+      <div className="h-96 flex items-center justify-center text-foreground-muted">
         <p>Invalid effort/impact data format</p>
       </div>
     );
@@ -21,7 +21,7 @@ const EffortImpactAnalysis = ({ data }) => {
 
   if (data.length === 0) {
     return (
-      <div className="h-96 flex items-center justify-center text-gray-500">
+      <div className="h-96 flex items-center justify-center text-foreground-muted">
         <p>No effort/impact data available</p>
       </div>
     );
@@ -54,23 +54,23 @@ const EffortImpactAnalysis = ({ data }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg max-w-xs">
-          <p className="font-medium text-gray-900 truncate">{data.title}</p>
+        <div className="bg-background-surface p-3 border border-border rounded-lg shadow-lg max-w-xs">
+          <p className="font-medium text-foreground truncate">{data.title}</p>
           <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
             <div>
-              <span className="text-gray-500">Effort:</span> {data.effort}/10
+              <span className="text-foreground-muted">Effort:</span> {data.effort}/10
             </div>
             <div>
-              <span className="text-gray-500">Impact:</span> {data.impact}/10
+              <span className="text-foreground-muted">Impact:</span> {data.impact}/10
             </div>
             <div>
-              <span className="text-gray-500">Votes:</span> {data.votes}
+              <span className="text-foreground-muted">Votes:</span> {data.votes}
             </div>
             <div>
-              <span className="text-gray-500">Score:</span> {data.score}
+              <span className="text-foreground-muted">Score:</span> {data.score}
             </div>
           </div>
-          <p className="text-xs text-gray-500 capitalize mt-1">
+          <p className="text-xs text-foreground-muted capitalize mt-1">
             Priority: {data.priority} • Status: {data.status?.replace('_', ' ')}
           </p>
         </div>
@@ -91,8 +91,8 @@ const EffortImpactAnalysis = ({ data }) => {
     return (
       <div className="h-96 p-4">
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-gray-700">Effort vs Impact Analysis</h4>
-          <p className="text-xs text-gray-500">Features plotted by development effort and business impact</p>
+          <h4 className="text-sm font-medium text-foreground-secondary">Effort vs Impact Analysis</h4>
+          <p className="text-xs text-foreground-muted">Features plotted by development effort and business impact</p>
         </div>
         <ResponsiveContainer width="100%" height="75%">
           <ScatterChart
@@ -143,20 +143,20 @@ const EffortImpactAnalysis = ({ data }) => {
         {/* Quadrant Legend */}
         <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
           <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span className="text-gray-600">Quick Wins (Low Effort, High Impact)</span>
+            <div className="w-3 h-3 rounded-full bg-success"></div>
+            <span className="text-foreground-secondary">Quick Wins (Low Effort, High Impact)</span>
           </div>
           <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-gray-600">Major Projects (High Effort, High Impact)</span>
+            <div className="w-3 h-3 rounded-full bg-info"></div>
+            <span className="text-foreground-secondary">Major Projects (High Effort, High Impact)</span>
           </div>
           <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-            <span className="text-gray-600">Fill-ins (Low Effort, Low Impact)</span>
+            <div className="w-3 h-3 rounded-full bg-foreground-muted"></div>
+            <span className="text-foreground-secondary">Fill-ins (Low Effort, Low Impact)</span>
           </div>
           <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-            <span className="text-gray-600">Questionable (High Effort, Low Impact)</span>
+            <div className="w-3 h-3 rounded-full bg-warning"></div>
+            <span className="text-foreground-secondary">Questionable (High Effort, Low Impact)</span>
           </div>
         </div>
       </div>
@@ -164,7 +164,7 @@ const EffortImpactAnalysis = ({ data }) => {
   } catch (error) {
     console.error('Error rendering EffortImpactAnalysis:', error);
     return (
-      <div className="h-96 flex items-center justify-center text-gray-500">
+      <div className="h-96 flex items-center justify-center text-foreground-muted">
         <p>Error rendering effort/impact analysis</p>
       </div>
     );

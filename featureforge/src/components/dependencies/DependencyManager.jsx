@@ -110,7 +110,7 @@ const DependencyManager = ({ feature, onFeatureUpdate }) => {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent"></div>
           </div>
         </CardContent>
       </Card>
@@ -141,14 +141,14 @@ const DependencyManager = ({ feature, onFeatureUpdate }) => {
               </CardTitle>
               
               {isBlocked && (
-                <div className="flex items-center gap-1 text-orange-600">
+                <div className="flex items-center gap-1 text-warning">
                   <AlertTriangle className="h-4 w-4" />
                   <span className="text-sm font-medium">Blocked</span>
                 </div>
               )}
               
               {!isBlocked && totalDependencies > 0 && (
-                <div className="flex items-center gap-1 text-green-600">
+                <div className="flex items-center gap-1 text-success">
                   <CheckCircle className="h-4 w-4" />
                   <span className="text-sm font-medium">Clear</span>
                 </div>
@@ -169,11 +169,11 @@ const DependencyManager = ({ feature, onFeatureUpdate }) => {
         <CardContent>
           {totalDependencies === 0 ? (
             <div className="text-center py-8">
-              <div className="text-gray-400 mb-2">
+              <div className="text-foreground-muted mb-2">
                 <Plus className="h-12 w-12 mx-auto mb-4 opacity-50" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Dependencies</h3>
-              <p className="text-gray-500 mb-4">
+              <h3 className="text-lg font-medium text-foreground mb-2">No Dependencies</h3>
+              <p className="text-foreground-muted mb-4">
                 This feature doesn't have any dependencies yet.
               </p>
               <Button
@@ -188,29 +188,29 @@ const DependencyManager = ({ feature, onFeatureUpdate }) => {
           ) : (
             <div className="space-y-6">
               {/* Statistics */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-background-elevated rounded-lg">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{stats.totalOutgoing || 0}</div>
-                  <div className="text-sm text-gray-600">Outgoing</div>
+                  <div className="text-2xl font-bold text-info">{stats.totalOutgoing || 0}</div>
+                  <div className="text-sm text-foreground-secondary">Outgoing</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{stats.totalIncoming || 0}</div>
-                  <div className="text-sm text-gray-600">Incoming</div>
+                  <div className="text-2xl font-bold text-success">{stats.totalIncoming || 0}</div>
+                  <div className="text-sm text-foreground-secondary">Incoming</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{stats.blockingCount || 0}</div>
-                  <div className="text-sm text-gray-600">Blocking</div>
+                  <div className="text-2xl font-bold text-error">{stats.blockingCount || 0}</div>
+                  <div className="text-sm text-foreground-secondary">Blocking</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{stats.blockedByCount || 0}</div>
-                  <div className="text-sm text-gray-600">Blocked By</div>
+                  <div className="text-2xl font-bold text-warning">{stats.blockedByCount || 0}</div>
+                  <div className="text-sm text-foreground-secondary">Blocked By</div>
                 </div>
               </div>
 
               {/* Outgoing Dependencies */}
               {outgoing.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">
+                  <h4 className="text-sm font-medium text-foreground-secondary mb-3">
                     Outgoing Dependencies ({outgoing.length})
                   </h4>
                   <DependencyList
@@ -224,7 +224,7 @@ const DependencyManager = ({ feature, onFeatureUpdate }) => {
               {/* Incoming Dependencies */}
               {incoming.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">
+                  <h4 className="text-sm font-medium text-foreground-secondary mb-3">
                     Incoming Dependencies ({incoming.length})
                   </h4>
                   <DependencyList

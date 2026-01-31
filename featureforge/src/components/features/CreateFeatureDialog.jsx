@@ -286,7 +286,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
         </DialogHeader>
         
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm mb-4 flex-shrink-0">
+          <div className="bg-error-50 border border-error/30 text-error p-3 rounded-md text-sm mb-4 flex-shrink-0">
             {error}
           </div>
         )}
@@ -304,12 +304,12 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
                 required
                 disabled={loading}
                 maxLength={FIELD_LIMITS.FEATURE_TITLE}
-                className={errors.title ? 'border-red-500' : ''}
+                className={errors.title ? 'border-error' : ''}
               />
               <div className="flex justify-between items-center">
                 <div>
                   {errors.title && (
-                    <p className="text-xs text-red-600">{errors.title}</p>
+                    <p className="text-xs text-error">{errors.title}</p>
                   )}
                 </div>
                 <CharacterCounter value={formData.title} limit={FIELD_LIMITS.FEATURE_TITLE} />
@@ -324,7 +324,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
                 value={formData.description}
                 onChange={handleChange}
                 placeholder="Describe the feature in detail, including the problem it solves"
-                className={`min-h-[120px] ${errors.description ? 'border-red-500' : ''}`}
+                className={`min-h-[120px] ${errors.description ? 'border-error' : ''}`}
                 required
                 disabled={loading}
                 maxLength={FIELD_LIMITS.FEATURE_DESCRIPTION}
@@ -332,7 +332,7 @@ const CreateFeatureDialog = ({ onFeatureCreated }) => {
               <div className="flex justify-between items-center">
                 <div>
                   {errors.description && (
-                    <p className="text-xs text-red-600">{errors.description}</p>
+                    <p className="text-xs text-error">{errors.description}</p>
                   )}
                 </div>
                 <CharacterCounter value={formData.description} limit={FIELD_LIMITS.FEATURE_DESCRIPTION} />

@@ -328,12 +328,12 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
           required
           disabled={loading}
           maxLength={FIELD_LIMITS.FEATURE_TITLE}
-          className={errors.title ? 'border-red-500' : ''}
+                className={errors.title ? 'border-error' : ''}
         />
         <div className="flex justify-between items-center">
           <div>
             {errors.title && (
-              <p className="text-xs text-red-600">{errors.title}</p>
+              <p className="text-xs text-error">{errors.title}</p>
             )}
           </div>
           <CharacterCounter value={formData.title} limit={FIELD_LIMITS.FEATURE_TITLE} />
@@ -348,7 +348,7 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
           value={formData.description}
           onChange={handleChange}
           placeholder="Describe the feature in detail"
-          className={`min-h-[120px] ${errors.description ? 'border-red-500' : ''}`}
+          className={`min-h-[120px] ${errors.description ? 'border-error' : ''}`}
           required
           disabled={loading}
           maxLength={FIELD_LIMITS.FEATURE_DESCRIPTION}
@@ -356,7 +356,7 @@ const FeatureForm = ({ teamId, initialData, onSubmit, isEdit = false }) => {
         <div className="flex justify-between items-center">
           <div>
             {errors.description && (
-              <p className="text-xs text-red-600">{errors.description}</p>
+              <p className="text-xs text-error">{errors.description}</p>
             )}
           </div>
           <CharacterCounter value={formData.description} limit={FIELD_LIMITS.FEATURE_DESCRIPTION} />

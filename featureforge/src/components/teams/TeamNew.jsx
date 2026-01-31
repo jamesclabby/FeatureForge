@@ -48,11 +48,11 @@ const TeamNew = () => {
         {/* Welcome header for new users */}
         {isNewUser && (
           <div className="mb-6 text-center">
-            <div className="bg-primary-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Users className="h-8 w-8 text-primary-600" />
+            <div className="bg-accent-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <Users className="h-8 w-8 text-accent" />
             </div>
-            <h1 className="text-2xl font-bold text-secondary-900 mb-2">Create Your First Team</h1>
-            <p className="text-secondary-600 max-w-md mx-auto">
+            <h1 className="text-2xl font-bold text-foreground mb-2">Create Your First Team</h1>
+            <p className="text-foreground-secondary max-w-md mx-auto">
               Teams help you organize features and collaborate with others. 
               Give your team a name and description to get started.
             </p>
@@ -90,9 +90,9 @@ const TeamNew = () => {
 
         {/* Helpful tips for new users */}
         {isNewUser && (
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-medium text-blue-900 mb-2">💡 Quick Tips</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
+          <div className="mt-6 p-4 bg-info-100 border border-info/30 rounded-lg">
+            <h3 className="font-medium text-info mb-2">💡 Quick Tips</h3>
+            <ul className="text-sm text-foreground-secondary space-y-1">
               <li>• Choose a name that reflects your product or project</li>
               <li>• You can always change the name and description later</li>
               <li>• You can invite team members after creating the team</li>

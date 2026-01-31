@@ -354,7 +354,7 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-foreground-muted">
                     Feature type cannot be changed after creation
                   </p>
                 </div>
@@ -379,7 +379,7 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
                     </SelectContent>
                   </Select>
                   {formData.type === 'parent' && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-foreground-muted">
                       Parent features cannot have parent features
                     </p>
                   )}
@@ -481,7 +481,7 @@ const FeatureDetailModal = ({ feature, isOpen, onClose, onFeatureUpdate }) => {
                       {tag}
                       <button
                         type="button"
-                        className="ml-1 text-gray-500 hover:text-gray-700"
+                        className="ml-1 text-foreground-muted hover:text-foreground-secondary"
                         onClick={() => handleRemoveTag(tag)}
                         disabled={loading}
                       >

@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
 import { getFeatureTypeDetails } from '../../constants/featureTypes';
+import { getColorClassesByName } from '../../constants/designTokens';
 
 // Helper function to get status/priority details
 const getStatusDetails = (statusValue) => {
@@ -37,37 +38,9 @@ const FeatureCard = ({ feature, onVote, onClick }) => {
   const priorityDetails = getPriorityDetails(feature.priority);
   const typeDetails = getFeatureTypeDetails(feature.type || 'task');
 
-  // Set badge colors based on status
-  const getStatusColor = () => {
-    switch (statusDetails.color) {
-      case 'blue':
-        return 'bg-blue-100 text-blue-800';
-      case 'amber':
-        return 'bg-amber-100 text-amber-800';
-      case 'green':
-        return 'bg-green-100 text-green-700';
-      case 'purple':
-        return 'bg-purple-100 text-purple-800';
-      case 'gray':
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Set badge colors based on priority
-  const getPriorityColor = () => {
-    switch (priorityDetails.color) {
-      case 'red':
-        return 'bg-red-100 text-red-800';
-      case 'amber':
-        return 'bg-amber-100 text-amber-800';
-      case 'blue':
-        return 'bg-blue-100 text-blue-800';
-      case 'gray':
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // Get badge colors from centralized design tokens
+  const statusColor = getColorClassesByName(statusDetails.color, 'status');
+  const priorityColor = getColorClassesByName(priorityDetails.color, 'priority');
 
   return (
     <Card 
@@ -77,24 +50,25 @@ const FeatureCard = ({ feature, onVote, onClick }) => {
       <CardContent className="pt-6">
         <div className="flex justify-between items-start">
           <div className="space-y-2 flex-1">
-            <h3 className="text-lg font-semibold">{feature.title}</h3>
-            <p className="text-secondary-600 line-clamp-2">{feature.description}</p>
+            <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
+            <p className="text-foreground-secondary line-clamp-2">{feature.description}</p>
             
             <div className="flex flex-wrap gap-2 mt-3">
-              <Badge className={typeDetails.color}>
-                {typeDetails.icon} {typeDetails.label}
+              <Badge className={`${typeDetails.color} flex items-center gap-1`}>
+                <typeDetails.Icon className="h-3.5 w-3.5" />
+                {typeDetails.label}
               </Badge>
               
-              <Badge className={getStatusColor()}>
+              <Badge className={statusColor}>
                 {statusDetails.label}
               </Badge>
               
-              <Badge className={getPriorityColor()}>
+              <Badge className={priorityColor}>
                 {priorityDetails.label} Priority
               </Badge>
               
               {feature.tags && feature.tags.map(tag => (
-                <Badge key={tag} variant="outline" className="bg-secondary-50">
+                <Badge key={tag} variant="outline" className="bg-background-elevated">
                   {tag}
                 </Badge>
               ))}
@@ -129,12 +103,12 @@ const FeatureCard = ({ feature, onVote, onClick }) => {
                 <path d="m19 14-7-7-7 7"/>
               </svg>
             </Button>
-            <span className="text-sm font-medium">{feature.votes}</span>
+            <span className="text-sm font-medium text-foreground">{feature.votes}</span>
           </div>
         </div>
       </CardContent>
       
-      <CardFooter className="border-t border-secondary-100 bg-secondary-50 py-3 text-xs text-secondary-500">
+      <CardFooter className="border-t border-border bg-background-elevated py-3 text-xs text-foreground-muted">
         <div className="flex justify-between items-center w-full">
           <span>Created {formatDate(feature.createdAt)}</span>
           <span>{feature.comments_count || feature.comments?.length || 0} comments</span>
@@ -144,4 +118,4 @@ const FeatureCard = ({ feature, onVote, onClick }) => {
   );
 };
 
-export default FeatureCard; 
+export default FeatureCard;

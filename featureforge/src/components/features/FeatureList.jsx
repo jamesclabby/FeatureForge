@@ -135,7 +135,7 @@ const FeatureList = ({ teamId }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -144,7 +144,7 @@ const FeatureList = ({ teamId }) => {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
+          <p className="text-error mb-4">{error}</p>
           <Button onClick={fetchFeatures}>Try Again</Button>
         </div>
       </div>
@@ -156,15 +156,15 @@ const FeatureList = ({ teamId }) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h2 className="text-2xl font-bold">Feature Requests</h2>
+        <h2 className="text-2xl font-bold text-foreground">Feature Requests</h2>
         <div className="flex items-center gap-3">
           {/* View Mode Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-background-elevated rounded-lg p-1">
             <button
               className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                 viewMode === 'list' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'bg-background-surface text-accent shadow-sm' 
+                  : 'text-foreground-secondary hover:text-foreground'
               }`}
               onClick={() => setViewMode('list')}
             >
@@ -173,8 +173,8 @@ const FeatureList = ({ teamId }) => {
             <button
               className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                 viewMode === 'hierarchy' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'bg-background-surface text-accent shadow-sm' 
+                  : 'text-foreground-secondary hover:text-foreground'
               }`}
               onClick={() => setViewMode('hierarchy')}
             >
@@ -200,7 +200,7 @@ const FeatureList = ({ teamId }) => {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
-              <label htmlFor="search" className="text-sm font-medium text-secondary-700 mb-1 block">
+              <label htmlFor="search" className="text-sm font-medium text-foreground-secondary mb-1 block">
                 Search
               </label>
               <Input
@@ -213,7 +213,7 @@ const FeatureList = ({ teamId }) => {
             </div>
             
             <div>
-              <label htmlFor="statusFilter" className="text-sm font-medium text-secondary-700 mb-1 block">
+              <label htmlFor="statusFilter" className="text-sm font-medium text-foreground-secondary mb-1 block">
                 Status
               </label>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -232,7 +232,7 @@ const FeatureList = ({ teamId }) => {
             </div>
             
             <div>
-              <label htmlFor="priorityFilter" className="text-sm font-medium text-secondary-700 mb-1 block">
+              <label htmlFor="priorityFilter" className="text-sm font-medium text-foreground-secondary mb-1 block">
                 Priority
               </label>
               <Select value={filterPriority} onValueChange={setFilterPriority}>
@@ -251,7 +251,7 @@ const FeatureList = ({ teamId }) => {
             </div>
             
             <div>
-              <label htmlFor="typeFilter" className="text-sm font-medium text-secondary-700 mb-1 block">
+              <label htmlFor="typeFilter" className="text-sm font-medium text-foreground-secondary mb-1 block">
                 Type
               </label>
               <Select value={filterType} onValueChange={setFilterType}>
@@ -273,7 +273,7 @@ const FeatureList = ({ teamId }) => {
             </div>
             
             <div>
-              <label htmlFor="sortBy" className="text-sm font-medium text-secondary-700 mb-1 block">
+              <label htmlFor="sortBy" className="text-sm font-medium text-foreground-secondary mb-1 block">
                 Sort By
               </label>
               <Select value={sortBy} onValueChange={setSortBy}>
@@ -293,7 +293,7 @@ const FeatureList = ({ teamId }) => {
       </Card>
 
       {/* Feature count */}
-      <div className="text-sm text-secondary-500">
+      <div className="text-sm text-foreground-muted">
         {displayedFeatures.length} {displayedFeatures.length === 1 ? 'feature' : 'features'} found
       </div>
 
@@ -301,7 +301,7 @@ const FeatureList = ({ teamId }) => {
       {displayedFeatures.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-secondary-500 mb-4">No features match your criteria.</p>
+            <p className="text-foreground-muted mb-4">No features match your criteria.</p>
             <CreateFeatureDialog onFeatureCreated={handleFeatureCreated} />
           </CardContent>
         </Card>
@@ -331,4 +331,4 @@ const FeatureList = ({ teamId }) => {
   );
 };
 
-export default FeatureList; 
+export default FeatureList;

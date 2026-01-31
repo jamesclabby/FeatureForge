@@ -5,7 +5,7 @@ const StatusTimelineChart = ({ data }) => {
   // Early return for safety
   if (!data) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>No timeline data provided</p>
       </div>
     );
@@ -13,7 +13,7 @@ const StatusTimelineChart = ({ data }) => {
 
   if (!data.monthlyData || !Array.isArray(data.monthlyData)) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>Invalid timeline data format</p>
       </div>
     );
@@ -21,7 +21,7 @@ const StatusTimelineChart = ({ data }) => {
 
   if (data.monthlyData.length === 0) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>No timeline data available</p>
       </div>
     );
@@ -40,9 +40,9 @@ const StatusTimelineChart = ({ data }) => {
     if (active && payload && payload.length) {
       const total = payload.reduce((sum, item) => sum + item.value, 0);
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900 mb-2">{label}</p>
-          <p className="text-sm text-gray-600 mb-1">Total: {total} features</p>
+        <div className="bg-background-surface p-3 border border-border rounded-lg shadow-lg">
+          <p className="font-medium text-foreground mb-2">{label}</p>
+          <p className="text-sm text-foreground-secondary mb-1">Total: {total} features</p>
           {payload.map((item, index) => (
             <p key={index} className="text-sm" style={{ color: item.color }}>
               {item.name}: {item.value} feature{item.value !== 1 ? 's' : ''}
@@ -69,8 +69,8 @@ const StatusTimelineChart = ({ data }) => {
     return (
       <div className="h-80 p-4">
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-gray-700">Feature Status Over Time</h4>
-          <p className="text-xs text-gray-500">Monthly distribution of feature statuses</p>
+          <h4 className="text-sm font-medium text-foreground-secondary">Feature Status Over Time</h4>
+          <p className="text-xs text-foreground-muted">Monthly distribution of feature statuses</p>
         </div>
         <ResponsiveContainer width="100%" height="85%">
           <BarChart
@@ -130,7 +130,7 @@ const StatusTimelineChart = ({ data }) => {
   } catch (error) {
     console.error('Error rendering StatusTimelineChart:', error);
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>Error rendering timeline chart</p>
       </div>
     );

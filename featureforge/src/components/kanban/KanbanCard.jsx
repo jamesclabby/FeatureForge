@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { getFeatureTypeDetails } from '../../constants/featureTypes';
+import { getPriorityColorClasses, DEPENDENCY_STATUS_COLORS } from '../../constants/designTokens';
 import { MessageSquare, ThumbsUp, Calendar, Clock, Edit2, Save, X, AlertTriangle, Ban, Link } from 'lucide-react';
 import featureService from '../../services/featureService';
 
@@ -14,16 +16,8 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
 
   const typeDetails = getFeatureTypeDetails(feature.type);
 
-  // Get priority color
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  // Get priority color from centralized design tokens
+  const priorityColors = getPriorityColorClasses(feature.priority);
 
   // Format date
   const formatDate = (dateString) => {
@@ -63,10 +57,10 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
       return {
         type: 'blocked',
         icon: Ban,
-        color: 'text-red-600',
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-200',
-        tooltip: `⚠️ Blocked by ${blockedByCount} incomplete feature${blockedByCount !== 1 ? 's' : ''}`,
+        color: 'text-error',
+        bgColor: 'bg-error-50',
+        borderColor: 'border-error/30',
+        tooltip: `Blocked by ${blockedByCount} incomplete feature${blockedByCount !== 1 ? 's' : ''}`,
         severity: 'critical'
       };
     }
@@ -76,9 +70,9 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
       return {
         type: 'blocking',
         icon: AlertTriangle,
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-50',
-        borderColor: 'border-orange-200',
+        color: 'text-warning',
+        bgColor: 'bg-warning-50',
+        borderColor: 'border-warning/30',
         tooltip: `Blocking ${blockingCount} feature${blockingCount !== 1 ? 's' : ''}`,
         severity: 'warning'
       };
@@ -89,9 +83,9 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
       return {
         type: 'has_dependencies',
         icon: Link,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50',
-        borderColor: 'border-blue-200',
+        color: 'text-info',
+        bgColor: 'bg-info-50',
+        borderColor: 'border-info/30',
         tooltip: `${totalOutgoing + totalIncoming} dependencies`,
         severity: 'info'
       };
@@ -139,8 +133,8 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
   const cardContent = (
     <Card 
       className={`cursor-grab active:cursor-grabbing transition-all hover:shadow-md group ${
-        isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-      } ${bulkMode ? 'hover:bg-gray-50 cursor-pointer' : 'hover:shadow-sm'}`}
+        isSelected ? 'ring-2 ring-accent bg-accent-50' : ''
+      } ${bulkMode ? 'hover:bg-background-elevated cursor-pointer' : 'hover:shadow-sm'}`}
       onClick={handleCardClick}
     >
       <CardHeader className="pb-2">
@@ -151,7 +145,7 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
                 type="text"
                 value={editedTitle}
                 onChange={(e) => setEditedTitle(e.target.value)}
-                className="w-full text-sm font-medium border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full text-sm font-medium border border-border rounded px-2 py-1 bg-background-surface text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
                 onClick={(e) => e.stopPropagation()}
                 autoFocus
               />
@@ -174,7 +168,7 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
             )}
             
             {/* Type icon */}
-            <span className="text-lg">{typeDetails.icon}</span>
+            <typeDetails.Icon className="h-4 w-4 text-foreground-muted" />
             
             {/* Bulk selection checkbox */}
             {bulkMode && (
@@ -185,7 +179,7 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
                   e.stopPropagation();
                   onSelect?.(feature.id);
                 }}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 ml-1"
+                className="rounded border-border text-accent focus:ring-ring ml-1"
               />
             )}
             
@@ -196,9 +190,9 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
                   e.stopPropagation();
                   setIsEditing(true);
                 }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-background-elevated rounded"
               >
-                <Edit2 className="h-3 w-3 text-gray-500" />
+                <Edit2 className="h-3 w-3 text-foreground-muted" />
               </button>
             )}
           </div>
@@ -208,7 +202,7 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
       <CardContent className="pt-0 space-y-3">
         {/* Only show has_dependencies banner */}
         {dependencyStatus?.type === 'has_dependencies' && (
-          <div className={`flex items-center gap-2 p-2 ${dependencyStatus.bgColor} border ${dependencyStatus.borderColor} rounded text-blue-700 text-xs`}>
+          <div className={`flex items-center gap-2 p-2 ${dependencyStatus.bgColor} border ${dependencyStatus.borderColor} rounded text-info text-xs`}>
             <Link className="h-3 w-3" />
             <span>{dependencyStatus.tooltip}</span>
           </div>
@@ -221,13 +215,13 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
               <textarea
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
-                className="w-full text-xs text-gray-600 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full text-xs text-foreground-secondary border border-border rounded px-2 py-1 bg-background-surface focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
                 rows={2}
                 onClick={(e) => e.stopPropagation()}
                 placeholder="Add description..."
               />
             ) : (
-              <p className="text-xs text-gray-600 line-clamp-2">
+              <p className="text-xs text-foreground-secondary line-clamp-2">
                 {feature.description}
               </p>
             )}
@@ -237,39 +231,42 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
         {/* Edit actions */}
         {isEditing && (
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 handleSave();
               }}
-              className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
+              className="h-7 text-xs"
             >
-              <Save className="h-3 w-3" />
+              <Save className="h-3 w-3 mr-1" />
               Save
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 handleCancel();
               }}
-              className="flex items-center gap-1 px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700"
+              className="h-7 text-xs"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3 w-3 mr-1" />
               Cancel
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Progress bar for parent features */}
         {progress && (
           <div>
-            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+            <div className="flex items-center justify-between text-xs text-foreground-secondary mb-1">
               <span>Progress</span>
               <span>{progress.completed}/{progress.total} completed</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-background-elevated rounded-full h-2">
               <div 
-                className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                className="bg-success h-2 rounded-full transition-all duration-300"
                 style={{ width: `${progress.percentage}%` }}
               />
             </div>
@@ -280,7 +277,7 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
         <div className="flex items-center justify-between">
           <Badge 
             variant="outline" 
-            className={`text-xs ${getPriorityColor(feature.priority)}`}
+            className={`text-xs ${priorityColors.combined}`}
           >
             {feature.priority?.toUpperCase() || 'MEDIUM'}
           </Badge>
@@ -303,7 +300,7 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
                  feature.assignee.email?.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs text-gray-600 truncate">
+            <span className="text-xs text-foreground-secondary truncate">
               {feature.assignee.name || feature.assignee.email}
             </span>
           </div>
@@ -312,7 +309,7 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
         {/* Due Date with overdue indicator */}
         {feature.due_date && (
           <div className={`flex items-center gap-2 ${
-            isOverdue() ? 'text-red-600' : 'text-gray-500'
+            isOverdue() ? 'text-error' : 'text-foreground-muted'
           }`}>
             {isOverdue() && <AlertTriangle className="h-3 w-3" />}
             <Calendar className="h-3 w-3" />
@@ -323,11 +320,11 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
         )}
 
         {/* Footer with stats */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-2 border-t border-border-muted">
           <div className="flex items-center gap-3">
             {/* Subtle blocked indicator in footer */}
             {dependencyStatus?.type === 'blocked' && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full">
+              <div className="flex items-center gap-1 px-2 py-1 bg-error-100 text-error rounded-full">
                 <Ban className="h-3 w-3" />
                 <span className="text-xs font-medium">Blocked</span>
               </div>
@@ -335,7 +332,7 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
             
             {/* Subtle blocking indicator */}
             {dependencyStatus?.type === 'blocking' && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
+              <div className="flex items-center gap-1 px-2 py-1 bg-warning-100 text-warning rounded-full">
                 <AlertTriangle className="h-3 w-3" />
                 <span className="text-xs font-medium">Blocking {feature.dependencyStats.blockingCount}</span>
               </div>
@@ -344,8 +341,8 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
             {/* Dependencies count */}
             {dependencyStatus && dependencyStatus.type === 'has_dependencies' && (
               <div className="flex items-center gap-1">
-                <Link className="h-3 w-3 text-blue-500" />
-                <span className="text-xs text-gray-600">
+                <Link className="h-3 w-3 text-info" />
+                <span className="text-xs text-foreground-secondary">
                   {feature.dependencyStats.totalOutgoing + feature.dependencyStats.totalIncoming}
                 </span>
               </div>
@@ -354,24 +351,24 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
             {/* Votes */}
             {feature.votes_count > 0 && (
               <div className="flex items-center gap-1">
-                <ThumbsUp className="h-3 w-3 text-blue-500" />
-                <span className="text-xs text-gray-600">{feature.votes_count}</span>
+                <ThumbsUp className="h-3 w-3 text-info" />
+                <span className="text-xs text-foreground-secondary">{feature.votes_count}</span>
               </div>
             )}
             
             {/* Comments */}
             {feature.comments_count > 0 && (
               <div className="flex items-center gap-1">
-                <MessageSquare className="h-3 w-3 text-green-500" />
-                <span className="text-xs text-gray-600">{feature.comments_count}</span>
+                <MessageSquare className="h-3 w-3 text-success" />
+                <span className="text-xs text-foreground-secondary">{feature.comments_count}</span>
               </div>
             )}
           </div>
 
           {/* Created date */}
           <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3 text-gray-400" />
-            <span className="text-xs text-gray-400">
+            <Clock className="h-3 w-3 text-foreground-muted" />
+            <span className="text-xs text-foreground-muted">
               {formatDate(feature.created_at)}
             </span>
           </div>
@@ -380,8 +377,8 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
         {/* Parent feature indicator */}
         {feature.parent && (
           <div className="flex items-center gap-1 pt-1">
-            <span className="text-xs text-gray-500">Parent:</span>
-            <span className="text-xs text-blue-600 truncate">
+            <span className="text-xs text-foreground-muted">Parent:</span>
+            <span className="text-xs text-info truncate">
               {feature.parent.title}
             </span>
           </div>
@@ -390,7 +387,7 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
         {/* Children count */}
         {feature.children && feature.children.length > 0 && (
           <div className="flex items-center gap-1 pt-1">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-foreground-muted">
               {feature.children.length} child{feature.children.length !== 1 ? 'ren' : ''}
             </span>
           </div>
@@ -420,4 +417,4 @@ const KanbanCard = ({ feature, index, bulkMode, isSelected, onSelect, onFeatureU
   );
 };
 
-export default KanbanCard; 
+export default KanbanCard;

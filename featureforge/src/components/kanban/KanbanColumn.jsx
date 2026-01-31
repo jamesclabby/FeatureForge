@@ -10,7 +10,7 @@ function KanbanColumn({ column, features, updating, bulkMode, selectedCards, onC
       <CardHeader className={`${column.color} rounded-t-lg`}>
         <CardTitle className="flex items-center justify-between text-lg">
           <span>{column.title}</span>
-          <Badge variant="secondary" className="bg-white text-gray-700">
+          <Badge variant="secondary" className="bg-background-surface text-foreground-secondary">
             {features.length}
           </Badge>
         </CardTitle>
@@ -23,8 +23,8 @@ function KanbanColumn({ column, features, updating, bulkMode, selectedCards, onC
               {...provided.droppableProps}
               className={`space-y-3 min-h-[400px] p-2 rounded-lg transition-colors ${
                 snapshot.isDraggingOver 
-                  ? 'bg-blue-50 border-2 border-blue-200 border-dashed' 
-                  : 'bg-gray-50'
+                  ? 'bg-accent-100 border-2 border-accent/30 border-dashed' 
+                  : 'bg-background-elevated'
               } ${updating ? 'opacity-75' : ''}`}
             >
               {features.map((feature, index) => (
@@ -43,7 +43,7 @@ function KanbanColumn({ column, features, updating, bulkMode, selectedCards, onC
               
               {/* Empty state */}
               {features.length === 0 && (
-                <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
+                <div className="flex items-center justify-center h-32 text-foreground-muted text-sm">
                   {snapshot.isDraggingOver 
                     ? 'Drop feature here' 
                     : 'No features in this column'

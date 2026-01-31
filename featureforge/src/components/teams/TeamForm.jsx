@@ -101,7 +101,7 @@ const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">
-          Team Name {isNewUser && <span className="text-red-500">*</span>}
+          Team Name {isNewUser && <span className="text-error">*</span>}
         </Label>
         <Input
           id="name"
@@ -111,12 +111,12 @@ const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
           placeholder={isNewUser ? "e.g., Product Team, Marketing Team, Development Team" : "Enter team name"}
           required
           maxLength={FIELD_LIMITS.TEAM_NAME}
-          className={errors.name ? 'border-red-500' : ''}
+          className={errors.name ? 'border-error' : ''}
         />
         <div className="flex justify-between items-center">
           <div>
             {errors.name && (
-              <p className="text-xs text-red-600">{errors.name}</p>
+              <p className="text-xs text-error">{errors.name}</p>
             )}
             {isNewUser && !errors.name && (
               <p className="text-xs text-secondary-500">
@@ -141,12 +141,12 @@ const TeamForm = ({ team, onSubmit, onCancel, isNewUser = false }) => {
           }
           rows={4}
           maxLength={FIELD_LIMITS.TEAM_DESCRIPTION}
-          className={errors.description ? 'border-red-500' : ''}
+          className={errors.description ? 'border-error' : ''}
         />
         <div className="flex justify-between items-center">
           <div>
             {errors.description && (
-              <p className="text-xs text-red-600">{errors.description}</p>
+              <p className="text-xs text-error">{errors.description}</p>
             )}
             {isNewUser && !errors.description && (
               <p className="text-xs text-secondary-500">

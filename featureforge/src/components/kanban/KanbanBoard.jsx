@@ -19,10 +19,10 @@ import {
 
 // Define the board columns based on feature statuses
 const COLUMNS = [
-  { id: 'backlog', title: 'Backlog', color: 'bg-gray-100' },
-  { id: 'in_progress', title: 'In Progress', color: 'bg-blue-100' },
-  { id: 'review', title: 'Review', color: 'bg-yellow-100' },
-  { id: 'done', title: 'Done', color: 'bg-green-100' }
+  { id: 'backlog', title: 'Backlog', color: 'bg-background-elevated' },
+  { id: 'in_progress', title: 'In Progress', color: 'bg-info-100' },
+  { id: 'review', title: 'Review', color: 'bg-warning-100' },
+  { id: 'done', title: 'Done', color: 'bg-success-100' }
 ];
 
 const VIEW_MODES = {
@@ -278,7 +278,7 @@ const KanbanBoard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -304,9 +304,9 @@ const KanbanBoard = () => {
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Kanban Board</h1>
+          <h1 className="text-2xl font-bold text-foreground">Kanban Board</h1>
           {filteredFeatures.length !== features.length && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-foreground-muted">
               Showing {filteredFeatures.length} of {features.length} features
             </span>
           )}
@@ -326,7 +326,7 @@ const KanbanBoard = () => {
             </Button>
             
             {showViewMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-48">
+              <div className="absolute right-0 top-full mt-1 bg-background-surface border border-border rounded-lg shadow-lg py-1 z-10 min-w-48">
                 {Object.entries(VIEW_MODES).map(([mode, config]) => (
                   <button
                     key={mode}
@@ -334,8 +334,8 @@ const KanbanBoard = () => {
                       setViewMode(mode);
                       setShowViewMenu(false);
                     }}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                      viewMode === mode ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-background-elevated flex items-center gap-2 ${
+                      viewMode === mode ? 'bg-accent-100 text-accent' : 'text-foreground-secondary'
                     }`}
                   >
                     {React.createElement(config.icon, { className: "h-4 w-4" })}
@@ -348,8 +348,8 @@ const KanbanBoard = () => {
 
           {/* Bulk Actions */}
           {selectedCards.size > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-              <span className="text-sm font-medium text-blue-900">
+            <div className="flex items-center gap-2 px-3 py-2 bg-accent-100 border border-accent/30 rounded-lg">
+              <span className="text-sm font-medium text-accent">
                 {selectedCards.size} selected
               </span>
               
@@ -360,7 +360,7 @@ const KanbanBoard = () => {
                     e.target.value = '';
                   }
                 }}
-                className="text-sm border-0 bg-transparent text-blue-700 font-medium"
+                className="text-sm border-0 bg-transparent text-accent font-medium"
                 defaultValue=""
               >
                 <option value="" disabled>Move to...</option>
@@ -375,7 +375,7 @@ const KanbanBoard = () => {
                   setSelectedCards(new Set());
                   setBulkMode(false);
                 }}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-foreground-muted hover:text-foreground-secondary"
               >
                 Cancel
               </button>
@@ -391,7 +391,7 @@ const KanbanBoard = () => {
           </Button>
           
           {/* Statistics */}
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4 text-sm text-foreground-secondary">
             <span>Total: {filteredFeatures.length}</span>
             <span>Backlog: {getFeaturesByStatus('backlog').length}</span>
             <span>In Progress: {getFeaturesByStatus('in_progress').length}</span>

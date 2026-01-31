@@ -24,6 +24,7 @@ import {
 import { useToast } from '../ui/toast';
 import featureService, { FEATURE_STATUSES, FEATURE_PRIORITIES } from '../../services/featureService';
 import { getFeatureTypeDetails } from '../../constants/featureTypes';
+import { getColorClassesByName } from '../../constants/designTokens';
 import { useAuth } from '../../contexts/AuthContext';
 import FeatureForm from './FeatureForm';
 import { CommentList } from '../comments';
@@ -203,7 +204,7 @@ const FeatureDetail = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -212,7 +213,7 @@ const FeatureDetail = () => {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <p className="text-red-500 mb-4">{error || 'Feature not found'}</p>
+          <p className="text-error mb-4">{error || 'Feature not found'}</p>
           <Button onClick={() => navigate('/features')}>Back to Features</Button>
         </div>
       </div>
@@ -223,37 +224,9 @@ const FeatureDetail = () => {
   const priorityDetails = getPriorityDetails(feature.priority);
   const typeDetails = getFeatureTypeDetails(feature.type || 'task');
 
-  // Status badge color
-  const getStatusColor = () => {
-    switch (statusDetails.color) {
-      case 'blue':
-        return 'bg-blue-100 text-blue-800';
-      case 'amber':
-        return 'bg-amber-100 text-amber-800';
-      case 'green':
-        return 'bg-green-100 text-green-700';
-      case 'purple':
-        return 'bg-purple-100 text-purple-800';
-      case 'gray':
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Priority badge color
-  const getPriorityColor = () => {
-    switch (priorityDetails.color) {
-      case 'red':
-        return 'bg-red-100 text-red-800';
-      case 'amber':
-        return 'bg-amber-100 text-amber-800';
-      case 'blue':
-        return 'bg-blue-100 text-blue-800';
-      case 'gray':
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // Get badge colors from centralized design tokens
+  const statusColor = getColorClassesByName(statusDetails.color, 'status');
+  const priorityColor = getColorClassesByName(priorityDetails.color, 'priority');
 
   return (
     <div className="space-y-6">
@@ -363,41 +336,41 @@ const FeatureDetail = () => {
                   <path d="m19 14-7-7-7 7"/>
                 </svg>
               </Button>
-              <span className="text-lg font-medium">{feature.votes}</span>
+              <span className="text-lg font-medium text-foreground">{feature.votes}</span>
             </div>
           </div>
         </CardHeader>
         
         <CardContent className="space-y-6">
           <div className="flex flex-wrap gap-2">
-            <Badge className={getStatusColor()}>
+            <Badge className={statusColor}>
               {statusDetails.label}
             </Badge>
             
-            <Badge className={getPriorityColor()}>
+            <Badge className={priorityColor}>
               {priorityDetails.label} Priority
             </Badge>
             
-            <Badge className={typeDetails.color}>
-              <span className="mr-1">{typeDetails.icon}</span>
+            <Badge className={`${typeDetails.color} flex items-center gap-1`}>
+              <typeDetails.Icon className="h-3.5 w-3.5" />
               {typeDetails.label}
             </Badge>
             
             {feature.tags && feature.tags.map(tag => (
-              <Badge key={tag} variant="outline" className="bg-secondary-50">
+              <Badge key={tag} variant="outline" className="bg-background-elevated">
                 {tag}
               </Badge>
             ))}
           </div>
           
           <div>
-            <h3 className="text-lg font-medium mb-2">Description</h3>
-            <p className="text-secondary-700 whitespace-pre-line">{feature.description}</p>
+            <h3 className="text-lg font-medium mb-2 text-foreground">Description</h3>
+            <p className="text-foreground-secondary whitespace-pre-line">{feature.description}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-sm font-medium text-secondary-500 mb-1">Status</h3>
+              <h3 className="text-sm font-medium text-foreground-muted mb-1">Status</h3>
               <Select 
                 value={selectedStatus} 
                 onValueChange={handleStatusChange}
@@ -418,8 +391,8 @@ const FeatureDetail = () => {
             
             {feature.assignedTo && (
               <div>
-                <h3 className="text-sm font-medium text-secondary-500 mb-1">Assigned To</h3>
-                <p>{feature.assignedTo}</p>
+                <h3 className="text-sm font-medium text-foreground-muted mb-1">Assigned To</h3>
+                <p className="text-foreground-secondary">{feature.assignedTo}</p>
               </div>
             )}
           </div>
@@ -428,7 +401,7 @@ const FeatureDetail = () => {
 
       {/* Dependencies section */}
       <div>
-        <h3 className="text-lg font-medium mb-4">Dependencies</h3>
+        <h3 className="text-lg font-medium mb-4 text-foreground">Dependencies</h3>
         <DependencyDisplay feature={feature} compact={true} />
       </div>
 
@@ -438,4 +411,4 @@ const FeatureDetail = () => {
   );
 };
 
-export default FeatureDetail; 
+export default FeatureDetail;

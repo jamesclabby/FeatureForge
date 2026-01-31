@@ -64,7 +64,7 @@ const TeamDetails = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -72,7 +72,7 @@ const TeamDetails = () => {
   if (error) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-red-500">{error}</p>
+        <p className="text-error">{error}</p>
       </div>
     );
   }
@@ -80,7 +80,7 @@ const TeamDetails = () => {
   if (!team) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-secondary-500">Team not found</p>
+        <p className="text-foreground-muted">Team not found</p>
       </div>
     );
   }
@@ -89,8 +89,8 @@ const TeamDetails = () => {
     <div className="container mx-auto px-4 py-8 space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">{team.name}</h1>
-          <p className="text-secondary-500 mt-2">{team.description}</p>
+          <h1 className="text-3xl font-bold text-foreground">{team.name}</h1>
+          <p className="text-foreground-muted mt-2">{team.description}</p>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
@@ -119,12 +119,12 @@ const TeamDetails = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-medium text-secondary-500">Created</h3>
-                    <p>{new Date(team.createdAt).toLocaleDateString()}</p>
+                    <h3 className="text-sm font-medium text-foreground-muted">Created</h3>
+                    <p className="text-foreground-secondary">{new Date(team.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-secondary-500">Members</h3>
-                    <p>{team.memberCount} members</p>
+                    <h3 className="text-sm font-medium text-foreground-muted">Members</h3>
+                    <p className="text-foreground-secondary">{team.memberCount} members</p>
                   </div>
                 </CardContent>
               </Card>
@@ -155,4 +155,4 @@ const TeamDetails = () => {
   );
 };
 
-export default TeamDetails; 
+export default TeamDetails;

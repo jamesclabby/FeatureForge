@@ -68,16 +68,16 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
     filters.dateRange.end;
 
   const featureTypes = [
-    { value: 'story', label: 'Story', color: 'bg-blue-100 text-blue-800' },
-    { value: 'task', label: 'Task', color: 'bg-green-100 text-green-800' },
-    { value: 'research', label: 'Research', color: 'bg-purple-100 text-purple-800' }
+    { value: 'story', label: 'Story', color: 'bg-background-elevated text-foreground-secondary' },
+    { value: 'task', label: 'Task', color: 'bg-background-elevated text-foreground-secondary' },
+    { value: 'research', label: 'Research', color: 'bg-background-elevated text-foreground-secondary' }
   ];
 
   const priorities = [
-    { value: 'low', label: 'Low', color: 'bg-gray-100 text-gray-800' },
-    { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'high', label: 'High', color: 'bg-orange-100 text-orange-800' },
-    { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-800' }
+    { value: 'low', label: 'Low', color: 'bg-background-elevated text-foreground-muted' },
+    { value: 'medium', label: 'Medium', color: 'bg-background-elevated text-foreground-secondary' },
+    { value: 'high', label: 'High', color: 'bg-warning-100 text-warning' },
+    { value: 'urgent', label: 'Urgent', color: 'bg-error-100 text-error' }
   ];
 
   const getCurrentFilters = () => ({
@@ -130,7 +130,7 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground-muted h-4 w-4" />
               <Input
                 placeholder="Search features..."
                 value={filters.search}
@@ -149,7 +149,7 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
                 <Filter className="h-4 w-4" />
                 Filters
                 {hasActiveFilters && (
-                  <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5 ml-1">
+                  <span className="bg-accent text-white text-xs rounded-full px-2 py-0.5 ml-1">
                     Active
                   </span>
                 )}
@@ -160,7 +160,7 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
                   variant="ghost"
                   size="sm"
                   onClick={clearAllFilters}
-                  className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+                  className="flex items-center gap-1 text-foreground-muted hover:text-foreground"
                 >
                   <X className="h-3 w-3" />
                   Clear
@@ -171,10 +171,10 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
 
           {/* Filter Controls */}
           {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-border">
               {/* Assignee Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <label className="text-sm font-medium text-foreground-secondary mb-2 block">
                   Assignee
                 </label>
                 <Select
@@ -198,7 +198,7 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
 
               {/* Type Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <label className="text-sm font-medium text-foreground-secondary mb-2 block">
                   Type
                 </label>
                 <Select
@@ -224,7 +224,7 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
 
               {/* Priority Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <label className="text-sm font-medium text-foreground-secondary mb-2 block">
                   Priority
                 </label>
                 <Select
@@ -246,7 +246,7 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
 
               {/* Date Range */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1">
+                <label className="text-sm font-medium text-foreground-secondary mb-1">
                   <Calendar className="h-4 w-4 inline mr-1" />
                   Date Range
                 </label>
@@ -255,14 +255,14 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
                     type="date"
                     value={filters.dateRange.start}
                     onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, start: e.target.value })}
-                    className="w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-1 border border-border bg-background-surface text-foreground rounded-md text-sm focus:ring-2 focus:ring-ring focus:border-transparent"
                     placeholder="Start date"
                   />
                   <input
                     type="date"
                     value={filters.dateRange.end}
                     onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, end: e.target.value })}
-                    className="w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-1 border border-border bg-background-surface text-foreground rounded-md text-sm focus:ring-2 focus:ring-ring focus:border-transparent"
                     placeholder="End date"
                   />
                 </div>
@@ -272,15 +272,15 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
 
           {/* Active Filters Summary */}
           {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-              <span className="text-sm text-gray-500">Active filters:</span>
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-border-muted">
+              <span className="text-sm text-foreground-muted">Active filters:</span>
               
               {filters.search && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-info-100 text-info text-xs rounded-full">
                   Search: "{filters.search}"
                   <button
                     onClick={() => handleFilterChange('search', '')}
-                    className="hover:bg-blue-200 rounded-full p-0.5"
+                    className="hover:bg-info-50 rounded-full p-0.5"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -288,12 +288,12 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
               )}
 
               {filters.assignee !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-success-100 text-success text-xs rounded-full">
                   Assignee: {filters.assignee === 'unassigned' ? 'Unassigned' : 
                     (Array.isArray(teamMembers) ? teamMembers.find(m => m.id === filters.assignee)?.name : null) || 'Unknown'}
                   <button
                     onClick={() => handleFilterChange('assignee', 'all')}
-                    className="hover:bg-green-200 rounded-full p-0.5"
+                    className="hover:bg-success-50 rounded-full p-0.5"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -301,11 +301,11 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
               )}
 
               {filters.type !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 text-accent text-xs rounded-full">
                   Type: {FEATURE_TYPES_ARRAY.find(t => t.value === filters.type)?.label}
                   <button
                     onClick={() => handleFilterChange('type', 'all')}
-                    className="hover:bg-purple-200 rounded-full p-0.5"
+                    className="hover:bg-accent-50 rounded-full p-0.5"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -313,11 +313,11 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
               )}
 
               {filters.priority !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-warning-100 text-warning text-xs rounded-full">
                   Priority: {filters.priority.charAt(0).toUpperCase() + filters.priority.slice(1)}
                   <button
                     onClick={() => handleFilterChange('priority', 'all')}
-                    className="hover:bg-orange-200 rounded-full p-0.5"
+                    className="hover:bg-warning-50 rounded-full p-0.5"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -325,11 +325,11 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
               )}
 
               {filters.dateRange.start && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-teal-100 text-teal-800 text-xs rounded-full">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-info-100 text-info text-xs rounded-full">
                   Date Range: {filters.dateRange.start} - {filters.dateRange.end}
                   <button
                     onClick={() => handleFilterChange('dateRange', { start: '', end: '' })}
-                    className="hover:bg-teal-200 rounded-full p-0.5"
+                    className="hover:bg-info-50 rounded-full p-0.5"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -340,15 +340,15 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
 
           {/* Saved Presets */}
           {showPresetSave && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-border">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium text-gray-700">
+                <h4 className="text-sm font-medium text-foreground-secondary">
                   <Bookmark className="h-4 w-4 inline mr-1" />
                   Saved Filters
                 </h4>
                 <button
                   onClick={() => setShowPresetSave(!showPresetSave)}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-accent hover:text-accent-600"
                 >
                   Save Current
                 </button>
@@ -361,18 +361,18 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
                   placeholder="Preset name"
                   value={presetName}
                   onChange={(e) => setPresetName(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-border bg-background-surface text-foreground rounded-md text-sm focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
                 <button
                   onClick={saveFilterPreset}
                   disabled={!presetName.trim()}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 bg-accent text-white rounded-md text-sm hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setShowPresetSave(false)}
-                  className="px-3 py-2 text-gray-600 hover:text-gray-800 text-sm"
+                  className="px-3 py-2 text-foreground-secondary hover:text-foreground text-sm"
                 >
                   Cancel
                 </button>
@@ -383,24 +383,24 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
                 {savedPresets.map(preset => (
                   <div
                     key={preset.id}
-                    className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-md text-sm"
+                    className="flex items-center gap-2 px-3 py-1 bg-background-elevated rounded-md text-sm"
                   >
                     <button
                       onClick={() => applyPreset(preset)}
-                      className="text-gray-700 hover:text-gray-900"
+                      className="text-foreground-secondary hover:text-foreground"
                     >
                       {preset.name}
                     </button>
                     <button
                       onClick={() => deletePreset(preset.id)}
-                      className="text-gray-400 hover:text-red-600"
+                      className="text-foreground-muted hover:text-error"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 ))}
                 {savedPresets.length === 0 && (
-                  <p className="text-sm text-gray-500">No saved filters yet</p>
+                  <p className="text-sm text-foreground-muted">No saved filters yet</p>
                 )}
               </div>
             </div>
@@ -411,4 +411,4 @@ const KanbanFilters = ({ filters, onFiltersChange }) => {
   );
 };
 
-export default KanbanFilters; 
+export default KanbanFilters;

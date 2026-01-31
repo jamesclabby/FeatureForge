@@ -52,7 +52,7 @@ const FeatureListExample = () => {
   }
 
   if (error) {
-    return <div className="p-4 text-red-600">Error: {error}</div>;
+    return <div className="p-6 text-red-600">Error: {error}</div>;
   }
 
   if (features.length === 0) {

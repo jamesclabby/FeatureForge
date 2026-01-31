@@ -88,7 +88,7 @@ function CommentItem({ comment, teamId, onUpdate, onDelete, onReplyAdded, depth 
       return '';
     }
     // Simple mention highlighting - allow dots, hyphens, underscores in usernames
-    return content.replace(/@([\w.-]+)/g, '<span class="bg-blue-100 text-blue-800 px-1 rounded">@$1</span>');
+    return content.replace(/@([\w.-]+)/g, '<span class="bg-info-100 text-info px-1 rounded">@$1</span>');
   };
 
   const getInitials = (name) => {
@@ -101,8 +101,8 @@ function CommentItem({ comment, teamId, onUpdate, onDelete, onReplyAdded, depth 
   };
 
   return (
-    <div className={`${depth > 0 ? 'ml-8 border-l-2 border-gray-200 pl-4' : ''}`}>
-      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+    <div className={`${depth > 0 ? 'ml-8 border-l-2 border-border pl-4' : ''}`}>
+      <div className="bg-background-elevated rounded-lg p-4 space-y-3">
         {/* Comment Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
@@ -112,11 +112,11 @@ function CommentItem({ comment, teamId, onUpdate, onDelete, onReplyAdded, depth 
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-sm">{safeComment.author?.name || 'Unknown User'}</p>
-              <p className="text-xs text-gray-500">
+              <p className="font-medium text-sm text-foreground">{safeComment.author?.name || 'Unknown User'}</p>
+              <p className="text-xs text-foreground-muted">
                 {formatDistanceToNow(new Date(safeComment.createdAt), { addSuffix: true })}
                 {safeComment.isEdited && (
-                  <span className="ml-1 text-gray-400">(edited)</span>
+                  <span className="ml-1 text-foreground-muted">(edited)</span>
                 )}
               </p>
             </div>
@@ -137,7 +137,7 @@ function CommentItem({ comment, teamId, onUpdate, onDelete, onReplyAdded, depth 
                 variant="ghost"
                 size="sm"
                 onClick={handleDelete}
-                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                className="h-8 w-8 p-0 text-error hover:text-error/80"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
@@ -178,7 +178,7 @@ function CommentItem({ comment, teamId, onUpdate, onDelete, onReplyAdded, depth 
           </div>
         ) : (
           <div 
-            className="text-sm text-gray-700"
+            className="text-sm text-foreground-secondary"
             dangerouslySetInnerHTML={{ __html: renderContent(safeComment.content) }}
           />
         )}
@@ -190,7 +190,7 @@ function CommentItem({ comment, teamId, onUpdate, onDelete, onReplyAdded, depth 
               variant="ghost"
               size="sm"
               onClick={() => setIsReplying(!isReplying)}
-              className="flex items-center space-x-1 text-gray-600"
+              className="flex items-center space-x-1 text-foreground-secondary"
             >
               <Reply className="h-3 w-3" />
               <span>Reply</span>

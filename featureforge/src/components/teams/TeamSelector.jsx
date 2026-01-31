@@ -83,8 +83,8 @@ const TeamSelector = () => {
         userRole: 'admin'
       });
       
-      // Navigate to the specific team dashboard instead of the general dashboard
-      const teamDashboardUrl = `/team-dashboard/${teamId}?t=${Date.now()}`;
+      // Navigate to the specific team dashboard
+      const teamDashboardUrl = `/team-dashboard/${teamId}`;
       console.log('TeamSelector: Navigating to', teamDashboardUrl);
       
       toast.toast({
@@ -93,8 +93,8 @@ const TeamSelector = () => {
         variant: 'default',
       });
       
-      // Hard redirect instead of using React Router
-      window.location.href = teamDashboardUrl;
+      // Using React Router navigate for SPA navigation
+      navigate(teamDashboardUrl);
     } catch (error) {
       console.error('Error in handleTeamSelect:', error);
       toast.toast({
@@ -112,7 +112,7 @@ const TeamSelector = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -120,7 +120,7 @@ const TeamSelector = () => {
   if (error) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p className="text-red-500">{error}</p>
+        <p className="text-error">{error}</p>
       </div>
     );
   }
@@ -130,13 +130,13 @@ const TeamSelector = () => {
       <div className="max-w-4xl mx-auto">
         {/* Welcome Section for New Users */}
         {isNewUser && (
-          <div className="mb-8 bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg p-6 text-white">
+          <div className="mb-8 bg-background-overlay rounded-lg p-6 text-foreground border border-border">
             <div className="text-center">
-              <h1 className="text-3xl font-bold mb-2">Welcome to FeatureForge! 🎉</h1>
-              <p className="text-primary-100 text-lg mb-4">
+              <h1 className="text-3xl font-semibold mb-2">Welcome to FeatureForge</h1>
+              <p className="text-foreground-secondary text-lg mb-4">
                 You're just one step away from managing your product features like a pro.
               </p>
-              <p className="text-primary-200">
+              <p className="text-foreground-muted">
                 First, let's get you set up with a team. All features in FeatureForge belong to teams.
               </p>
             </div>
@@ -145,20 +145,20 @@ const TeamSelector = () => {
 
         {/* Regular Header for Existing Users */}
         {!isNewUser && (
-          <h1 className="text-3xl font-bold mb-8 text-center">Select a Team</h1>
+          <h1 className="text-3xl font-semibold mb-8 text-center text-foreground">Select a Team</h1>
         )}
         
         {teams.length === 0 ? (
           <Card className="text-center">
             <CardContent className="py-12">
               <div className="flex flex-col items-center space-y-4">
-                <div className="bg-primary-100 p-4 rounded-full">
-                  <Users className="h-12 w-12 text-primary-600" />
+                <div className="bg-accent-100 p-4 rounded-full">
+                  <Users className="h-12 w-12 text-accent" />
                 </div>
                 {isNewUser ? (
                   <>
-                    <h2 className="text-xl font-semibold text-secondary-900">Let's Create Your First Team</h2>
-                    <p className="text-secondary-500 max-w-md">
+                    <h2 className="text-xl font-semibold text-foreground">Let's Create Your First Team</h2>
+                    <p className="text-foreground-muted max-w-md">
                       Teams help you organize your features and collaborate with others. 
                       You can always create more teams later or join existing ones.
                     </p>
@@ -174,8 +174,8 @@ const TeamSelector = () => {
                   </>
                 ) : (
                   <>
-                    <h2 className="text-xl font-semibold text-secondary-900">No Teams Found</h2>
-                    <p className="text-secondary-500 mb-4">You don't belong to any teams yet.</p>
+                    <h2 className="text-xl font-semibold text-foreground">No Teams Found</h2>
+                    <p className="text-foreground-muted mb-4">You don't belong to any teams yet.</p>
                     <Button onClick={handleCreateTeam}>Create Your First Team</Button>
                   </>
                 )}
@@ -185,8 +185,8 @@ const TeamSelector = () => {
         ) : (
           <>
             {isNewUser && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-blue-800 text-center">
+              <div className="mb-6 p-4 bg-info-50 border border-info/30 rounded-lg">
+                <p className="text-info text-center">
                   <strong>Great!</strong> You already have access to {teams.length === 1 ? 'a team' : 'some teams'}. 
                   Select one below to get started, or create a new team if needed.
                 </p>
@@ -202,15 +202,15 @@ const TeamSelector = () => {
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-primary-600" />
+                      <Users className="h-5 w-5 text-accent" />
                       {team.name}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-secondary-500 mb-3">{team.description}</p>
+                    <p className="text-foreground-muted mb-3">{team.description}</p>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-secondary-400">{team.memberCount} members</span>
-                      <span className="text-xs text-secondary-400">ID: {team.id.slice(0, 8)}...</span>
+                      <span className="text-foreground-muted">{team.memberCount} members</span>
+                      <span className="text-xs text-foreground-muted">ID: {team.id.slice(0, 8)}...</span>
                     </div>
                   </CardContent>
                   <CardFooter>
@@ -244,21 +244,21 @@ const TeamSelector = () => {
 
         {/* Diagnostic section - only show for existing users or if there are teams */}
         {!isNewUser && teams.length > 0 && (
-          <div className="mt-6 p-4 bg-secondary-50 rounded-lg">
-            <h3 className="font-medium mb-2">Diagnostic Information</h3>
-            <p className="text-xs mb-2">If clicking on teams doesn't work, try the direct selection below:</p>
+          <div className="mt-6 p-4 bg-background-elevated rounded-lg">
+            <h3 className="font-medium mb-2 text-foreground">Diagnostic Information</h3>
+            <p className="text-xs mb-2 text-foreground-muted">If clicking on teams doesn't work, try the direct selection below:</p>
             <div className="flex flex-wrap gap-2">
               {teams.map(team => (
                 <button
                   key={team.id}
-                  className="text-xs px-3 py-1 bg-white border border-secondary-200 rounded hover:bg-secondary-100"
+                  className="text-xs px-3 py-1 bg-background-surface border border-border rounded hover:bg-background-elevated text-foreground-secondary"
                   onClick={(e) => {
                     e.preventDefault();
                     console.log('Direct team selection for:', team.id);
                     localStorage.setItem('selectedTeamId', team.id);
                     localStorage.setItem('selectedTeamName', team.name);
                     localStorage.setItem('selectedUserRole', 'admin');
-                    window.location.href = `/team-dashboard/${team.id}`;
+                    navigate(`/team-dashboard/${team.id}`);
                   }}
                 >
                   {team.name}
@@ -272,4 +272,4 @@ const TeamSelector = () => {
   );
 };
 
-export default TeamSelector; 
+export default TeamSelector;

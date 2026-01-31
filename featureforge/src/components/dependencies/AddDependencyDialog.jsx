@@ -20,6 +20,7 @@ import { FIELD_LIMITS, validateDependencyDescription } from '../../utils/validat
 import dependencyService from '../../services/dependencyService';
 import { DEPENDENCY_TYPES, getDependencyTypeConfig } from '../../constants/dependencyTypes';
 import { getFeatureTypeDetails } from '../../constants/featureTypes';
+import { getStatusColorClasses } from '../../constants/designTokens';
 
 const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
   const [selectedDependencyType, setSelectedDependencyType] = useState('depends_on');
@@ -123,17 +124,8 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
   };
 
   const getStatusBadgeColor = (status) => {
-    switch (status) {
-      case 'done':
-        return 'bg-green-100 text-green-800';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'review':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'backlog':
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+    const statusColors = getStatusColorClasses(status);
+    return statusColors.combined;
   };
 
   return (
@@ -158,15 +150,15 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
                   onClick={() => setSelectedDependencyType(type)}
                   className={`p-3 text-left border rounded-lg transition-colors ${
                     selectedDependencyType === type
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-accent bg-accent-50'
+                      : 'border-border hover:border-foreground-muted'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     {React.createElement(config.icon, { className: "h-4 w-4" })}
-                    <span className="font-medium text-sm">{config.label}</span>
+                    <span className="font-medium text-sm text-foreground">{config.label}</span>
                   </div>
-                  <p className="text-xs text-gray-600">{config.description}</p>
+                  <p className="text-xs text-foreground-secondary">{config.description}</p>
                 </button>
               ))}
             </div>
@@ -176,7 +168,7 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
           <div className="space-y-2">
             <Label>Target Feature</Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground-muted" />
               <Input
                 placeholder="Search features..."
                 value={searchTerm}
@@ -187,7 +179,7 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
 
             {/* Selected Feature Display */}
             {selectedFeature && (
-              <div className="p-3 border border-blue-200 bg-blue-50 rounded-lg">
+              <div className="p-3 border border-accent/30 bg-accent-50 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -198,28 +190,28 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
                         {selectedFeature.status?.replace('_', ' ').toUpperCase()}
                       </Badge>
                     </div>
-                    <h4 className="font-medium text-sm">{selectedFeature.title}</h4>
+                    <h4 className="font-medium text-sm text-foreground">{selectedFeature.title}</h4>
                   </div>
-                  <Check className="h-5 w-5 text-blue-600" />
+                  <Check className="h-5 w-5 text-accent" />
                 </div>
               </div>
             )}
 
             {/* Search Results */}
             {!selectedFeature && searchResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto border rounded-lg">
+              <div className="max-h-48 overflow-y-auto border border-border rounded-lg">
                 {searchResults.map((feature) => {
                   const typeDetails = getFeatureTypeDetails(feature.type);
                   return (
                     <div
                       key={feature.id}
                       onClick={() => setSelectedFeature(feature)}
-                      className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                      className="p-3 hover:bg-background-elevated cursor-pointer border-b border-border-muted last:border-b-0"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-lg">{typeDetails.icon}</span>
+                        <typeDetails.Icon className="h-5 w-5 text-foreground-muted" />
                         <div className="flex-1">
-                          <div className="font-medium text-sm">{feature.title}</div>
+                          <div className="font-medium text-sm text-foreground">{feature.title}</div>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge className={`text-xs ${getStatusBadgeColor(feature.status)}`}>
                               {feature.status?.replace('_', ' ').toUpperCase()}
@@ -237,14 +229,14 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
             )}
 
             {!selectedFeature && searchResults.length === 0 && !searching && (
-              <div className="text-center py-4 text-gray-500 text-sm">
+              <div className="text-center py-4 text-foreground-muted text-sm">
                 {searchTerm ? 'No features found' : 'Start typing to search features'}
               </div>
             )}
 
             {searching && (
               <div className="text-center py-4">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent mx-auto"></div>
               </div>
             )}
           </div>
@@ -259,12 +251,12 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
               onChange={handleDescriptionChange}
               rows={3}
               maxLength={FIELD_LIMITS.DEPENDENCY_DESCRIPTION}
-              className={descriptionError ? 'border-red-500' : ''}
+              className={descriptionError ? 'border-error' : ''}
             />
             <div className="flex justify-between items-center">
               <div>
                 {descriptionError && (
-                  <p className="text-xs text-red-600">{descriptionError}</p>
+                  <p className="text-xs text-error">{descriptionError}</p>
                 )}
               </div>
               <CharacterCounter value={description} limit={FIELD_LIMITS.DEPENDENCY_DESCRIPTION} />
@@ -288,4 +280,4 @@ const AddDependencyDialog = ({ isOpen, onClose, onAdd, sourceFeature }) => {
   );
 };
 
-export default AddDependencyDialog; 
+export default AddDependencyDialog;

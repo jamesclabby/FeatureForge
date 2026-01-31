@@ -3,9 +3,10 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Trash2, MoreHorizontal, ExternalLink } from 'lucide-react';
+import { Trash2, ExternalLink } from 'lucide-react';
 import { getDependencyTypeConfig, getDependencyStatusColor } from '../../constants/dependencyTypes';
 import { getFeatureTypeDetails } from '../../constants/featureTypes';
+import { getStatusColorClasses, getPriorityColorClasses } from '../../constants/designTokens';
 
 const DependencyCard = ({ dependency, type, onDelete }) => {
   const [showActions, setShowActions] = useState(false);
@@ -26,34 +27,9 @@ const DependencyCard = ({ dependency, type, onDelete }) => {
     }
   };
 
-  const getStatusBadgeColor = (status) => {
-    switch (status) {
-      case 'done':
-        return 'bg-green-100 text-green-800';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'review':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'backlog':
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'urgent':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'high':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  // Get colors from centralized design tokens
+  const statusColors = getStatusColorClasses(displayFeature.status);
+  const priorityColors = getPriorityColorClasses(displayFeature.priority);
 
   return (
     <Card 
@@ -78,16 +54,16 @@ const DependencyCard = ({ dependency, type, onDelete }) => {
             </div>
 
             {/* Feature Title */}
-            <h4 className="font-medium text-gray-900 mb-2 line-clamp-2">
+            <h4 className="font-medium text-foreground mb-2 line-clamp-2">
               {displayFeature.title}
             </h4>
 
             {/* Feature Details */}
-            <div className="flex items-center gap-3 text-sm text-gray-600">
+            <div className="flex items-center gap-3 text-sm text-foreground-secondary">
               {/* Status */}
               <Badge 
                 variant="outline" 
-                className={`${getStatusBadgeColor(displayFeature.status)} text-xs`}
+                className={`${statusColors.combined} text-xs`}
               >
                 {displayFeature.status?.replace('_', ' ').toUpperCase()}
               </Badge>
@@ -95,7 +71,7 @@ const DependencyCard = ({ dependency, type, onDelete }) => {
               {/* Priority */}
               <Badge 
                 variant="outline" 
-                className={`${getPriorityColor(displayFeature.priority)} text-xs`}
+                className={`${priorityColors.combined} text-xs`}
               >
                 {displayFeature.priority?.toUpperCase() || 'MEDIUM'}
               </Badge>
@@ -119,14 +95,14 @@ const DependencyCard = ({ dependency, type, onDelete }) => {
 
             {/* Description if available */}
             {dependency.description && (
-              <p className="text-sm text-gray-600 mt-2 italic">
+              <p className="text-sm text-foreground-secondary mt-2 italic">
                 "{dependency.description}"
               </p>
             )}
 
             {/* Created by info */}
             {dependency.creator && (
-              <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+              <div className="flex items-center gap-1 mt-2 text-xs text-foreground-muted">
                 <span>Created by {dependency.creator.name || dependency.creator.email}</span>
               </div>
             )}
@@ -139,7 +115,7 @@ const DependencyCard = ({ dependency, type, onDelete }) => {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600"
+              className="h-8 w-8 p-0 text-foreground-muted hover:text-info"
               title="View Feature"
             >
               <ExternalLink className="h-4 w-4" />
@@ -148,7 +124,7 @@ const DependencyCard = ({ dependency, type, onDelete }) => {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
+              className="h-8 w-8 p-0 text-foreground-muted hover:text-error"
               onClick={handleDelete}
               title="Remove Dependency"
             >
@@ -161,4 +137,4 @@ const DependencyCard = ({ dependency, type, onDelete }) => {
   );
 };
 
-export default DependencyCard; 
+export default DependencyCard;

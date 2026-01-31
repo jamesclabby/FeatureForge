@@ -53,7 +53,7 @@ const TeamList = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -61,7 +61,7 @@ const TeamList = () => {
   if (error) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-red-500">{error}</p>
+        <p className="text-error">{error}</p>
       </div>
     );
   }
@@ -69,7 +69,7 @@ const TeamList = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Teams</h1>
+        <h1 className="text-3xl font-bold text-foreground">Teams</h1>
         <Button onClick={handleCreateTeam}>Create Team</Button>
       </div>
 
@@ -84,13 +84,13 @@ const TeamList = () => {
               <CardTitle>{team.name}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-secondary-500 mb-2">{team.description}</p>
-              <p className="text-sm text-secondary-400">
+              <p className="text-foreground-muted mb-2">{team.description}</p>
+              <p className="text-sm text-foreground-muted">
                 {team.memberCount} members
               </p>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <span className="text-sm text-secondary-400">
+              <span className="text-sm text-foreground-muted">
                 Created {new Date(team.createdAt).toLocaleDateString()}
               </span>
               <Button variant="outline" size="sm">
@@ -103,7 +103,7 @@ const TeamList = () => {
 
       {teams.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-secondary-500 mb-4">No teams found</p>
+          <p className="text-foreground-muted mb-4">No teams found</p>
           <Button onClick={handleCreateTeam}>Create your first team</Button>
         </div>
       )}
@@ -123,4 +123,4 @@ const TeamList = () => {
   );
 };
 
-export default TeamList; 
+export default TeamList;

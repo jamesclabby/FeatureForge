@@ -17,10 +17,10 @@ const LoadingSpinner = ({
   };
 
   const colorClasses = {
-    primary: 'border-primary-500',
-    secondary: 'border-secondary-500',
+    primary: 'border-accent',
+    secondary: 'border-foreground-secondary',
     white: 'border-white',
-    gray: 'border-gray-500'
+    muted: 'border-foreground-muted'
   };
 
   const spinner = (
@@ -39,11 +39,11 @@ const LoadingSpinner = ({
   const content = (
     <div className={clsx(
       'flex flex-col items-center justify-center gap-3',
-      fullScreen && 'min-h-screen bg-gray-50'
+      fullScreen && 'min-h-screen bg-background-base'
     )}>
       {spinner}
       {text && (
-        <p className="text-sm text-gray-600 animate-pulse">
+        <p className="text-sm text-foreground-secondary animate-pulse">
           {text}
         </p>
       )}
@@ -52,7 +52,7 @@ const LoadingSpinner = ({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-background-base bg-opacity-75 flex items-center justify-center z-50">
         {content}
       </div>
     );
@@ -67,10 +67,10 @@ export const SkeletonLoader = ({ lines = 3, className = '' }) => {
     <div className={clsx('animate-pulse space-y-3', className)}>
       {Array.from({ length: lines }).map((_, index) => (
         <div key={index} className="flex space-x-4">
-          <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+          <div className="rounded-full bg-background-elevated h-10 w-10"></div>
           <div className="flex-1 space-y-2 py-1">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-background-elevated rounded w-3/4"></div>
+            <div className="h-4 bg-background-elevated rounded w-1/2"></div>
           </div>
         </div>
       ))}
@@ -83,18 +83,18 @@ export const CardSkeleton = ({ count = 1, className = '' }) => {
   return (
     <div className={clsx('grid gap-4', className)}>
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="border border-gray-200 rounded-lg p-6 animate-pulse">
+        <div key={index} className="border border-border rounded-lg p-6 animate-pulse bg-background-surface">
           <div className="flex items-center space-x-4 mb-4">
-            <div className="rounded-full bg-gray-200 h-12 w-12"></div>
+            <div className="rounded-full bg-background-elevated h-12 w-12"></div>
             <div className="space-y-2 flex-1">
-              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-background-elevated rounded w-1/4"></div>
+              <div className="h-4 bg-background-elevated rounded w-1/2"></div>
             </div>
           </div>
           <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+            <div className="h-4 bg-background-elevated rounded"></div>
+            <div className="h-4 bg-background-elevated rounded w-5/6"></div>
+            <div className="h-4 bg-background-elevated rounded w-4/6"></div>
           </div>
         </div>
       ))}
@@ -102,4 +102,4 @@ export const CardSkeleton = ({ count = 1, className = '' }) => {
   );
 };
 
-export default LoadingSpinner; 
+export default LoadingSpinner;

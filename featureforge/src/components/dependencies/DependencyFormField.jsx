@@ -10,6 +10,7 @@ import { useToast } from '../ui/toast';
 import dependencyService from '../../services/dependencyService';
 import { DEPENDENCY_TYPES, getDependencyTypeConfig } from '../../constants/dependencyTypes';
 import { getFeatureTypeDetails } from '../../constants/featureTypes';
+import { getStatusColorClasses } from '../../constants/designTokens';
 
 const DependencyFormField = ({ 
   feature, 
@@ -98,17 +99,8 @@ const DependencyFormField = ({
   };
 
   const getStatusBadgeColor = (status) => {
-    switch (status) {
-      case 'done':
-        return 'bg-green-100 text-green-800';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'review':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'backlog':
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+    const statusColors = getStatusColorClasses(status);
+    return statusColors.combined;
   };
 
   const handleFeatureSelect = (feature) => {
@@ -120,7 +112,7 @@ const DependencyFormField = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium">Dependencies</Label>
+        <Label className="text-sm font-medium text-foreground">Dependencies</Label>
         {!showAddForm && !disabled && (
           <Button
             type="button"
@@ -149,7 +141,7 @@ const DependencyFormField = ({
                   <div className="flex items-center gap-3 flex-1">
                     <div className="flex items-center gap-2">
                       {React.createElement(dependencyConfig.icon, { 
-                        className: "h-4 w-4 text-gray-600" 
+                        className: "h-4 w-4 text-foreground-secondary" 
                       })}
                       <Badge variant="outline" className="text-xs">
                         {dependencyConfig.label}
@@ -158,7 +150,7 @@ const DependencyFormField = ({
                     
                     <div className="flex items-center gap-2 flex-1">
                       <span className="text-lg">{featureTypeDetails?.icon}</span>
-                      <span className="font-medium text-sm">{targetFeature?.title}</span>
+                      <span className="font-medium text-sm text-foreground">{targetFeature?.title}</span>
                       <Badge className={`text-xs ${getStatusBadgeColor(targetFeature?.status)}`}>
                         {targetFeature?.status?.replace('_', ' ').toUpperCase()}
                       </Badge>
@@ -171,7 +163,7 @@ const DependencyFormField = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveDependency(dependency)}
-                      className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
+                      className="h-8 w-8 p-0 text-foreground-muted hover:text-error"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -189,7 +181,7 @@ const DependencyFormField = ({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm">Dependency Type</Label>
+                <Label className="text-sm text-foreground-secondary">Dependency Type</Label>
                 <Select
                   value={selectedDependencyType}
                   onValueChange={setSelectedDependencyType}
@@ -211,7 +203,7 @@ const DependencyFormField = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm">Feature</Label>
+                <Label className="text-sm text-foreground-secondary">Feature</Label>
                 <div className="relative">
                   <Input
                     value={searchTerm}
@@ -219,26 +211,26 @@ const DependencyFormField = ({
                     placeholder="Search features..."
                     className="pr-8"
                   />
-                  <Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
+                  <Search className="absolute right-2 top-2.5 h-4 w-4 text-foreground-muted" />
                 </div>
               </div>
             </div>
 
             {/* Search Results */}
             {searchResults.length > 0 && (
-              <div className="max-h-48 overflow-y-auto border rounded-md">
+              <div className="max-h-48 overflow-y-auto border border-border rounded-md">
                 {searchResults.map((feature) => {
                   const typeDetails = getFeatureTypeDetails(feature.type);
                   return (
                     <div
                       key={feature.id}
                       onClick={() => handleFeatureSelect(feature)}
-                      className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                      className="p-3 hover:bg-background-elevated cursor-pointer border-b border-border-muted last:border-b-0"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-lg">{typeDetails.icon}</span>
+                        <typeDetails.Icon className="h-5 w-5 text-foreground-muted" />
                         <div className="flex-1">
-                          <div className="font-medium text-sm">{feature.title}</div>
+                          <div className="font-medium text-sm text-foreground">{feature.title}</div>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge className={`text-xs ${getStatusBadgeColor(feature.status)}`}>
                               {feature.status?.replace('_', ' ').toUpperCase()}
@@ -257,7 +249,7 @@ const DependencyFormField = ({
 
             {searching && (
               <div className="flex items-center justify-center py-4">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent"></div>
               </div>
             )}
 
@@ -289,7 +281,7 @@ const DependencyFormField = ({
       )}
 
       {dependencies.length === 0 && !showAddForm && (
-        <div className="text-center py-4 text-gray-500 border border-dashed rounded-lg">
+        <div className="text-center py-4 text-foreground-muted border border-dashed border-border rounded-lg">
           <Link className="h-8 w-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">No dependencies added</p>
         </div>
@@ -298,4 +290,4 @@ const DependencyFormField = ({
   );
 };
 
-export default DependencyFormField; 
+export default DependencyFormField;

@@ -14,7 +14,7 @@ const SWIMLANE_TYPES = {
       const member = teamMembers?.find(m => m.id === key);
       return member?.name || 'Unknown';
     },
-    getGroupColor: () => 'bg-blue-50 border-blue-200'
+    getGroupColor: () => 'bg-info-100 border-info/30'
   },
   priority: {
     label: 'Priority',
@@ -23,11 +23,11 @@ const SWIMLANE_TYPES = {
     getGroupLabel: (key) => key.charAt(0).toUpperCase() + key.slice(1),
     getGroupColor: (key) => {
       switch (key) {
-        case 'urgent': return 'bg-red-50 border-red-200';
-        case 'high': return 'bg-orange-50 border-orange-200';
-        case 'medium': return 'bg-yellow-50 border-yellow-200';
-        case 'low': return 'bg-gray-50 border-gray-200';
-        default: return 'bg-gray-50 border-gray-200';
+        case 'urgent': return 'bg-error-100 border-error/30';
+        case 'high': return 'bg-warning-100 border-warning/30';
+        case 'medium': return 'bg-warning-50 border-warning/20';
+        case 'low': return 'bg-background-elevated border-border';
+        default: return 'bg-background-elevated border-border';
       }
     }
   },
@@ -38,10 +38,10 @@ const SWIMLANE_TYPES = {
     getGroupLabel: (key) => key.charAt(0).toUpperCase() + key.slice(1),
     getGroupColor: (key) => {
       switch (key) {
-        case 'story': return 'bg-blue-50 border-blue-200';
-        case 'task': return 'bg-green-50 border-green-200';
-        case 'research': return 'bg-purple-50 border-purple-200';
-        default: return 'bg-gray-50 border-gray-200';
+        case 'story': return 'bg-info-100 border-info/30';
+        case 'task': return 'bg-success-100 border-success/30';
+        case 'research': return 'bg-accent-100 border-accent/30';
+        default: return 'bg-background-elevated border-border';
       }
     }
   }
@@ -129,34 +129,34 @@ function KanbanSwimlanes({
           return (
             <Card key={swimlaneKey} className={`border-l-4 ${groupColor}`}>
               <CardHeader 
-                className="pb-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                className="pb-3 cursor-pointer hover:bg-background-elevated transition-colors"
                 onClick={() => toggleSwimlane(swimlaneKey)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
                       {isCollapsed ? (
-                        <ChevronRight className="h-4 w-4 text-gray-500" />
+                        <ChevronRight className="h-4 w-4 text-foreground-muted" />
                       ) : (
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                        <ChevronDown className="h-4 w-4 text-foreground-muted" />
                       )}
-                      {React.createElement(swimlaneConfig.icon, { className: "h-4 w-4 text-gray-600" })}
-                      <h3 className="font-medium text-gray-900">{groupLabel}</h3>
+                      {React.createElement(swimlaneConfig.icon, { className: "h-4 w-4 text-foreground-secondary" })}
+                      <h3 className="font-medium text-foreground">{groupLabel}</h3>
                     </div>
                     
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 text-sm text-foreground-muted">
                       <span>Total: {stats.total}</span>
                       {stats.inProgress > 0 && (
-                        <span className="text-blue-600">In Progress: {stats.inProgress}</span>
+                        <span className="text-info">In Progress: {stats.inProgress}</span>
                       )}
                       {stats.done > 0 && (
-                        <span className="text-green-600">Done: {stats.done}</span>
+                        <span className="text-success">Done: {stats.done}</span>
                       )}
                     </div>
                   </div>
 
                   {!isCollapsed && (
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-foreground-muted">
                       Click to collapse
                     </div>
                   )}
@@ -168,11 +168,11 @@ function KanbanSwimlanes({
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {COLUMNS.map(column => (
                       <div key={column.id} className="space-y-2">
-                        <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <h4 className="text-sm font-medium text-gray-700">
+                        <div className="flex items-center justify-between p-2 bg-background-elevated rounded">
+                          <h4 className="text-sm font-medium text-foreground-secondary">
                             {column.title}
                           </h4>
-                          <span className="text-xs text-gray-500 bg-white rounded-full px-2 py-1">
+                          <span className="text-xs text-foreground-muted bg-background-surface rounded-full px-2 py-1">
                             {swimlaneFeatures[column.id]?.length || 0}
                           </span>
                         </div>
@@ -187,8 +187,8 @@ function KanbanSwimlanes({
                               {...provided.droppableProps}
                               className={`min-h-32 rounded-lg transition-colors p-2 ${
                                 snapshot.isDraggingOver 
-                                  ? 'bg-blue-50 border-2 border-blue-200' 
-                                  : 'bg-gray-25'
+                                  ? 'bg-accent-100 border-2 border-accent/30' 
+                                  : 'bg-background-base'
                               } ${updating ? 'opacity-50' : ''}`}
                             >
                               <div className="space-y-3">
@@ -221,9 +221,9 @@ function KanbanSwimlanes({
         {swimlaneKeys.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center">
-              {React.createElement(swimlaneConfig.icon, { className: "h-12 w-12 text-gray-400 mx-auto mb-4" })}
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Features Found</h3>
-              <p className="text-gray-500">
+              {React.createElement(swimlaneConfig.icon, { className: "h-12 w-12 text-foreground-muted mx-auto mb-4" })}
+              <h3 className="text-lg font-medium text-foreground mb-2">No Features Found</h3>
+              <p className="text-foreground-muted">
                 There are no features to display in this view.
               </p>
             </CardContent>

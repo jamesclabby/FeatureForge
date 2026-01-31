@@ -55,14 +55,14 @@ const DependencyDisplay = ({ feature, compact = false }) => {
   const getStatusBadgeColor = (status) => {
     switch (status) {
       case 'done':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success-100 text-success';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-info-100 text-info';
       case 'review':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning-100 text-warning';
       case 'backlog':
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-background-elevated text-foreground-secondary';
     }
   };
 
@@ -74,11 +74,11 @@ const DependencyDisplay = ({ feature, compact = false }) => {
     if (!displayFeature) return null;
 
     return (
-      <div key={dependency.id} className="flex items-center justify-between p-3 border rounded-lg">
+      <div key={dependency.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
         <div className="flex items-center gap-3 flex-1">
           <div className="flex items-center gap-2">
             {React.createElement(dependencyConfig.icon, { 
-              className: "h-4 w-4 text-gray-600" 
+              className: "h-4 w-4 text-foreground-secondary" 
             })}
             <Badge variant="outline" className="text-xs">
               {dependencyConfig.label}
@@ -87,7 +87,7 @@ const DependencyDisplay = ({ feature, compact = false }) => {
           
           <div className="flex items-center gap-2 flex-1">
             <span className="text-lg">{featureTypeDetails?.icon}</span>
-            <span className="font-medium text-sm">{displayFeature.title}</span>
+            <span className="font-medium text-sm text-foreground">{displayFeature.title}</span>
             <Badge className={`text-xs ${getStatusBadgeColor(displayFeature.status)}`}>
               {displayFeature.status?.replace('_', ' ').toUpperCase()}
             </Badge>
@@ -97,7 +97,7 @@ const DependencyDisplay = ({ feature, compact = false }) => {
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600"
+          className="h-8 w-8 p-0 text-foreground-muted hover:text-info"
           onClick={() => {
             // Navigate to feature detail - you might want to implement this based on your routing
             window.open(`/features/${displayFeature.id}`, '_blank');
@@ -112,7 +112,7 @@ const DependencyDisplay = ({ feature, compact = false }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -124,7 +124,7 @@ const DependencyDisplay = ({ feature, compact = false }) => {
     // Compact view for feature detail pages
     if (totalDependencies === 0) {
       return (
-        <div className="text-center py-4 text-gray-500">
+        <div className="text-center py-4 text-foreground-muted">
           <Link className="h-8 w-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">No dependencies</p>
         </div>
@@ -136,12 +136,12 @@ const DependencyDisplay = ({ feature, compact = false }) => {
         {/* Status indicator */}
         <div className="flex items-center gap-2">
           {isBlocked ? (
-            <div className="flex items-center gap-1 text-orange-600">
+            <div className="flex items-center gap-1 text-warning">
               <AlertTriangle className="h-4 w-4" />
               <span className="text-sm font-medium">Blocked by {stats.blockedByCount || 0} feature{(stats.blockedByCount || 0) !== 1 ? 's' : ''}</span>
             </div>
           ) : totalDependencies > 0 ? (
-            <div className="flex items-center gap-1 text-green-600">
+            <div className="flex items-center gap-1 text-success">
               <CheckCircle className="h-4 w-4" />
               <span className="text-sm font-medium">All dependencies clear</span>
             </div>
@@ -151,7 +151,7 @@ const DependencyDisplay = ({ feature, compact = false }) => {
         {/* Outgoing Dependencies */}
         {outgoing.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">
+            <h4 className="text-sm font-medium text-foreground-secondary">
               This feature depends on ({outgoing.length})
             </h4>
             <div className="space-y-2">
@@ -163,7 +163,7 @@ const DependencyDisplay = ({ feature, compact = false }) => {
         {/* Incoming Dependencies */}
         {incoming.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">
+            <h4 className="text-sm font-medium text-foreground-secondary">
               Features that depend on this ({incoming.length})
             </h4>
             <div className="space-y-2">
@@ -189,14 +189,14 @@ const DependencyDisplay = ({ feature, compact = false }) => {
             </CardTitle>
             
             {isBlocked && (
-              <div className="flex items-center gap-1 text-orange-600">
+              <div className="flex items-center gap-1 text-warning">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="text-sm font-medium">Blocked</span>
               </div>
             )}
             
             {!isBlocked && totalDependencies > 0 && (
-              <div className="flex items-center gap-1 text-green-600">
+              <div className="flex items-center gap-1 text-success">
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm font-medium">Clear</span>
               </div>
@@ -208,40 +208,40 @@ const DependencyDisplay = ({ feature, compact = false }) => {
       <CardContent>
         {totalDependencies === 0 ? (
           <div className="text-center py-8">
-            <div className="text-gray-400 mb-2">
+            <div className="text-foreground-muted mb-2">
               <Link className="h-12 w-12 mx-auto mb-4 opacity-50" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Dependencies</h3>
-            <p className="text-gray-500">
+            <h3 className="text-lg font-medium text-foreground mb-2">No Dependencies</h3>
+            <p className="text-foreground-muted">
               This feature doesn't have any dependencies.
             </p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Statistics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-background-elevated rounded-lg">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.totalOutgoing || 0}</div>
-                <div className="text-sm text-gray-600">Outgoing</div>
+                <div className="text-2xl font-bold text-info">{stats.totalOutgoing || 0}</div>
+                <div className="text-sm text-foreground-secondary">Outgoing</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{stats.totalIncoming || 0}</div>
-                <div className="text-sm text-gray-600">Incoming</div>
+                <div className="text-2xl font-bold text-success">{stats.totalIncoming || 0}</div>
+                <div className="text-sm text-foreground-secondary">Incoming</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{stats.blockingCount || 0}</div>
-                <div className="text-sm text-gray-600">Blocking</div>
+                <div className="text-2xl font-bold text-error">{stats.blockingCount || 0}</div>
+                <div className="text-sm text-foreground-secondary">Blocking</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{stats.blockedByCount || 0}</div>
-                <div className="text-sm text-gray-600">Blocked By</div>
+                <div className="text-2xl font-bold text-warning">{stats.blockedByCount || 0}</div>
+                <div className="text-sm text-foreground-secondary">Blocked By</div>
               </div>
             </div>
 
             {/* Outgoing Dependencies */}
             {outgoing.length > 0 && (
               <div className="space-y-3">
-                <h4 className="text-sm font-medium text-gray-700">
+                <h4 className="text-sm font-medium text-foreground-secondary">
                   Outgoing Dependencies ({outgoing.length})
                 </h4>
                 <div className="space-y-2">
@@ -253,7 +253,7 @@ const DependencyDisplay = ({ feature, compact = false }) => {
             {/* Incoming Dependencies */}
             {incoming.length > 0 && (
               <div className="space-y-3">
-                <h4 className="text-sm font-medium text-gray-700">
+                <h4 className="text-sm font-medium text-foreground-secondary">
                   Incoming Dependencies ({incoming.length})
                 </h4>
                 <div className="space-y-2">

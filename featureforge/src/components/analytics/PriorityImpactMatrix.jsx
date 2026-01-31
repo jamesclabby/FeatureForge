@@ -5,7 +5,7 @@ const PriorityImpactMatrix = ({ data }) => {
   // Early return for safety
   if (!data) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>No priority analysis data provided</p>
       </div>
     );
@@ -13,7 +13,7 @@ const PriorityImpactMatrix = ({ data }) => {
 
   if (!Array.isArray(data)) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>Invalid priority analysis data format</p>
       </div>
     );
@@ -21,7 +21,7 @@ const PriorityImpactMatrix = ({ data }) => {
 
   if (data.length === 0) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>No priority analysis data available</p>
       </div>
     );
@@ -60,12 +60,12 @@ const PriorityImpactMatrix = ({ data }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{data.name}</p>
-          <p className="text-sm text-gray-600">
+        <div className="bg-background-surface p-3 border border-border rounded-lg shadow-lg">
+          <p className="font-medium text-foreground">{data.name}</p>
+          <p className="text-sm text-foreground-secondary">
             {data.count} feature{data.count !== 1 ? 's' : ''} ({data.percentage}%)
           </p>
-          <p className="text-xs text-gray-500 capitalize">
+          <p className="text-xs text-foreground-muted capitalize">
             Priority: {data.priority}
           </p>
         </div>
@@ -78,8 +78,8 @@ const PriorityImpactMatrix = ({ data }) => {
     return (
       <div className="h-80 p-4">
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-gray-700">Priority Distribution</h4>
-          <p className="text-xs text-gray-500">Features grouped by priority level</p>
+          <h4 className="text-sm font-medium text-foreground-secondary">Priority Distribution</h4>
+          <p className="text-xs text-foreground-muted">Features grouped by priority level</p>
         </div>
         <ResponsiveContainer width="100%" height="85%">
           <ScatterChart
@@ -132,7 +132,7 @@ const PriorityImpactMatrix = ({ data }) => {
                 className="w-3 h-3 rounded-full" 
                 style={{ backgroundColor: color }}
               ></div>
-              <span className="text-xs text-gray-600 capitalize">{priority}</span>
+              <span className="text-xs text-foreground-secondary capitalize">{priority}</span>
             </div>
           ))}
         </div>
@@ -141,7 +141,7 @@ const PriorityImpactMatrix = ({ data }) => {
   } catch (error) {
     console.error('Error rendering PriorityImpactMatrix:', error);
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>Error rendering priority matrix</p>
       </div>
     );

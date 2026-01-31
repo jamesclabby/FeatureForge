@@ -206,7 +206,7 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
       const successMessage = {
         id: Date.now(),
         type: 'system',
-        content: `✅ **Action completed!** ${result.message}`,
+        content: `Action completed! ${result.message}`,
         timestamp: new Date()
       };
       
@@ -222,7 +222,7 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
       const errorMessage = {
         id: Date.now(),
         type: 'error',
-        content: `❌ Failed to execute action: ${error.message}`,
+        content: `Failed to execute action: ${error.message}`,
         timestamp: new Date()
       };
       
@@ -236,28 +236,28 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
     <div className="fixed bottom-4 right-4 z-50 max-h-[calc(100vh-2rem)]">
       {/* Expanded Chat Window */}
       {isExpanded && (
-        <Card className="mb-4 w-80 max-h-[calc(100vh-6rem)] shadow-lg border-2 border-blue-200 bg-white relative flex flex-col">
+        <Card className="mb-4 w-80 max-h-[calc(100vh-6rem)] shadow-lg border-2 border-accent/30 relative flex flex-col">
           {/* Header */}
-          <CardHeader className="flex flex-row items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-purple-50 border-b flex-shrink-0">
+          <CardHeader className="flex flex-row items-center justify-between p-3 bg-background-elevated border-b border-border flex-shrink-0">
             <div className="flex items-center space-x-2">
-              <Sparkles className="h-4 w-4 text-blue-600" />
+              <Sparkles className="h-4 w-4 text-accent" />
               <div>
-                <h3 className="font-semibold text-sm text-gray-800">AI Assistant</h3>
-                <p className="text-xs text-gray-600">{actualTeamName}</p>
+                <h3 className="font-semibold text-sm text-foreground">AI Assistant</h3>
+                <p className="text-xs text-foreground-secondary">{actualTeamName}</p>
               </div>
             </div>
             <div className="flex items-center space-x-1">
               {aiStatus === 'healthy' && (
-                <div className="w-2 h-2 bg-green-500 rounded-full" title="AI Online" />
+                <div className="w-2 h-2 bg-success rounded-full" title="AI Online" />
               )}
               {aiStatus === 'error' && (
-                <div className="w-2 h-2 bg-red-500 rounded-full" title="AI Offline" />
+                <div className="w-2 h-2 bg-error rounded-full" title="AI Offline" />
               )}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={refreshSuggestions}
-                className="h-6 w-6 p-0 hover:bg-gray-200"
+                className="h-6 w-6 p-0 hover:bg-background-elevated"
                 title="Refresh suggestions with latest data"
               >
                 <RefreshCw className="h-3 w-3" />
@@ -266,7 +266,7 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
                 variant="ghost"
                 size="sm"
                 onClick={toggleExpanded}
-                className="h-6 w-6 p-0 hover:bg-gray-200"
+                className="h-6 w-6 p-0 hover:bg-background-elevated"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -277,8 +277,8 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
               {messages.length === 0 && (
-                <div className="text-center text-gray-500 text-sm py-4">
-                  <Sparkles className="h-8 w-8 mx-auto mb-2 text-blue-400" />
+                <div className="text-center text-foreground-muted text-sm py-4">
+                  <Sparkles className="h-8 w-8 mx-auto mb-2 text-accent/50" />
                   <p>Hi! I'm your FeatureForge AI assistant.</p>
                   <p className="text-xs mt-1">Ask me about features, analytics, or team insights.</p>
                 </div>
@@ -292,12 +292,12 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
                   <div
                     className={`max-w-[80%] p-2 rounded-lg text-sm ${
                       message.type === 'user'
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-accent text-white'
                         : message.type === 'error'
-                        ? 'bg-red-100 text-red-800 border border-red-200'
+                        ? 'bg-error-50 text-error border border-error/30'
                         : message.type === 'system'
-                        ? 'bg-green-100 text-green-800 border border-green-200'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-success-50 text-success border border-success/30'
+                        : 'bg-background-elevated text-foreground'
                     }`}
                   >
                     <div
@@ -313,15 +313,15 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
                     
                     {/* Action buttons for AI suggestions */}
                     {message.suggestedAction && (
-                      <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                        <div className="text-xs text-blue-700 mb-1">Suggested action:</div>
-                        <div className="text-xs text-blue-600 mb-2">
+                      <div className="mt-2 p-2 bg-accent-50 rounded border border-accent/30">
+                        <div className="text-xs text-accent mb-1">Suggested action:</div>
+                        <div className="text-xs text-accent/80 mb-2">
                           {message.suggestedAction.action.replace('_', ' ')} - {Object.keys(message.suggestedAction.parameters).length} parameters
                         </div>
                         <button
                           onClick={() => handleActionExecution(message.suggestedAction.action, message.suggestedAction.parameters)}
                           disabled={isLoading}
-                          className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50"
+                          className="px-2 py-1 bg-accent text-white text-xs rounded hover:bg-accent-600 disabled:opacity-50"
                         >
                           {isLoading ? 'Executing...' : 'Execute Action'}
                         </button>
@@ -333,8 +333,8 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
 
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 p-2 rounded-lg">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                  <div className="bg-background-elevated p-2 rounded-lg">
+                    <Loader2 className="h-4 w-4 animate-spin text-accent" />
                   </div>
                 </div>
               )}
@@ -344,14 +344,14 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
 
             {/* Suggestions */}
             {messages.length === 0 && suggestions.length > 0 && (
-              <div className="p-3 border-t bg-gray-50 flex-shrink-0">
-                <p className="text-xs text-gray-600 mb-2">Try asking:</p>
+              <div className="p-3 border-t border-border bg-background-elevated flex-shrink-0">
+                <p className="text-xs text-foreground-secondary mb-2">Try asking:</p>
                 <div className="space-y-1">
                   {suggestions.slice(0, 2).map((suggestion, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestionClick(suggestion)}
-                      className="w-full text-left text-xs p-2 bg-white border border-gray-200 rounded hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                      className="w-full text-left text-xs p-2 bg-background-surface border border-border rounded hover:bg-background-elevated hover:border-accent/50 transition-colors text-foreground-secondary"
                     >
                       {suggestion}
                     </button>
@@ -361,7 +361,7 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
             )}
 
             {/* Input Area */}
-            <div className="p-3 border-t bg-white relative flex-shrink-0">
+            <div className="p-3 border-t border-border bg-background-surface relative flex-shrink-0">
               <div className="flex space-x-2">
                 <Input
                   ref={inputRef}
@@ -389,10 +389,10 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
               {/* Collapse Button - positioned in bottom right corner of input area */}
               <Button
                 onClick={toggleExpanded}
-                className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full shadow-lg bg-gray-600 hover:bg-gray-700 transition-all duration-200 z-10"
+                className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full shadow-lg bg-foreground-muted hover:bg-foreground-secondary transition-all duration-200 z-10"
                 title="Minimize chat"
               >
-                <ChevronUp className="h-4 w-4 text-white" />
+                <ChevronUp className="h-4 w-4 text-background-base" />
               </Button>
             </div>
           </CardContent>
@@ -403,12 +403,12 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
       {!isExpanded && (
         <Button
           onClick={toggleExpanded}
-          className="h-12 w-12 rounded-full shadow-lg transition-all duration-200 bg-blue-600 hover:bg-blue-700 hover:scale-110"
+          className="h-12 w-12 rounded-full shadow-lg transition-all duration-200 bg-accent hover:bg-accent-600 hover:scale-110"
           title="Open AI assistant"
         >
           <MessageCircle className="h-5 w-5 text-white" />
           {aiStatus === 'healthy' && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background-surface" />
           )}
         </Button>
       )}
@@ -416,4 +416,4 @@ const AIChatWidget = ({ teamId, teamName, userRole }) => {
   );
 };
 
-export default AIChatWidget; 
+export default AIChatWidget;

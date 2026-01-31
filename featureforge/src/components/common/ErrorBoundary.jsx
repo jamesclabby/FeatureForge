@@ -39,13 +39,13 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       // Fallback UI
       return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-background-base flex flex-col justify-center py-12 sm:px-6 lg:px-8">
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <div className="bg-background-surface py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-border">
               <div className="text-center">
-                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-error-100 mb-4">
                   <svg
-                    className="h-6 w-6 text-red-600"
+                    className="h-6 w-6 text-error"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -58,21 +58,21 @@ class ErrorBoundary extends React.Component {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-2">
+                <h3 className="text-lg leading-6 font-medium text-foreground mb-2">
                   Something went wrong
                 </h3>
-                <p className="text-sm text-gray-600 mb-6">
+                <p className="text-sm text-foreground-secondary mb-6">
                   We're sorry, but something unexpected happened. Please try refreshing the page.
                 </p>
                 
                 {/* Show error details in development */}
                 {process.env.NODE_ENV === 'development' && this.state.error && (
                   <details className="text-left mb-6">
-                    <summary className="cursor-pointer text-sm font-medium text-gray-700 mb-2">
+                    <summary className="cursor-pointer text-sm font-medium text-foreground-secondary mb-2">
                       Error Details (Development Only)
                     </summary>
-                    <div className="bg-gray-100 p-3 rounded text-xs font-mono text-gray-800 overflow-auto max-h-40">
-                      <p className="font-bold text-red-600 mb-2">
+                    <div className="bg-background-elevated p-3 rounded text-xs font-mono text-foreground-secondary overflow-auto max-h-40">
+                      <p className="font-bold text-error mb-2">
                         {this.state.error.toString()}
                       </p>
                       <pre className="whitespace-pre-wrap">
@@ -85,13 +85,13 @@ class ErrorBoundary extends React.Component {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={this.handleRetry}
-                    className="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    className="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
                   >
                     Try Again
                   </button>
                   <button
                     onClick={() => window.location.reload()}
-                    className="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    className="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-border text-sm font-medium rounded-md text-foreground-secondary bg-background-surface hover:bg-background-elevated focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
                   >
                     Refresh Page
                   </button>

@@ -5,7 +5,7 @@ const StatusDistributionChart = ({ data, title = "Status Distribution" }) => {
   // Early return for safety
   if (!data) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>No data provided</p>
       </div>
     );
@@ -13,7 +13,7 @@ const StatusDistributionChart = ({ data, title = "Status Distribution" }) => {
 
   if (!Array.isArray(data)) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>Invalid data format</p>
       </div>
     );
@@ -21,7 +21,7 @@ const StatusDistributionChart = ({ data, title = "Status Distribution" }) => {
 
   if (data.length === 0) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>No data available</p>
       </div>
     );
@@ -59,7 +59,7 @@ const StatusDistributionChart = ({ data, title = "Status Distribution" }) => {
 
   if (chartData.length === 0) {
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>No features found</p>
       </div>
     );
@@ -75,9 +75,9 @@ const StatusDistributionChart = ({ data, title = "Status Distribution" }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{data.name}</p>
-          <p className="text-sm text-gray-600">
+        <div className="bg-background-surface p-3 border border-border rounded-lg shadow-lg">
+          <p className="font-medium text-foreground">{data.name}</p>
+          <p className="text-sm text-foreground-secondary">
             {data.value} feature{data.value !== 1 ? 's' : ''} ({data.percentage}%)
           </p>
         </div>
@@ -125,7 +125,7 @@ const StatusDistributionChart = ({ data, title = "Status Distribution" }) => {
   } catch (error) {
     console.error('Error rendering StatusDistributionChart:', error);
     return (
-      <div className="h-80 flex items-center justify-center text-gray-500">
+      <div className="h-80 flex items-center justify-center text-foreground-muted">
         <p>Error rendering chart</p>
       </div>
     );
